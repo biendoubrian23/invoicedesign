@@ -31,7 +31,7 @@ const Header = () => {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">
-              Facture<span className="text-blue-600">Design</span>
+              Invoice<span className="text-blue-600">Design</span>
             </span>
           </Link>
 

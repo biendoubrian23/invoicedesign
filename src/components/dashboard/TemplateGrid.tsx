@@ -13,7 +13,7 @@ const TemplateGrid = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="h-full overflow-y-auto p-6">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           Choisissez un modele

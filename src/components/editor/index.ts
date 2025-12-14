@@ -4,3 +4,5 @@ export { default as LogoPanel } from "./LogoPanel";
 export { default as BlocksPanel } from "./BlocksPanel";
 export { default as InvoicePreview } from "./InvoicePreview";
 export { default as EditPanel } from "./EditPanel";
+export { default as MobileEditPanel } from "./MobileEditPanel";
+export { default as MobileDashboard } from "./MobileDashboard";

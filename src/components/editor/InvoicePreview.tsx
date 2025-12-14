@@ -1,12 +1,86 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, useState, useCallback, useEffect, useRef } from "react";
 import { useInvoiceStore } from "@/store";
+import {
+  InvoiceBlock,
+  FreeTextBlock,
+  DetailedTableBlock,
+  SignatureBlock,
+  QRCodeBlock,
+  ConditionsBlock,
+  InvoiceItemsBlock,
+  TotalsBlock,
+  PaymentTermsBlock,
+} from "@/types/invoice";
+import {
+  FreeTextRenderer,
+  DetailedTableRenderer,
+  SignatureRenderer,
+  QRCodeRenderer,
+  ConditionsRenderer,
+} from "./blocks/renderers";
+import TotalsRenderer from "./blocks/renderers/TotalsRenderer";
+import PaymentTermsRenderer from "./blocks/renderers/PaymentTermsRenderer";
+import { GripVertical, ZoomIn, ZoomOut } from "lucide-react";
+
+// Dimensions A4 en pixels (à 96 DPI: 210mm = 793.7px, 297mm = 1122.5px)
+const A4_WIDTH_PX = 794;
+const A4_MIN_HEIGHT_PX = 1123;
 
 const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
-  const { invoice, calculateTotals } = useInvoiceStore();
+  const { invoice, calculateTotals, blocks, reorderBlocks, selectBlock, selectedBlockId } = useInvoiceStore();
   const { subtotal, tax, total } = calculateTotals();
   const { styling } = invoice;
+
+  // Container ref pour mesurer l'espace disponible
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [autoScale, setAutoScale] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(100); // Zoom manuel en pourcentage (50-200%)
+  
+  // Scale final = autoScale * zoomLevel
+  const finalScale = autoScale * (zoomLevel / 100);
+
+  // Calculer le scale automatique en fonction de l'espace disponible
+  useEffect(() => {
+    const calculateScale = () => {
+      if (!containerRef.current) return;
+      
+      const container = containerRef.current;
+      const availableWidth = container.clientWidth - 48; // 48px = padding (24px * 2)
+      const availableHeight = container.clientHeight - 48;
+      
+      // Calculer le scale pour que le document rentre en largeur ET en hauteur
+      const scaleX = availableWidth / A4_WIDTH_PX;
+      const scaleY = availableHeight / A4_MIN_HEIGHT_PX;
+      
+      // Prendre le plus petit des deux pour s'assurer que tout rentre
+      // Mais ne pas dépasser 1 (pas d'agrandissement)
+      const newScale = Math.min(scaleX, scaleY, 1);
+      
+      // Minimum scale de 0.3 pour rester lisible
+      setAutoScale(Math.max(newScale, 0.3));
+    };
+
+    calculateScale();
+
+    // Observer les changements de taille du conteneur
+    const resizeObserver = new ResizeObserver(calculateScale);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    window.addEventListener('resize', calculateScale);
+    
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', calculateScale);
+    };
+  }, []);
+
+  // Drag and Drop state
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
 
   // Fixed pixel sizes for consistent PDF export
   const logoSizes = {
@@ -23,9 +97,164 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
 
   const currentLogoSize = logoSizes[invoice.logoSize];
 
+  // Drag and Drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
+    setDraggedBlockId(blockId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", blockId);
+    // Add a slight delay to show the drag effect
+    setTimeout(() => {
+      (e.target as HTMLElement).style.opacity = "0.5";
+    }, 0);
+  }, []);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
+    (e.target as HTMLElement).style.opacity = "1";
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, blockId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (blockId !== draggedBlockId) {
+      setDragOverBlockId(blockId);
+    }
+  }, [draggedBlockId]);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverBlockId(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault();
+    const sourceBlockId = e.dataTransfer.getData("text/plain");
+    
+    if (sourceBlockId && sourceBlockId !== targetBlockId) {
+      // Find the indices of the source and target blocks
+      const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
+      const sourceIndex = sortedBlocks.findIndex(b => b.id === sourceBlockId);
+      const targetIndex = sortedBlocks.findIndex(b => b.id === targetBlockId);
+      
+      if (sourceIndex !== -1 && targetIndex !== -1) {
+        reorderBlocks(sourceIndex, targetIndex);
+      }
+    }
+    
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
+  }, [blocks, reorderBlocks]);
+
+  // Trouver le bloc invoice-items
+  const invoiceItemsBlock = blocks.find(
+    b => b.type === "invoice-items" && b.enabled
+  ) as InvoiceItemsBlock | undefined;
+
+  // Trier les blocs par ordre
+  const sortedBlocks = [...blocks]
+    .filter(b => b.enabled && b.type !== "invoice-items")
+    .sort((a, b) => a.order - b.order);
+
+  // Fonction pour rendre un bloc
+  const renderBlock = (block: InvoiceBlock) => {
+    switch (block.type) {
+      case "free-text":
+        return (
+          <FreeTextRenderer
+            key={block.id}
+            block={block as FreeTextBlock}
+            primaryColor={styling.primaryColor}
+          />
+        );
+      case "detailed-table":
+        return (
+          <DetailedTableRenderer
+            key={block.id}
+            block={block as DetailedTableBlock}
+            primaryColor={styling.primaryColor}
+          />
+        );
+      case "signature":
+        return (
+          <SignatureRenderer
+            key={block.id}
+            block={block as SignatureBlock}
+            primaryColor={styling.primaryColor}
+          />
+        );
+      case "qr-code":
+        return (
+          <QRCodeRenderer
+            key={block.id}
+            block={block as QRCodeBlock}
+            primaryColor={styling.primaryColor}
+          />
+        );
+      case "conditions":
+        return (
+          <ConditionsRenderer
+            key={block.id}
+            block={block as ConditionsBlock}
+            primaryColor={styling.primaryColor}
+          />
+        );
+      case "totals":
+        return (
+          <TotalsRenderer
+            key={block.id}
+            block={block as TotalsBlock}
+            primaryColor={styling.primaryColor}
+          />
+        );
+      case "payment-terms":
+        return (
+          <PaymentTermsRenderer
+            key={block.id}
+            block={block as PaymentTermsBlock}
+            primaryColor={styling.primaryColor}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="h-full bg-gray-100 p-6 overflow-y-auto">
-      <div className="max-w-[210mm] mx-auto">
+    <div className="h-full flex flex-col bg-gray-100">
+      {/* Barre de zoom */}
+      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-center gap-3 shrink-0">
+        <ZoomOut className="w-4 h-4 text-gray-500" />
+        <input
+          type="range"
+          min="50"
+          max="200"
+          step="10"
+          value={zoomLevel}
+          onChange={(e) => setZoomLevel(parseInt(e.target.value, 10))}
+          className="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+        />
+        <ZoomIn className="w-4 h-4 text-gray-500" />
+        <span className="text-sm text-gray-600 min-w-[3rem] text-center">{zoomLevel}%</span>
+        <button
+          onClick={() => setZoomLevel(100)}
+          className="text-xs text-blue-600 hover:text-blue-800 ml-2"
+        >
+          Réinitialiser
+        </button>
+      </div>
+      
+      {/* Zone de prévisualisation */}
+      <div 
+        ref={containerRef}
+        className="flex-1 p-6 overflow-auto flex items-start justify-center"
+      >
+        <div 
+          className="origin-top"
+          style={{ 
+            transform: `scale(${finalScale})`,
+            transformOrigin: 'top center',
+          }}
+        >
         {/* A4 Paper avec dimensions exactes pour export PDF */}
         <div
           ref={ref}
@@ -99,8 +328,11 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
               </div>
             </div>
 
+            {/* Spacer */}
+            <div className="col-span-3"></div>
+
             {/* Client */}
-            <div className="col-span-7">
+            <div className="col-span-4 text-right">
               <h2
                 className="text-sm font-semibold mb-2"
                 style={{ color: styling.primaryColor }}
@@ -116,131 +348,225 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
             </div>
           </div>
 
-          {/* Items Table */}
-          <div className="mb-8">
-            {/* Header */}
-            <div
-              className="grid grid-cols-12 gap-4 py-3 px-4 text-sm font-semibold text-white"
-              style={{ backgroundColor: styling.primaryColor }}
-            >
-              <div className="col-span-6">Description</div>
-              <div className="col-span-2 text-center">Qte</div>
-              <div className="col-span-2 text-right">Prix unit.</div>
-              <div className="col-span-2 text-right">Total</div>
-            </div>
-
-            {/* Rows */}
-            {invoice.items.map((item, index) => (
-              <div key={item.id}>
-                {/* Ligne principale */}
-                <div
-                  className={`grid grid-cols-12 gap-4 py-3 px-4 text-sm ${
-                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                  }`}
-                >
-                  <div className="col-span-6 text-gray-800 font-medium">
-                    {item.description}
-                  </div>
-                  <div className="col-span-2 text-center text-gray-600">
-                    {(!item.hasSubItems || item.subItemsMode === 'parent-quantity') 
-                      ? item.quantity 
-                      : '-'}
-                  </div>
-                  <div className="col-span-2 text-right text-gray-600">
-                    {!item.hasSubItems 
-                      ? `${item.unitPrice.toFixed(2)} EUR`
-                      : item.subItemsMode === 'parent-quantity'
-                      ? `${item.unitPrice.toFixed(2)} EUR`
-                      : '-'}
-                  </div>
-                  <div className="col-span-2 text-right font-medium text-gray-800">
-                    {item.total.toFixed(2)} EUR
-                  </div>
-                </div>
-
-                {/* Sous-lignes */}
-                {item.hasSubItems && item.subItems && item.subItems.length > 0 && (
-                  <div className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                    {item.subItems.map((subItem) => (
-                      <div
-                        key={subItem.id}
-                        className="grid grid-cols-12 gap-4 py-2 px-4 pl-12 text-xs border-l-2 border-blue-300"
-                        style={{ 
-                          borderLeftColor: styling.primaryColor,
-                          opacity: 0.9 
-                        }}
-                      >
-                        <div className="col-span-6 text-gray-700 flex items-center">
-                          <span className="mr-2 text-gray-400">↳</span>
-                          {subItem.description}
-                        </div>
-                        <div className="col-span-2 text-center text-gray-500">
-                          {item.subItemsMode === 'individual-quantities' && subItem.hasQuantity
-                            ? subItem.quantity
-                            : '-'}
-                        </div>
-                        <div className="col-span-2 text-right text-gray-500">
-                          {item.subItemsMode !== 'no-prices'
-                            ? `${subItem.unitPrice.toFixed(2)} EUR`
-                            : '-'}
-                        </div>
-                        <div className="col-span-2 text-right text-gray-700">
-                          {item.subItemsMode === 'individual-quantities'
-                            ? `${subItem.total.toFixed(2)} EUR`
-                            : item.subItemsMode === 'parent-quantity'
-                            ? `${subItem.unitPrice.toFixed(2)} EUR`
-                            : '-'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Totals */}
-          <div className="mb-8">
-            <div className="grid grid-cols-12 gap-4 px-4">
-              <div className="col-span-8"></div>
-              <div className="col-span-4">
-                <div className="flex justify-between py-2 text-sm">
-                  <span className="text-gray-600">Sous-total HT</span>
-                  <span className="font-medium text-right">{subtotal.toFixed(2)} EUR</span>
-                </div>
-                <div className="flex justify-between py-2 text-sm border-b border-gray-200">
-                  <span className="text-gray-600">TVA ({invoice.taxRate}%)</span>
-                  <span className="font-medium text-right">{tax.toFixed(2)} EUR</span>
-                </div>
-                <div
-                  className="flex justify-between py-3 text-lg font-bold"
+          {/* Items Table - Dynamique basé sur le bloc invoice-items */}
+          {invoiceItemsBlock && (
+            <div className="mb-8">
+              {/* Titre optionnel */}
+              {invoiceItemsBlock.showTitle && invoiceItemsBlock.title && (
+                <h3
+                  className="text-sm font-semibold mb-3"
                   style={{ color: styling.primaryColor }}
                 >
-                  <span>Total TTC</span>
-                  <span className="text-right">{total.toFixed(2)} EUR</span>
-                </div>
-              </div>
-            </div>
-          </div>
+                  {invoiceItemsBlock.title}
+                </h3>
+              )}
 
-          {/* Payment Terms */}
-          {invoice.paymentTerms && (
-            <div
-              className="p-4 text-sm"
-              style={{ backgroundColor: `${styling.primaryColor}10` }}
-            >
-              <h3
-                className="font-semibold mb-2"
-                style={{ color: styling.primaryColor }}
-              >
-                Conditions de paiement
-              </h3>
-              <p className="text-gray-700 whitespace-pre-line">
-                {invoice.paymentTerms}
-              </p>
+              {/* Header */}
+              {invoiceItemsBlock.showHeader && (
+                <div
+                  className="flex gap-2 py-3 px-4 text-sm font-semibold text-white"
+                  style={{ backgroundColor: styling.primaryColor }}
+                >
+                  {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
+                    // Calculer la largeur : dernière colonne prend le reste
+                    const isLast = idx === arr.length - 1;
+                    const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
+                    const width = isLast ? 100 - usedWidth : column.width;
+                    
+                    return (
+                      <div
+                        key={column.id}
+                        style={{ width: `${width}%`, minWidth: 0 }}
+                        className={`${
+                          column.key === 'quantity' || column.key === 'unitPrice' || column.key === 'total'
+                            ? 'text-right'
+                            : column.key === 'description'
+                            ? ''
+                            : 'text-center'
+                        }`}
+                      >
+                        {column.header}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Rows */}
+              {invoice.items.map((item, index) => (
+                <div key={item.id}>
+                  {/* Ligne principale */}
+                  <div
+                    className={`flex gap-2 py-3 px-4 text-sm ${
+                      invoiceItemsBlock.striped
+                        ? index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                        : "bg-white"
+                    }`}
+                  >
+                    {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
+                      // Calculer la largeur : dernière colonne prend le reste
+                      const isLast = idx === arr.length - 1;
+                      const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
+                      const width = isLast ? 100 - usedWidth : column.width;
+                      
+                      let content = "";
+                      let alignment = "";
+
+                      switch (column.key) {
+                        case "description":
+                          content = item.description;
+                          alignment = "";
+                          break;
+                        case "quantity":
+                          content = (!item.hasSubItems || item.subItemsMode === 'parent-quantity') 
+                            ? item.quantity.toString()
+                            : '-';
+                          alignment = "text-right";
+                          break;
+                        case "unitPrice":
+                          content = !item.hasSubItems 
+                            ? `${item.unitPrice.toFixed(2)} ${invoice.currency}`
+                            : item.subItemsMode === 'parent-quantity'
+                            ? `${item.unitPrice.toFixed(2)} ${invoice.currency}`
+                            : '-';
+                          alignment = "text-right";
+                          break;
+                        case "total":
+                          content = `${item.total.toFixed(2)} ${invoice.currency}`;
+                          alignment = "text-right font-medium";
+                          break;
+                        default:
+                          // Colonnes personnalisées
+                          content = item.customFields?.[column.key] || "-";
+                          alignment = "text-center";
+                      }
+
+                      return (
+                        <div
+                          key={column.id}
+                          style={{ width: `${width}%`, minWidth: 0 }}
+                          className={`text-gray-800 ${alignment}`}
+                        >
+                          {content}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Sous-lignes */}
+                  {item.hasSubItems && item.subItems && item.subItems.length > 0 && (
+                    <div className={invoiceItemsBlock.striped ? (index % 2 === 0 ? "bg-gray-50" : "bg-white") : "bg-white"}>
+                      {item.subItems.map((subItem) => (
+                        <div
+                          key={subItem.id}
+                          className="flex gap-2 py-2 px-4 text-xs"
+                        >
+                          {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
+                            // Calculer la largeur : dernière colonne prend le reste
+                            const isLast = idx === arr.length - 1;
+                            const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
+                            const width = isLast ? 100 - usedWidth : column.width;
+                            
+                            let content = "";
+                            let alignment = "";
+
+                            switch (column.key) {
+                              case "description":
+                                content = subItem.description;
+                                alignment = "text-gray-700";
+                                break;
+                              case "quantity":
+                                content = item.subItemsMode === 'individual-quantities' && subItem.hasQuantity
+                                  ? subItem.quantity?.toString() || '-'
+                                  : '-';
+                                alignment = "text-right text-gray-500";
+                                break;
+                              case "unitPrice":
+                                content = item.subItemsMode !== 'no-prices'
+                                  ? `${subItem.unitPrice.toFixed(2)} ${invoice.currency}`
+                                  : '-';
+                                alignment = "text-right text-gray-500";
+                                break;
+                              case "total":
+                                content = item.subItemsMode === 'individual-quantities'
+                                  ? `${subItem.total.toFixed(2)} ${invoice.currency}`
+                                  : item.subItemsMode === 'parent-quantity'
+                                  ? `${subItem.unitPrice.toFixed(2)} ${invoice.currency}`
+                                  : '-';
+                                alignment = "text-right text-gray-700";
+                                break;
+                              default:
+                                // Colonnes personnalisées
+                                content = subItem.customFields?.[column.key] || "-";
+                                alignment = "text-center text-gray-500";
+                            }
+
+                            return (
+                              <div
+                                key={column.id}
+                                style={{ width: `${width}%`, minWidth: 0 }}
+                                className={`${alignment} ${
+                                  column.key === "description" ? "flex items-center pl-8" : ""
+                                }`}
+                              >
+                                {column.key === "description" && (
+                                  <span className="mr-2 text-gray-400">-</span>
+                                )}
+                                {content}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Blocs modulaires avec drag & drop */}
+          {sortedBlocks.length > 0 && (
+            <div className="space-y-2 mt-6">
+              {sortedBlocks.map(block => (
+                <div
+                  key={block.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, block.id)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, block.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, block.id)}
+                  onClick={() => selectBlock(block.id)}
+                  className={`relative group transition-all duration-200 ${
+                    dragOverBlockId === block.id 
+                      ? "border-t-2 border-blue-500" 
+                      : ""
+                  } ${
+                    selectedBlockId === block.id 
+                      ? "ring-2 ring-blue-400 ring-offset-2" 
+                      : ""
+                  } ${
+                    draggedBlockId === block.id 
+                      ? "opacity-50" 
+                      : ""
+                  }`}
+                >
+                  {/* Drag handle - visible on hover */}
+                  <div 
+                    className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing print:hidden"
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <GripVertical className="w-4 h-4 text-gray-400" />
+                  </div>
+                  
+                  {renderBlock(block)}
+                </div>
+              ))}
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

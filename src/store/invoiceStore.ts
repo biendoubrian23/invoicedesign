@@ -1,5 +1,21 @@
 import { create } from "zustand";
-import { Invoice, InvoiceItem, SubItem, Template, EditorSection } from "@/types/invoice";
+import { 
+  Invoice, 
+  InvoiceItem, 
+  SubItem, 
+  Template, 
+  EditorSection,
+  InvoiceBlock,
+  FreeTextBlock,
+  DetailedTableBlock,
+  SignatureBlock,
+  QRCodeBlock,
+  ConditionsBlock,
+  InvoiceItemsBlock,
+  TotalsBlock,
+  PaymentTermsBlock,
+  BlockType,
+} from "@/types/invoice";
 
 interface InvoiceStore {
   // Current invoice being edited
@@ -10,6 +26,11 @@ interface InvoiceStore {
   activeSection: EditorSection;
   // Templates list
   templates: Template[];
+  
+  // Blocs modulaires
+  blocks: InvoiceBlock[];
+  selectedBlockId: string | null;
+  
   // Actions
   setInvoice: (invoice: Partial<Invoice>) => void;
   setIssuer: (issuer: Partial<Invoice["issuer"]>) => void;
@@ -24,6 +45,15 @@ interface InvoiceStore {
   removeSubItem: (itemId: string, subItemId: string) => void;
   toggleSubItems: (itemId: string, enabled: boolean) => void;
   setSubItemsMode: (itemId: string, mode: InvoiceItem['subItemsMode']) => void;
+  
+  // Block actions
+  addBlock: (type: BlockType) => void;
+  updateBlock: (id: string, data: Partial<InvoiceBlock>) => void;
+  removeBlock: (id: string) => void;
+  reorderBlocks: (startIndex: number, endIndex: number) => void;
+  selectBlock: (id: string | null) => void;
+  moveBlockUp: (id: string) => void;
+  moveBlockDown: (id: string) => void;
   
   setStyling: (styling: Partial<Invoice["styling"]>) => void;
   setLogo: (logo: string | undefined) => void;
@@ -42,6 +72,7 @@ const defaultInvoice: Invoice = {
   dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0],
+  currency: "€",
   issuer: {
     name: "Votre Societe",
     address: "123 Rue de la Facturation\n75001 Paris",
@@ -142,11 +173,186 @@ const defaultTemplates: Template[] = [
   },
 ];
 
+// Blocs par défaut
+const defaultBlocks: InvoiceBlock[] = [
+  {
+    id: "invoice-items-default",
+    type: "invoice-items",
+    order: 0,
+    enabled: true,
+    showTitle: false,
+    title: "Prestations",
+    columns: [
+      { id: "col-desc", key: "description", header: "Description", width: 45, visible: true, required: true },
+      { id: "col-qty", key: "quantity", header: "Qte", width: 10, visible: true },
+      { id: "col-price", key: "unitPrice", header: "Prix unit.", width: 20, visible: true },
+      { id: "col-total", key: "total", header: "Total", width: 25, visible: true, required: true },
+    ],
+    showHeader: true,
+    striped: true,
+  } as InvoiceItemsBlock,
+  {
+    id: "totals-default",
+    type: "totals",
+    order: 100,
+    enabled: true,
+    showTitle: false,
+    title: "Totaux",
+    showSubtotal: true,
+    showTax: true,
+    showTotal: true,
+    subtotalLabel: "Sous-total HT",
+    taxLabel: "TVA",
+    totalLabel: "Total TTC",
+  } as TotalsBlock,
+  {
+    id: "payment-terms-default",
+    type: "payment-terms",
+    order: 101,
+    enabled: true,
+    showTitle: true,
+    title: "Conditions de paiement",
+    content: "Paiement sous 30 jours par virement bancaire\nIBAN: FR76 XXXX XXXX XXXX XXXX XXXX XXX",
+  } as PaymentTermsBlock,
+];
+
+// Fonction pour créer un nouveau bloc selon son type
+const createBlock = (type: BlockType, order: number): InvoiceBlock => {
+  const id = crypto.randomUUID();
+  
+  switch (type) {
+    case "invoice-items":
+      return {
+        id,
+        type: "invoice-items",
+        order,
+        enabled: true,
+        showTitle: false,
+        title: "Prestations",
+        columns: [
+          { id: crypto.randomUUID(), key: "description", header: "Description", width: 45, visible: true, required: true },
+          { id: crypto.randomUUID(), key: "quantity", header: "Qte", width: 10, visible: true },
+          { id: crypto.randomUUID(), key: "unitPrice", header: "Prix unit.", width: 20, visible: true },
+          { id: crypto.randomUUID(), key: "total", header: "Total", width: 25, visible: true, required: true },
+        ],
+        showHeader: true,
+        striped: true,
+      } as InvoiceItemsBlock;
+      
+    case "free-text":
+      return {
+        id,
+        type: "free-text",
+        order,
+        enabled: true,
+        showTitle: false,
+        title: "Note",
+        content: "Saisissez votre texte ici...",
+        alignment: "left",
+      } as FreeTextBlock;
+      
+    case "detailed-table":
+      return {
+        id,
+        type: "detailed-table",
+        order,
+        enabled: true,
+        showTitle: false,
+        title: "Details supplementaires",
+        columns: [
+          { id: crypto.randomUUID(), header: "Element", width: 50, align: "left" },
+          { id: crypto.randomUUID(), header: "Details", width: 50, align: "left" },
+        ],
+        rows: [
+          { id: crypto.randomUUID(), cells: ["", ""] },
+        ],
+        showHeader: true,
+        striped: true,
+      } as DetailedTableBlock;
+      
+    case "signature":
+      return {
+        id,
+        type: "signature",
+        order,
+        enabled: true,
+        showTitle: false,
+        title: "Signature",
+        mode: "text",
+        signatureText: "",
+        signatureFont: "'Dancing Script', cursive",
+        showDate: true,
+        showName: true,
+        signerName: "",
+        position: "right",
+      } as SignatureBlock;
+      
+    case "qr-code":
+      return {
+        id,
+        type: "qr-code",
+        order,
+        enabled: true,
+        showTitle: false,
+        title: "Paiement",
+        content: "",
+        size: "medium",
+        position: "left",
+        showLabel: true,
+        label: "Scannez pour payer",
+      } as QRCodeBlock;
+      
+    case "conditions":
+      return {
+        id,
+        type: "conditions",
+        order,
+        enabled: true,
+        showTitle: false,
+        title: "Conditions generales",
+        content: "Paiement a reception de facture. En cas de retard de paiement, une penalite de 3 fois le taux d'interet legal sera appliquee, ainsi qu'une indemnite forfaitaire de 40€ pour frais de recouvrement.",
+        fontSize: "small",
+      } as ConditionsBlock;
+
+    case "totals":
+      return {
+        id,
+        type: "totals",
+        order,
+        enabled: true,
+        showTitle: false,
+        title: "Totaux",
+        showSubtotal: true,
+        showTax: true,
+        showTotal: true,
+        subtotalLabel: "Sous-total HT",
+        taxLabel: "TVA",
+        totalLabel: "Total TTC",
+      } as TotalsBlock;
+
+    case "payment-terms":
+      return {
+        id,
+        type: "payment-terms",
+        order,
+        enabled: true,
+        showTitle: true,
+        title: "Conditions de paiement",
+        content: "Paiement sous 30 jours par virement bancaire\nIBAN: FR76 XXXX XXXX XXXX XXXX XXXX XXX",
+      } as PaymentTermsBlock;
+      
+    default:
+      throw new Error(`Unknown block type: ${type}`);
+  }
+};
+
 export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
   invoice: defaultInvoice,
   selectedTemplate: "classic",
   activeSection: "templates",
   templates: defaultTemplates,
+  blocks: defaultBlocks,
+  selectedBlockId: null,
 
   setInvoice: (invoiceData) =>
     set((state) => ({
@@ -431,6 +637,99 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
   },
 
   resetInvoice: () => set({ invoice: defaultInvoice }),
+
+  // Block actions
+  addBlock: (type) =>
+    set((state) => {
+      let order: number;
+      
+      // Si c'est un tableau détaillé, le placer juste après invoice-items (order 1)
+      if (type === "detailed-table") {
+        const invoiceItemsBlock = state.blocks.find(b => b.type === "invoice-items");
+        if (invoiceItemsBlock) {
+          order = invoiceItemsBlock.order + 1;
+          // Décaler tous les blocs suivants
+          const updatedBlocks = state.blocks.map(b => 
+            b.order >= order ? { ...b, order: b.order + 1 } : b
+          );
+          const newBlock = createBlock(type, order);
+          return {
+            blocks: [...updatedBlocks, newBlock],
+            selectedBlockId: newBlock.id,
+          };
+        }
+      }
+      
+      // Sinon, ajouter à la fin
+      const maxOrder = Math.max(...state.blocks.map(b => b.order), -1);
+      const newBlock = createBlock(type, maxOrder + 1);
+      return {
+        blocks: [...state.blocks, newBlock],
+        selectedBlockId: newBlock.id,
+      };
+    }),
+
+  updateBlock: (id, data) =>
+    set((state) => ({
+      blocks: state.blocks.map((block) =>
+        block.id === id ? { ...block, ...data } : block
+      ),
+    })),
+
+  removeBlock: (id) =>
+    set((state) => ({
+      blocks: state.blocks.filter((block) => block.id !== id),
+      selectedBlockId: state.selectedBlockId === id ? null : state.selectedBlockId,
+    })),
+
+  reorderBlocks: (startIndex, endIndex) =>
+    set((state) => {
+      const result = [...state.blocks].sort((a, b) => a.order - b.order);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      
+      // Recalculer les ordres
+      const reordered = result.map((block, index) => ({
+        ...block,
+        order: index,
+      }));
+      
+      return { blocks: reordered };
+    }),
+
+  selectBlock: (id) => set({ selectedBlockId: id }),
+
+  moveBlockUp: (id) =>
+    set((state) => {
+      const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
+      const index = sorted.findIndex(b => b.id === id);
+      if (index <= 0) return state;
+      
+      // Échanger les ordres
+      const newBlocks = sorted.map((block, i) => {
+        if (i === index) return { ...block, order: index - 1 };
+        if (i === index - 1) return { ...block, order: index };
+        return block;
+      });
+      
+      return { blocks: newBlocks };
+    }),
+
+  moveBlockDown: (id) =>
+    set((state) => {
+      const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
+      const index = sorted.findIndex(b => b.id === id);
+      if (index >= sorted.length - 1) return state;
+      
+      // Échanger les ordres
+      const newBlocks = sorted.map((block, i) => {
+        if (i === index) return { ...block, order: index + 1 };
+        if (i === index + 1) return { ...block, order: index };
+        return block;
+      });
+      
+      return { blocks: newBlocks };
+    }),
 
   calculateTotals: () => {
     const { invoice } = get();

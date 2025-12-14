@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { InvoiceItem } from "@/types/invoice";
+import { InvoiceItem, InvoiceItemsColumn } from "@/types/invoice";
 import { useInvoiceStore } from "@/store";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -10,10 +10,12 @@ import { Trash2, Plus, ChevronDown, ChevronRight, Settings } from "lucide-react"
 interface InvoiceItemEditorProps {
   item: InvoiceItem;
   index: number;
+  customColumns?: InvoiceItemsColumn[];
 }
 
-const InvoiceItemEditor = ({ item, index }: InvoiceItemEditorProps) => {
+const InvoiceItemEditor = ({ item, index, customColumns = [] }: InvoiceItemEditorProps) => {
   const {
+    invoice,
     updateItem,
     removeItem,
     addSubItem,
@@ -101,6 +103,26 @@ const InvoiceItemEditor = ({ item, index }: InvoiceItemEditorProps) => {
               onChange={(e) => updateItem(item.id, { description: e.target.value })}
             />
 
+            {/* Colonnes personnalisées */}
+            {customColumns.length > 0 && (
+              <div className="grid grid-cols-2 gap-2">
+                {customColumns.map((col) => (
+                  <Input
+                    key={col.id}
+                    placeholder={col.header}
+                    value={item.customFields?.[col.key] || ""}
+                    onChange={(e) => {
+                      const newCustomFields = {
+                        ...item.customFields,
+                        [col.key]: e.target.value,
+                      };
+                      updateItem(item.id, { customFields: newCustomFields });
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
             {/* Mode selector pour les sous-lignes */}
             {item.hasSubItems && (
               <div className="relative">
@@ -176,7 +198,7 @@ const InvoiceItemEditor = ({ item, index }: InvoiceItemEditorProps) => {
               {/* Total */}
               <div className={`flex items-center ${item.hasSubItems && item.subItemsMode !== 'parent-quantity' ? 'col-span-2' : ''} ${item.hasSubItems ? 'justify-end' : 'justify-end'}`}>
                 <span className="text-sm font-semibold text-gray-900">
-                  {item.total.toFixed(2)} EUR
+                  {item.total.toFixed(2)} {invoice.currency}
                 </span>
               </div>
             </div>
@@ -221,6 +243,27 @@ const InvoiceItemEditor = ({ item, index }: InvoiceItemEditorProps) => {
                   className="text-sm"
                 />
 
+                {/* Colonnes personnalisées pour sous-lignes */}
+                {customColumns.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {customColumns.map((col) => (
+                      <Input
+                        key={col.id}
+                        placeholder={col.header}
+                        value={subItem.customFields?.[col.key] || ""}
+                        onChange={(e) => {
+                          const newCustomFields = {
+                            ...subItem.customFields,
+                            [col.key]: e.target.value,
+                          };
+                          updateSubItem(item.id, subItem.id, { customFields: newCustomFields });
+                        }}
+                        className="text-sm"
+                      />
+                    ))}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-3 gap-2">
                   {/* Quantité - visible uniquement en mode individual-quantities */}
                   {item.subItemsMode === 'individual-quantities' && (
@@ -255,7 +298,7 @@ const InvoiceItemEditor = ({ item, index }: InvoiceItemEditorProps) => {
                       {item.subItemsMode === 'individual-quantities' && (
                         <div className="flex items-center justify-end">
                           <span className="text-xs font-medium text-gray-700">
-                            {subItem.total.toFixed(2)} EUR
+                            {subItem.total.toFixed(2)} {invoice.currency}
                           </span>
                         </div>
                       )}

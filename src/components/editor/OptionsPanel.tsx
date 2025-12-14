@@ -2,12 +2,7 @@
 
 import { useInvoiceStore } from "@/store";
 import Input from "@/components/ui/Input";
-
-const fonts = [
-  { id: "Inter", name: "Inter" },
-  { id: "Arial", name: "Arial" },
-  { id: "Georgia", name: "Georgia" },
-];
+import { DOCUMENT_FONTS } from "@/types/invoice";
 
 const OptionsPanel = () => {
   const { invoice, setStyling } = useInvoiceStore();
@@ -69,19 +64,29 @@ const OptionsPanel = () => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Police
+              Police du document
             </label>
             <select
               value={styling.fontFamily}
               onChange={(e) => setStyling({ fontFamily: e.target.value })}
-              className="w-full px-4 py-2.5 text-sm border border-gray-300 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full px-4 py-2.5 text-sm border border-gray-300 bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-lg"
             >
-              {fonts.map((font) => (
-                <option key={font.id} value={font.id}>
+              {DOCUMENT_FONTS.map((font) => (
+                <option key={font.name} value={font.value} style={{ fontFamily: font.value }}>
                   {font.name}
                 </option>
               ))}
             </select>
+            
+            {/* Preview de la police */}
+            <div 
+              className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg"
+              style={{ fontFamily: styling.fontFamily }}
+            >
+              <p className="text-sm text-gray-600 mb-1">Apercu :</p>
+              <p className="text-lg">Votre Societe - Facture N° 2025-001</p>
+              <p className="text-sm text-gray-500">1 234,56 EUR</p>
+            </div>
           </div>
         </div>
       </section>

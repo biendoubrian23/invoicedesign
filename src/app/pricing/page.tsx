@@ -17,7 +17,7 @@ const plans = [
       { name: "5 factures par mois", included: true },
       { name: "2 templates de base", included: true },
       { name: "Export PDF", included: true },
-      { name: "Filigrane FactureDesign", included: true },
+      { name: "Filigrane InvoiceDesign", included: true },
       { name: "Tous les templates", included: false },
       { name: "Logo personnalise", included: false },
       { name: "Factures dynamiques", included: false },

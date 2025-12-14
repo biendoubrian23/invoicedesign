@@ -12,7 +12,7 @@ const CTA = () => {
           Pret a creer votre premiere facture ?
         </h2>
         <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto animate-fade-in-up stagger-1">
-          Rejoignez des milliers de professionnels qui utilisent FactureDesign pour
+          Rejoignez des milliers de professionnels qui utilisent InvoiceDesign pour
           gerer leur facturation.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up stagger-2">

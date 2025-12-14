@@ -11,7 +11,7 @@ const plans = [
     price: "0",
     period: "/mois",
     description: "Pour demarrer",
-    features: ["5 factures par mois", "2 templates", "Filigrane FactureDesign", "Export PDF"],
+    features: ["5 factures par mois", "2 templates", "Filigrane InvoiceDesign", "Export PDF"],
     cta: "Essayer",
     popular: false,
   },

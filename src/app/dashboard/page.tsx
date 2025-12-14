@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { DashboardHeader, Sidebar } from "@/components/dashboard";
-import { EditPanel, InvoicePreview } from "@/components/editor";
+import { EditPanel, InvoicePreview, MobileDashboard } from "@/components/editor";
 import { useInvoiceStore } from "@/store";
 import { useExport } from "@/hooks/useExport";
 import Button from "@/components/ui/Button";
@@ -17,6 +17,21 @@ export default function DashboardPage() {
     filename: `facture-${invoice.invoiceNumber}`,
     format: 'A4',
   });
+
+  // Détection mobile/tablette - mode mobile si écran < 1024px (pas assez d'espace pour la prévisualisation)
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      // Passer en mode mobile si largeur < 1024px pour éviter que la prévisualisation soit coupée
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Splitter states
   const [sidebarWidth, setSidebarWidth] = useState(240);
@@ -72,6 +87,22 @@ export default function DashboardPage() {
     }
   }
 
+  // Affichage mobile
+  if (isMobile) {
+    return (
+      <div className="h-screen flex flex-col bg-gray-50">
+        <MobileDashboard
+          ref={previewRef}
+          showPreview={showMobilePreview}
+          onTogglePreview={() => setShowMobilePreview(!showMobilePreview)}
+          onExportPDF={exportPDF}
+          onExportImage={exportImage}
+          isExporting={isExporting}
+        />
+      </div>
+    );
+  }
+
   return (
     <div 
       className="h-screen flex flex-col bg-gray-50"
@@ -103,7 +134,7 @@ export default function DashboardPage() {
                 Facture : <span className="font-medium text-gray-900">{invoice.invoiceNumber}</span>
               </span>
               <span className="text-sm text-gray-600">
-                Total : <span className="font-semibold text-blue-600">{total.toFixed(2)} EUR</span>
+                Total : <span className="font-semibold text-blue-600">{total.toFixed(2)} {invoice.currency}</span>
               </span>
               {error && (
                 <span className="text-sm text-red-600">{error}</span>
