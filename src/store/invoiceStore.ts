@@ -696,7 +696,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
     set((state) => ({
       blocks: state.blocks.map((block) =>
         block.id === id ? { ...block, ...data } : block
-      ),
+      ) as InvoiceBlock[],
     })),
 
   removeBlock: (id) =>

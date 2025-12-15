@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useState, useCallback } from "react";
+import { forwardRef, useState, useCallback, memo } from "react";
 import { useInvoiceStore } from "@/store";
 import {
     InvoiceBlock,
@@ -13,15 +13,15 @@ import {
     InvoiceItemsBlock,
     TotalsBlock,
 } from "@/types/invoice";
-import {
-    FreeTextRenderer,
-    DetailedTableRenderer,
-    SignatureRenderer,
-    QRCodeRenderer,
-    ConditionsRenderer,
-} from "./blocks/renderers";
+// Direct imports for renderers (avoid barrel imports for better tree-shaking)
+import FreeTextRenderer from "./blocks/renderers/FreeTextRenderer";
+import DetailedTableRenderer from "./blocks/renderers/DetailedTableRenderer";
+import SignatureRenderer from "./blocks/renderers/SignatureRenderer";
+import QRCodeRenderer from "./blocks/renderers/QRCodeRenderer";
+import ConditionsRenderer from "./blocks/renderers/ConditionsRenderer";
 import TotalsRenderer from "./blocks/renderers/TotalsRenderer";
 import PaymentTermsRenderer from "./blocks/renderers/PaymentTermsRenderer";
+import InvoiceItemsRenderer from "./blocks/renderers/InvoiceItemsRenderer";
 import ClickableZone from "./ClickableZone";
 import { GripVertical } from "lucide-react";
 
@@ -30,10 +30,9 @@ import { GripVertical } from "lucide-react";
  * Layout based on the user's reference design:
  * - Header: Company name/address (left) + INVOICE title with details (right)
  * - Bill To (left) + Payment Method (right)
- * - Items table with NO/Description/Price/Qty/Total
- * - Totals section aligned right
- * - Footer: Terms & Conditions (left) + Signature (right)
- * - Additional blocks section (draggable, same as Classic)
+ * - ALL OTHER BLOCKS: Draggable and sortable in the main area.
+ *   (Items table, Totals, Conditions, Signature, etc.)
+ * - Special Logic: If "Payment Terms" and "Signature" are adjacent, they render side-by-side in a footer layout.
  */
 
 interface ElegantTemplateProps {
@@ -42,50 +41,21 @@ interface ElegantTemplateProps {
 
 const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
     ({ isMobile = false }, ref) => {
-        const { invoice, calculateTotals, blocks, reorderBlocks, selectBlock, selectedBlockId } = useInvoiceStore();
-        const { subtotal, tax, total } = calculateTotals();
+        const { invoice, blocks, reorderBlocks, selectBlock, selectedBlockId } = useInvoiceStore();
         const { styling } = invoice;
 
         // Drag and Drop state
         const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
         const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
 
-        // Trouver les blocs spécifiques
-        const invoiceItemsBlock = blocks.find(
-            (b) => b.type === "invoice-items" && b.enabled
-        ) as InvoiceItemsBlock | undefined;
-
-        const totalsBlock = blocks.find(
-            (b) => b.type === "totals" && b.enabled
-        ) as TotalsBlock | undefined;
-
-        const paymentTermsBlock = blocks.find(
-            (b) => b.type === "payment-terms" && b.enabled
-        ) as PaymentTermsBlock | undefined;
-
-        const signatureBlock = blocks.find(
-            (b) => b.type === "signature" && b.enabled
-        ) as SignatureBlock | undefined;
-
-        // Tous les blocs triés par order (hors invoice-items et totals qui sont fixés)
-        const allSortedBlocks = [...blocks]
-            .filter(b => b.enabled && !["invoice-items", "totals"].includes(b.type))
+        // Get sorted enabled blocks
+        const sortedBlocks = [...blocks]
+            .filter(b => b.enabled)
             .sort((a, b) => a.order - b.order);
 
-        // Vérifier si payment-terms et signature sont consécutifs (footer mode)
-        // Si payment-terms suivi directement de signature OU signature suivi de payment-terms
-        const ptIndex = allSortedBlocks.findIndex(b => b.type === "payment-terms");
-        const sigIndex = allSortedBlocks.findIndex(b => b.type === "signature");
-        const areFooterBlocksAdjacent = ptIndex !== -1 && sigIndex !== -1 &&
-            Math.abs(ptIndex - sigIndex) === 1;
-
-        // Si consécutifs, on les rend ensemble, sinon séparément
-        const sortedBlocks = areFooterBlocksAdjacent
-            ? allSortedBlocks.filter(b => b.type !== "payment-terms" && b.type !== "signature")
-            : allSortedBlocks;
-
-        // Position du footer (après quel bloc les mettre)
-        const footerPosition = areFooterBlocksAdjacent ? Math.min(ptIndex, sigIndex) : -1;
+        // Find specific blocks for helper logic (not used for separate rendering anymore)
+        const paymentTermsBlock = blocks.find(b => b.type === "payment-terms") as PaymentTermsBlock | undefined;
+        const signatureBlock = blocks.find(b => b.type === "signature") as SignatureBlock | undefined;
 
         // Logo sizes
         const logoSizes = {
@@ -128,9 +98,9 @@ const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
             const sourceBlockId = e.dataTransfer.getData("text/plain");
 
             if (sourceBlockId && sourceBlockId !== targetBlockId) {
-                const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
-                const sourceIndex = sortedBlocks.findIndex(b => b.id === sourceBlockId);
-                const targetIndex = sortedBlocks.findIndex(b => b.id === targetBlockId);
+                const currentSorted = [...blocks].sort((a, b) => a.order - b.order);
+                const sourceIndex = currentSorted.findIndex(b => b.id === sourceBlockId);
+                const targetIndex = currentSorted.findIndex(b => b.id === targetBlockId);
 
                 if (sourceIndex !== -1 && targetIndex !== -1) {
                     reorderBlocks(sourceIndex, targetIndex);
@@ -144,6 +114,22 @@ const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
         // Render blocks dynamically
         const renderBlock = (block: InvoiceBlock) => {
             switch (block.type) {
+                case "invoice-items":
+                    return (
+                        <InvoiceItemsRenderer
+                            key={block.id}
+                            block={block as InvoiceItemsBlock}
+                            primaryColor={styling.primaryColor}
+                        />
+                    );
+                case "totals":
+                    return (
+                        <TotalsRenderer
+                            key={block.id}
+                            block={block as TotalsBlock}
+                            primaryColor={styling.primaryColor}
+                        />
+                    );
                 case "free-text":
                     return (
                         <FreeTextRenderer
@@ -196,6 +182,116 @@ const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
                     return null;
             }
         };
+
+        // Helper to check if current block is start of a standard footer group (Terms + Signature)
+        const isFooterGroupStart = (index: number) => {
+            const current = sortedBlocks[index];
+            const next = sortedBlocks[index + 1];
+            if (!current || !next) return false;
+
+            // Check if current is PaymentTerms and next is Signature (Standard Footer Order)
+            if (current.type === 'payment-terms' && next.type === 'signature') return true;
+
+            // Check if current is Signature and next is PaymentTerms (Reverse Order)
+            // Even if reversed, we display them side-by-side in standard layout (Terms Left, Sig Right)
+            // This satisfies "si on met au dessus de term condition on met aussi au dessus de signature automatiquement"
+            if (current.type === 'signature' && next.type === 'payment-terms') return true;
+
+            return false;
+        };
+
+        // Helper to check if current block should be skipped (because it was handled in previous iteration as part of a group)
+        const shouldSkipBlock = (index: number) => {
+            const prev = sortedBlocks[index - 1];
+            const current = sortedBlocks[index];
+            if (!prev || !current) return false;
+
+            // Skip if this is Signature and previous was Terms (Standard Group)
+            if (prev.type === 'payment-terms' && current.type === 'signature') return true;
+
+            // Skip if this is Terms and previous was Signature (Reverse Group)
+            if (prev.type === 'signature' && current.type === 'payment-terms') return true;
+
+            return false;
+        };
+
+        // Custom Footer Group Renderer (Terms Left, Signature Right)
+        const renderFooterGroup = (block1: InvoiceBlock, block2: InvoiceBlock) => {
+            // Identify which is which
+            const termsBlock = (block1.type === 'payment-terms' ? block1 : block2) as PaymentTermsBlock;
+            const sigBlock = (block1.type === 'signature' ? block1 : block2) as SignatureBlock;
+
+            return (
+                <div key={`group-${block1.id}-${block2.id}`} className="flex justify-between items-end pt-8 border-t border-gray-200 gap-8 animate-scale-in">
+                    {/* Terms & Conditions (left) */}
+                    <ClickableZone
+                        target={{
+                            type: "block",
+                            blockId: termsBlock.id,
+                            mode: "content",
+                        }}
+                        disabled={isMobile}
+                        className="flex-1 max-w-xs"
+                    >
+                        <h3 className="text-sm font-bold text-gray-900 mb-2">
+                            {termsBlock.title || "Conditions de paiement :"}
+                        </h3>
+                        <p className="text-xs text-gray-600 italic leading-relaxed">
+                            {termsBlock.content ||
+                                "Paiement sous 30 jours par virement bancaire."}
+                        </p>
+                    </ClickableZone>
+
+                    {/* Signature (right) */}
+                    <ClickableZone
+                        target={{
+                            type: "block",
+                            blockId: sigBlock.id,
+                            mode: "content",
+                        }}
+                        disabled={isMobile}
+                        className="flex-1 text-right"
+                    >
+                        <div className="inline-block text-right">
+                            {/* Signature line/text rendering (Inline or reuse renderer logic?) 
+                                Reuse logic from previous ElegantTemplate footer 
+                             */}
+                            {sigBlock.signatureText ? (
+                                <p
+                                    className="text-2xl mb-2"
+                                    style={{
+                                        fontFamily: sigBlock.signatureFont || "cursive",
+                                    }}
+                                >
+                                    {sigBlock.signatureText}
+                                </p>
+                            ) : sigBlock.signatureData ? (
+                                <img
+                                    src={sigBlock.signatureData}
+                                    alt="Signature"
+                                    className="h-12 ml-auto mb-2"
+                                />
+                            ) : (
+                                <div className="h-12 border-b border-gray-400 w-40 ml-auto mb-2"></div>
+                            )}
+                            {/* Name & Role */}
+                            {sigBlock.showName && sigBlock.signerName && (
+                                <p className="text-sm font-medium text-gray-900">
+                                    {sigBlock.signerName}
+                                </p>
+                            )}
+                            {sigBlock.signerRole && (
+                                <p className="text-xs text-gray-500">{sigBlock.signerRole}</p>
+                            )}
+                            {sigBlock.showDate && (
+                                <p className="text-xs text-gray-500">Le {new Date().toLocaleDateString("fr-FR")}</p>
+                            )}
+                        </div>
+                    </ClickableZone>
+                </div>
+            );
+        };
+
 
         return (
             <div
@@ -315,341 +411,69 @@ const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
                 </div>
 
                 {/* ============================================ */}
-                {/* ITEMS TABLE */}
+                {/* ALL BLOCKS SECTION (Draggable) */}
                 {/* ============================================ */}
-                {invoiceItemsBlock && (
-                    <ClickableZone
-                        target={{ type: "items-table", mode: "content" }}
-                        showLayoutOption={true}
-                        disabled={isMobile}
-                        className="mb-8"
-                    >
-                        {/* Table Header - Dynamic based on columns */}
-                        {invoiceItemsBlock.showHeader && (
-                            <div
-                                className="flex gap-2 py-3 px-4 text-sm font-bold border-b-2"
-                                style={{ borderColor: styling.primaryColor }}
+                <div className="space-y-4">
+                    {sortedBlocks.map((block, index) => {
+                        // Check for Footer Flex grouping (Terms + Signature)
+                        if (isFooterGroupStart(index)) {
+                            // Render the group
+                            return renderFooterGroup(block, sortedBlocks[index + 1]);
+                        }
+
+                        // Skip if part of a previously rendered group
+                        if (shouldSkipBlock(index)) {
+                            return null;
+                        }
+
+                        // Special Layout: Totals usually aligns right, but we need to support full drag
+                        // TotalsRenderer handles its own alignment inside its container? 
+                        // The TotalsRenderer in this app renders a full width block with right alignment inside.
+
+                        const isTableBlock = block.type === 'detailed-table';
+                        const isItemsBlock = block.type === 'invoice-items';
+
+                        return (
+                            <ClickableZone
+                                key={block.id}
+                                target={{ type: 'block', blockId: block.id, mode: 'content' }}
+                                showLayoutOption={isTableBlock || isItemsBlock}
+                                disabled={isMobile}
                             >
-                                {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
-                                    const isLast = idx === arr.length - 1;
-                                    const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
-                                    const width = isLast ? 100 - usedWidth : column.width;
-
-                                    return (
-                                        <div
-                                            key={column.id}
-                                            style={{ width: `${width}%`, minWidth: 0 }}
-                                            className={`${column.key === 'quantity' || column.key === 'unitPrice' || column.key === 'total'
-                                                ? 'text-right'
-                                                : column.key === 'description'
-                                                    ? ''
-                                                    : 'text-center'
-                                                }`}
-                                        >
-                                            {column.header}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {/* Table Rows - Dynamic */}
-                        {invoice.items.map((item, index) => (
-                            <div key={item.id}>
-                                {/* Main row */}
-                                <div className={`flex gap-2 py-3 px-4 text-sm border-b border-gray-200 ${invoiceItemsBlock.striped
-                                    ? index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                                    : "bg-white"
-                                    }`}>
-                                    {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
-                                        const isLast = idx === arr.length - 1;
-                                        const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
-                                        const width = isLast ? 100 - usedWidth : column.width;
-
-                                        let content = "";
-                                        // Use same alignment as header
-                                        let alignment = column.key === 'quantity' || column.key === 'unitPrice' || column.key === 'total'
-                                            ? 'text-right'
-                                            : column.key === 'description'
-                                                ? ''
-                                                : 'text-center';
-
-                                        switch (column.key) {
-                                            case "index":
-                                                content = (index + 1).toString();
-                                                break;
-                                            case "description":
-                                                content = item.description;
-                                                break;
-                                            case "quantity":
-                                                content = (!item.hasSubItems || item.subItemsMode === 'parent-quantity')
-                                                    ? item.quantity.toString()
-                                                    : '-';
-                                                break;
-                                            case "unitPrice":
-                                                content = !item.hasSubItems
-                                                    ? `${item.unitPrice.toFixed(2)} ${invoice.currency}`
-                                                    : item.subItemsMode === 'parent-quantity'
-                                                        ? `${item.unitPrice.toFixed(2)} ${invoice.currency}`
-                                                        : '-';
-                                                break;
-                                            case "total":
-                                                content = `${item.total.toFixed(2)} ${invoice.currency}`;
-                                                break;
-                                            default:
-                                                content = item.customFields?.[column.key] || "-";
-                                        }
-
-                                        return (
-                                            <div
-                                                key={column.id}
-                                                style={{ width: `${width}%`, minWidth: 0 }}
-                                                className={alignment}
-                                            >
-                                                {column.key === "description" ? (
-                                                    <>
-                                                        <p className="font-medium text-gray-900">{content}</p>
-                                                        {item.hasSubItems && item.subItems && item.subItems.length > 0 && (
-                                                            <p className="text-xs text-gray-500 mt-1">
-                                                                {item.subItems.map((s) => s.description).join(", ")}
-                                                            </p>
-                                                        )}
-                                                    </>
-                                                ) : content}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Sub-items (if any) */}
-                                {item.hasSubItems &&
-                                    item.subItems &&
-                                    item.subItems.length > 0 &&
-                                    item.subItemsMode !== "no-prices" && (
-                                        <div className="bg-gray-50">
-                                            {item.subItems.map((subItem) => (
-                                                <div
-                                                    key={subItem.id}
-                                                    className="flex gap-2 py-2 px-4 text-xs border-b border-gray-100"
-                                                >
-                                                    {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
-                                                        const isLast = idx === arr.length - 1;
-                                                        const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
-                                                        const width = isLast ? 100 - usedWidth : column.width;
-
-                                                        let content = "";
-                                                        let alignment = column.key === 'quantity' || column.key === 'unitPrice' || column.key === 'total'
-                                                            ? 'text-right text-gray-500'
-                                                            : column.key === 'description'
-                                                                ? 'pl-4 text-gray-600'
-                                                                : 'text-center';
-
-                                                        switch (column.key) {
-                                                            case "index":
-                                                                content = "";
-                                                                alignment = "";
-                                                                break;
-                                                            case "description":
-                                                                content = `- ${subItem.description}`;
-                                                                break;
-                                                            case "quantity":
-                                                                content = item.subItemsMode === 'individual-quantities' && subItem.hasQuantity
-                                                                    ? subItem.quantity?.toString() || '-'
-                                                                    : '-';
-                                                                break;
-                                                            case "unitPrice":
-                                                                content = item.subItemsMode !== 'no-prices'
-                                                                    ? `${subItem.unitPrice.toFixed(2)} ${invoice.currency}`
-                                                                    : '-';
-                                                                break;
-                                                            case "total":
-                                                                content = item.subItemsMode === 'individual-quantities'
-                                                                    ? `${subItem.total.toFixed(2)} ${invoice.currency}`
-                                                                    : '-';
-                                                                break;
-                                                            default:
-                                                                content = subItem.customFields?.[column.key] || "-";
-                                                        }
-
-                                                        return (
-                                                            <div
-                                                                key={column.id}
-                                                                style={{ width: `${width}%`, minWidth: 0 }}
-                                                                className={alignment}
-                                                            >
-                                                                {content}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                            </div>
-                        ))}
-                    </ClickableZone>
-                )}
-
-                {/* ============================================ */}
-                {/* TOTALS SECTION (aligned right) */}
-                {/* ============================================ */}
-                <ClickableZone
-                    target={{ type: "block", blockId: totalsBlock?.id || "totals", mode: "content" }}
-                    disabled={isMobile}
-                    className="flex justify-end mb-10"
-                >
-                    <div className="w-64">
-                        <div className="border-t-2 border-gray-300 pt-4 space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Sous-total HT</span>
-                                <span className="font-medium">
-                                    {subtotal.toFixed(2)} {invoice.currency}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">TVA ({invoice.taxRate}%)</span>
-                                <span className="font-medium">
-                                    {tax > 0 ? `${tax.toFixed(2)} ${invoice.currency}` : "-"}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Remise</span>
-                                <span className="font-medium">-</span>
-                            </div>
-                            <div className="border-t border-gray-300 pt-2 mt-2">
-                                <div className="flex justify-between text-base font-bold">
-                                    <span>Total TTC</span>
-                                    <span>
-                                        {total.toFixed(2)} {invoice.currency}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </ClickableZone>
-
-                {/* ============================================ */}
-                {/* ADDITIONAL BLOCKS (draggable like Classic) */}
-                {/* ============================================ */}
-                {sortedBlocks.length > 0 && (
-                    <div className="space-y-2 mb-8">
-                        {sortedBlocks.map(block => {
-                            const isTableBlock = block.type === 'detailed-table';
-
-                            return (
-                                <ClickableZone
-                                    key={block.id}
-                                    target={{ type: 'block', blockId: block.id, mode: 'content' }}
-                                    showLayoutOption={isTableBlock}
-                                    disabled={isMobile}
-                                >
-                                    <div
-                                        draggable
-                                        onDragStart={(e) => handleDragStart(e, block.id)}
-                                        onDragEnd={handleDragEnd}
-                                        onDragOver={(e) => handleDragOver(e, block.id)}
-                                        onDragLeave={handleDragLeave}
-                                        onDrop={(e) => handleDrop(e, block.id)}
-                                        onClick={() => selectBlock(block.id)}
-                                        className={`relative group transition-all duration-200 ${dragOverBlockId === block.id
-                                            ? "border-t-2 border-blue-500"
+                                <div
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, block.id)}
+                                    onDragEnd={handleDragEnd}
+                                    onDragOver={(e) => handleDragOver(e, block.id)}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={(e) => handleDrop(e, block.id)}
+                                    onClick={() => selectBlock(block.id)}
+                                    className={`relative group transition-all duration-200 ${dragOverBlockId === block.id
+                                        ? "border-t-2 border-blue-500"
+                                        : ""
+                                        } ${selectedBlockId === block.id
+                                            ? "ring-2 ring-blue-400 ring-offset-2"
                                             : ""
-                                            } ${selectedBlockId === block.id
-                                                ? "ring-2 ring-blue-400 ring-offset-2"
-                                                : ""
-                                            } ${draggedBlockId === block.id
-                                                ? "opacity-50"
-                                                : ""
-                                            }`}
+                                        } ${draggedBlockId === block.id
+                                            ? "opacity-50"
+                                            : ""
+                                        }`}
+                                >
+                                    {/* Drag handle */}
+                                    <div
+                                        data-export-hidden
+                                        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing print:hidden"
+                                        onMouseDown={(e) => e.stopPropagation()}
                                     >
-                                        {/* Drag handle */}
-                                        <div
-                                            data-export-hidden
-                                            className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing print:hidden"
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                        >
-                                            <GripVertical className="w-4 h-4 text-gray-400" />
-                                        </div>
-
-                                        {renderBlock(block)}
+                                        <GripVertical className="w-4 h-4 text-gray-400" />
                                     </div>
-                                </ClickableZone>
-                            );
-                        })}
-                    </div>
-                )}
 
-                {/* ============================================ */}
-                {/* FOOTER FLEX: Terms & Signature côte à côte */}
-                {/* S'affiche uniquement si payment-terms et signature sont consécutifs */}
-                {/* ============================================ */}
-                {areFooterBlocksAdjacent && paymentTermsBlock && signatureBlock && (
-                    <div className="flex justify-between items-end pt-8 border-t border-gray-200 gap-8">
-                        {/* Terms & Conditions (left) */}
-                        <ClickableZone
-                            target={{
-                                type: "block",
-                                blockId: paymentTermsBlock.id,
-                                mode: "content",
-                            }}
-                            disabled={isMobile}
-                            className="flex-1 max-w-xs"
-                        >
-                            <h3 className="text-sm font-bold text-gray-900 mb-2">
-                                {paymentTermsBlock.title || "Conditions de paiement :"}
-                            </h3>
-                            <p className="text-xs text-gray-600 italic leading-relaxed">
-                                {paymentTermsBlock.content ||
-                                    "Paiement sous 30 jours par virement bancaire."}
-                            </p>
-                        </ClickableZone>
-
-                        {/* Signature (right) */}
-                        <ClickableZone
-                            target={{
-                                type: "block",
-                                blockId: signatureBlock.id,
-                                mode: "content",
-                            }}
-                            disabled={isMobile}
-                            className="flex-1 text-right"
-                        >
-                            <div className="inline-block text-right">
-                                {/* Signature line/text */}
-                                {signatureBlock.signatureText ? (
-                                    <p
-                                        className="text-2xl mb-2"
-                                        style={{
-                                            fontFamily: signatureBlock.signatureFont || "cursive",
-                                        }}
-                                    >
-                                        {signatureBlock.signatureText}
-                                    </p>
-                                ) : signatureBlock.signatureData ? (
-                                    <img
-                                        src={signatureBlock.signatureData}
-                                        alt="Signature"
-                                        className="h-12 ml-auto mb-2"
-                                    />
-                                ) : (
-                                    <div className="h-12 border-b border-gray-400 w-40 ml-auto mb-2"></div>
-                                )}
-                                {/* Name & Role */}
-                                {signatureBlock.showName && signatureBlock.signerName && (
-                                    <p className="text-sm font-medium text-gray-900">
-                                        {signatureBlock.signerName}
-                                    </p>
-                                )}
-                                {signatureBlock.signerRole && (
-                                    <p className="text-xs text-gray-500">{signatureBlock.signerRole}</p>
-                                )}
-                                {signatureBlock.showDate && (
-                                    <p className="text-xs text-gray-500">Le {new Date().toLocaleDateString("fr-FR")}</p>
-                                )}
-                            </div>
-                        </ClickableZone>
-                    </div>
-                )}
+                                    {renderBlock(block)}
+                                </div>
+                            </ClickableZone>
+                        );
+                    })}
+                </div>
             </div>
         );
     }
@@ -657,4 +481,5 @@ const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
 
 ElegantTemplate.displayName = "ElegantTemplate";
 
-export default ElegantTemplate;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(ElegantTemplate);

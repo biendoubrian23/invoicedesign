@@ -1,6 +1,7 @@
 "use client";
 
-import { forwardRef, useState, useCallback, useEffect, useRef } from "react";
+import { forwardRef, useState, useCallback, useEffect, useRef, memo } from "react";
+import dynamic from "next/dynamic";
 import { useInvoiceStore } from "@/store";
 import {
   InvoiceBlock,
@@ -13,18 +14,21 @@ import {
   TotalsBlock,
   PaymentTermsBlock,
 } from "@/types/invoice";
-import {
-  FreeTextRenderer,
-  DetailedTableRenderer,
-  SignatureRenderer,
-  QRCodeRenderer,
-  ConditionsRenderer,
-} from "./blocks/renderers";
+// Direct imports for renderers (avoid barrel imports)
+import FreeTextRenderer from "./blocks/renderers/FreeTextRenderer";
+import DetailedTableRenderer from "./blocks/renderers/DetailedTableRenderer";
+import SignatureRenderer from "./blocks/renderers/SignatureRenderer";
+import QRCodeRenderer from "./blocks/renderers/QRCodeRenderer";
+import ConditionsRenderer from "./blocks/renderers/ConditionsRenderer";
 import TotalsRenderer from "./blocks/renderers/TotalsRenderer";
 import PaymentTermsRenderer from "./blocks/renderers/PaymentTermsRenderer";
 import ClickableZone from "./ClickableZone";
-import ElegantTemplate from "./ElegantTemplate";
 import { GripVertical, ZoomIn, ZoomOut } from "lucide-react";
+
+// Lazy load ElegantTemplate for better initial load time
+const ElegantTemplate = dynamic(() => import("./ElegantTemplate"), {
+  loading: () => <div className="animate-pulse bg-gray-100 h-full w-full" />,
+});
 
 // Dimensions A4 en pixels (à 96 DPI: 210mm = 793.7px, 297mm = 1122.5px)
 const A4_WIDTH_PX = 794;
