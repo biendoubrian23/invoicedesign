@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { FileText, Home, Settings } from "lucide-react";
 
@@ -12,12 +13,14 @@ const DashboardHeader = ({ title = "Dashboard" }: DashboardHeaderProps) => {
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 group">
-        <div className="w-8 h-8 bg-blue-600 flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-          <FileText className="w-5 h-5 text-white" />
-        </div>
-        <span className="text-xl font-bold text-gray-900">
-          Invoice<span className="text-blue-600">Design</span>
-        </span>
+        <Image
+          src="/logoheader.png"
+          alt="InvoiceDesign Logo"
+          width={160}
+          height={40}
+          className="h-14 w-auto transition-transform duration-200 group-hover:scale-105"
+          priority
+        />
       </Link>
 
       {/* Title */}
