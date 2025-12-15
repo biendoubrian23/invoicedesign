@@ -75,11 +75,10 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
             <button
               key={mode.value}
               onClick={() => onChange({ mode: mode.value })}
-              className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors ${
-                block.mode === mode.value
+              className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors ${block.mode === mode.value
                   ? "bg-blue-50 border-blue-500 text-blue-600"
                   : "border-gray-300 text-gray-600 hover:bg-gray-50"
-              }`}
+                }`}
             >
               {mode.icon}
               <span className="text-sm">{mode.label}</span>
@@ -96,9 +95,9 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
               {block.signatureData ? (
                 <div className="space-y-2">
                   <div className="border rounded-lg p-4 bg-white">
-                    <img 
-                      src={block.signatureData} 
-                      alt="Signature" 
+                    <img
+                      src={block.signatureData}
+                      alt="Signature"
                       className="max-h-24 mx-auto"
                     />
                   </div>
@@ -106,9 +105,9 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
                     <Button variant="outline" size="sm" onClick={() => setShowPad(true)}>
                       Modifier
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => onChange({ signatureData: undefined })}
                     >
                       Supprimer
@@ -129,9 +128,9 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
                 onClear={() => onChange({ signatureData: undefined })}
                 initialValue={block.signatureData}
               />
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowPad(false)}
                 className="w-full"
               >
@@ -147,15 +146,15 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
           {block.signatureData ? (
             <div className="space-y-2">
               <div className="border rounded-lg p-4 bg-white">
-                <img 
-                  src={block.signatureData} 
-                  alt="Signature" 
+                <img
+                  src={block.signatureData}
+                  alt="Signature"
                   className="max-h-24 mx-auto"
                 />
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => onChange({ signatureData: undefined })}
                 className="w-full"
               >
@@ -185,7 +184,7 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
             onChange={(e) => onChange({ signatureText: e.target.value })}
             placeholder="ex: Jean Dupont"
           />
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Police de signature
@@ -221,6 +220,14 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
         value={block.signerName}
         onChange={(e) => onChange({ signerName: e.target.value })}
         placeholder="ex: Jean Dupont"
+      />
+
+      {/* Rôle du signataire (optionnel, surtout pour le template Elegant) */}
+      <Input
+        label="Rôle / Fonction"
+        value={block.signerRole || ""}
+        onChange={(e) => onChange({ signerRole: e.target.value })}
+        placeholder="ex: Manager, Directeur, CEO"
       />
 
       {/* Options */}
@@ -264,11 +271,10 @@ const SignatureEditor = ({ block, onChange }: SignatureEditorProps) => {
             <button
               key={pos.value}
               onClick={() => onChange({ position: pos.value })}
-              className={`p-2 rounded-lg border transition-colors ${
-                block.position === pos.value
+              className={`p-2 rounded-lg border transition-colors ${block.position === pos.value
                   ? "bg-blue-100 border-blue-500 text-blue-600"
                   : "border-gray-300 text-gray-600 hover:bg-gray-50"
-              }`}
+                }`}
             >
               {pos.icon}
             </button>

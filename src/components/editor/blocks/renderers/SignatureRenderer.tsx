@@ -32,7 +32,7 @@ const SignatureRenderer = ({ block, primaryColor }: SignatureRendererProps) => {
   }[block.position];
 
   const today = new Date().toLocaleDateString("fr-FR");
-  
+
   // Calcul de la taille basée sur signatureSize (défaut 100%)
   const sizePercent = block.signatureSize || 100;
   const baseHeight = 50; // hauteur de base en pixels
@@ -51,26 +51,26 @@ const SignatureRenderer = ({ block, primaryColor }: SignatureRendererProps) => {
           {block.title}
         </h3>
       )}
-      
+
       <div className={`flex ${positionClass}`}>
         <div style={{ minWidth: `${containerMinWidth}px` }}>
           {/* Zone de signature */}
-          <div 
+          <div
             className="border-b-2 border-gray-400 mb-2 flex items-end justify-center pb-1"
             style={{ minHeight: `${containerMinHeight}px` }}
           >
             {block.mode === "draw" && block.signatureData && (
-              <img 
-                src={block.signatureData} 
-                alt="Signature" 
+              <img
+                src={block.signatureData}
+                alt="Signature"
                 className="object-contain"
                 style={{ maxHeight: `${scaledHeight}px` }}
               />
             )}
             {block.mode === "image" && block.signatureData && (
-              <img 
-                src={block.signatureData} 
-                alt="Signature" 
+              <img
+                src={block.signatureData}
+                alt="Signature"
                 className="object-contain"
                 style={{ maxHeight: `${scaledHeight}px` }}
               />
@@ -84,11 +84,14 @@ const SignatureRenderer = ({ block, primaryColor }: SignatureRendererProps) => {
               </span>
             )}
           </div>
-          
+
           {/* Infos sous la signature */}
           <div className="text-xs text-gray-600 text-center space-y-1">
             {block.showName && block.signerName && (
               <p className="font-medium">{block.signerName}</p>
+            )}
+            {block.signerRole && (
+              <p className="text-gray-500">{block.signerRole}</p>
             )}
             {block.showDate && (
               <p>Le {today}</p>

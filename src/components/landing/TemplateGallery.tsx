@@ -9,18 +9,14 @@ const templates = [
     name: "Classic",
     description: "Template traditionnel et professionnel",
     color: "#2563eb",
+    previewStyle: "modern", // Blue header style
   },
   {
-    id: "modern",
-    name: "Modern",
-    description: "Design epure et contemporain",
-    color: "#059669",
-  },
-  {
-    id: "detailed",
-    name: "Detailed",
-    description: "Avec sous-elements et options",
-    color: "#7c3aed",
+    id: "elegant",
+    name: "Elegant",
+    description: "Design epure et minimaliste",
+    color: "#000000",
+    previewStyle: "minimal", // Black/white minimal style
   },
 ];
 
@@ -29,7 +25,7 @@ const TemplateGallery = () => {
 
   return (
     <section id="templates" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -40,14 +36,13 @@ const TemplateGallery = () => {
           </p>
         </div>
 
-        {/* Templates Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Templates Grid - 2 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {templates.map((template, index) => (
             <div
               key={template.id}
-              className={`cursor-pointer opacity-0 animate-fade-in-up ${
-                activeTemplate === template.id ? "ring-2 ring-blue-500 ring-offset-4" : ""
-              }`}
+              className={`cursor-pointer opacity-0 animate-fade-in-up ${activeTemplate === template.id ? "ring-2 ring-blue-500 ring-offset-4" : ""
+                }`}
               style={{ animationDelay: `${index * 0.1}s`, animationFillMode: "forwards" }}
               onClick={() => setActiveTemplate(template.id)}
             >

@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { 
-  Invoice, 
-  InvoiceItem, 
-  SubItem, 
-  Template, 
+import {
+  Invoice,
+  InvoiceItem,
+  SubItem,
+  Template,
   EditorSection,
   InvoiceBlock,
   FreeTextBlock,
@@ -18,7 +18,7 @@ import {
 } from "@/types/invoice";
 
 // Types pour la navigation depuis la preview
-export type PreviewClickTarget = 
+export type PreviewClickTarget =
   | { type: 'logo' }
   | { type: 'invoice-info' }
   | { type: 'issuer' }
@@ -37,14 +37,14 @@ interface InvoiceStore {
   activeSection: EditorSection;
   // Templates list
   templates: Template[];
-  
+
   // Blocs modulaires
   blocks: InvoiceBlock[];
   selectedBlockId: string | null;
-  
+
   // Navigation depuis la preview (pour scroll vers l'élément)
   focusTarget: PreviewClickTarget | null;
-  
+
   // Actions
   setInvoice: (invoice: Partial<Invoice>) => void;
   setIssuer: (issuer: Partial<Invoice["issuer"]>) => void;
@@ -52,14 +52,14 @@ interface InvoiceStore {
   addItem: () => void;
   updateItem: (id: string, item: Partial<InvoiceItem>) => void;
   removeItem: (id: string) => void;
-  
+
   // Sub-items actions
   addSubItem: (itemId: string) => void;
   updateSubItem: (itemId: string, subItemId: string, subItem: Partial<SubItem>) => void;
   removeSubItem: (itemId: string, subItemId: string) => void;
   toggleSubItems: (itemId: string, enabled: boolean) => void;
   setSubItemsMode: (itemId: string, mode: InvoiceItem['subItemsMode']) => void;
-  
+
   // Block actions
   addBlock: (type: BlockType) => void;
   updateBlock: (id: string, data: Partial<InvoiceBlock>) => void;
@@ -68,7 +68,7 @@ interface InvoiceStore {
   selectBlock: (id: string | null) => void;
   moveBlockUp: (id: string) => void;
   moveBlockDown: (id: string) => void;
-  
+
   setStyling: (styling: Partial<Invoice["styling"]>) => void;
   setLogo: (logo: string | undefined) => void;
   setLogoPosition: (position: Invoice["logoPosition"]) => void;
@@ -77,7 +77,7 @@ interface InvoiceStore {
   selectTemplate: (templateId: string) => void;
   resetInvoice: () => void;
   calculateTotals: () => { subtotal: number; tax: number; total: number };
-  
+
   // Navigation depuis la preview
   navigateFromPreview: (target: PreviewClickTarget) => void;
   clearFocusTarget: () => void;
@@ -170,24 +170,22 @@ const defaultInvoice: Invoice = {
   logoSize: "medium",
 };
 
+// Import model from models folder
+import { classicModel, elegantModel } from '@/models';
+
+// Templates disponibles (utilise les modèles du dossier models)
 const defaultTemplates: Template[] = [
   {
-    id: "classic",
-    name: "Classic",
-    description: "Template traditionnel et professionnel",
-    color: "#2563eb",
+    id: classicModel.id,
+    name: classicModel.name,
+    description: classicModel.description,
+    color: classicModel.previewColor,
   },
   {
-    id: "modern",
-    name: "Modern",
-    description: "Design epure et contemporain",
-    color: "#059669",
-  },
-  {
-    id: "detailed",
-    name: "Detailed",
-    description: "Avec sous-elements et options",
-    color: "#7c3aed",
+    id: elegantModel.id,
+    name: elegantModel.name,
+    description: elegantModel.description,
+    color: elegantModel.previewColor,
   },
 ];
 
@@ -237,7 +235,7 @@ const defaultBlocks: InvoiceBlock[] = [
 // Fonction pour créer un nouveau bloc selon son type
 const createBlock = (type: BlockType, order: number): InvoiceBlock => {
   const id = crypto.randomUUID();
-  
+
   switch (type) {
     case "invoice-items":
       return {
@@ -256,7 +254,7 @@ const createBlock = (type: BlockType, order: number): InvoiceBlock => {
         showHeader: true,
         striped: true,
       } as InvoiceItemsBlock;
-      
+
     case "free-text":
       return {
         id,
@@ -268,7 +266,7 @@ const createBlock = (type: BlockType, order: number): InvoiceBlock => {
         content: "Saisissez votre texte ici...",
         alignment: "left",
       } as FreeTextBlock;
-      
+
     case "detailed-table":
       return {
         id,
@@ -287,7 +285,7 @@ const createBlock = (type: BlockType, order: number): InvoiceBlock => {
         showHeader: true,
         striped: true,
       } as DetailedTableBlock;
-      
+
     case "signature":
       return {
         id,
@@ -304,7 +302,7 @@ const createBlock = (type: BlockType, order: number): InvoiceBlock => {
         signerName: "",
         position: "right",
       } as SignatureBlock;
-      
+
     case "qr-code":
       return {
         id,
@@ -319,7 +317,7 @@ const createBlock = (type: BlockType, order: number): InvoiceBlock => {
         showLabel: true,
         label: "Scannez pour payer",
       } as QRCodeBlock;
-      
+
     case "conditions":
       return {
         id,
@@ -358,7 +356,7 @@ const createBlock = (type: BlockType, order: number): InvoiceBlock => {
         title: "Conditions de paiement",
         content: "Paiement sous 30 jours par virement bancaire\nIBAN: FR76 XXXX XXXX XXXX XXXX XXXX XXX",
       } as PaymentTermsBlock;
-      
+
     default:
       throw new Error(`Unknown block type: ${type}`);
   }
@@ -447,18 +445,18 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
           items: state.invoice.items.map((item) => {
             if (item.id === id) {
               const updated = { ...item, ...itemData };
-              
+
               // Recalculer le unitPrice si on a des sous-items
               if (updated.hasSubItems && updated.subItems) {
                 const subItemsSum = updated.subItems
                   .filter(sub => sub.selected !== false)
                   .reduce((sum, sub) => sum + sub.unitPrice, 0);
-                
+
                 if (updated.subItemsMode === 'parent-quantity') {
                   updated.unitPrice = subItemsSum;
                 }
               }
-              
+
               updated.total = calculateItemTotal(updated);
               return updated;
             }
@@ -492,7 +490,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
               total: 0,
               selected: true,
             };
-            
+
             return {
               ...item,
               hasSubItems: true,
@@ -561,7 +559,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
         items: state.invoice.items.map((item) => {
           if (item.id === itemId && item.subItems) {
             const updatedSubItems = item.subItems.filter((sub) => sub.id !== subItemId);
-            
+
             return {
               ...item,
               subItems: updatedSubItems,
@@ -642,8 +640,14 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
   selectTemplate: (templateId) => {
     const template = get().templates.find((t) => t.id === templateId);
     if (template) {
+      // Import the model to get its default blocks
+      const { getModelById } = require('@/models');
+      const model = getModelById(templateId);
+
       set((state) => ({
         selectedTemplate: templateId,
+        // Load model-specific blocks if available
+        blocks: model?.defaultBlocks || state.blocks,
         invoice: {
           ...state.invoice,
           styling: {
@@ -661,14 +665,14 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
   addBlock: (type) =>
     set((state) => {
       let order: number;
-      
+
       // Si c'est un tableau détaillé, le placer juste après invoice-items (order 1)
       if (type === "detailed-table") {
         const invoiceItemsBlock = state.blocks.find(b => b.type === "invoice-items");
         if (invoiceItemsBlock) {
           order = invoiceItemsBlock.order + 1;
           // Décaler tous les blocs suivants
-          const updatedBlocks = state.blocks.map(b => 
+          const updatedBlocks = state.blocks.map(b =>
             b.order >= order ? { ...b, order: b.order + 1 } : b
           );
           const newBlock = createBlock(type, order);
@@ -678,7 +682,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
           };
         }
       }
-      
+
       // Sinon, ajouter à la fin
       const maxOrder = Math.max(...state.blocks.map(b => b.order), -1);
       const newBlock = createBlock(type, maxOrder + 1);
@@ -706,13 +710,13 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
       const result = [...state.blocks].sort((a, b) => a.order - b.order);
       const [removed] = result.splice(startIndex, 1);
       result.splice(endIndex, 0, removed);
-      
+
       // Recalculer les ordres
       const reordered = result.map((block, index) => ({
         ...block,
         order: index,
       }));
-      
+
       return { blocks: reordered };
     }),
 
@@ -723,14 +727,14 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
       const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
       const index = sorted.findIndex(b => b.id === id);
       if (index <= 0) return state;
-      
+
       // Échanger les ordres
       const newBlocks = sorted.map((block, i) => {
         if (i === index) return { ...block, order: index - 1 };
         if (i === index - 1) return { ...block, order: index };
         return block;
       });
-      
+
       return { blocks: newBlocks };
     }),
 
@@ -739,14 +743,14 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
       const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
       const index = sorted.findIndex(b => b.id === id);
       if (index >= sorted.length - 1) return state;
-      
+
       // Échanger les ordres
       const newBlocks = sorted.map((block, i) => {
         if (i === index) return { ...block, order: index + 1 };
         if (i === index + 1) return { ...block, order: index };
         return block;
       });
-      
+
       return { blocks: newBlocks };
     }),
 
@@ -763,7 +767,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
   navigateFromPreview: (target) => {
     // Déterminer la section à ouvrir selon le type de cible
     let section: EditorSection = "info";
-    
+
     switch (target.type) {
       case 'logo':
         section = "logo";
@@ -785,17 +789,17 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
         section = "blocks";
         break;
     }
-    
-    set({ 
-      activeSection: section, 
+
+    set({
+      activeSection: section,
       focusTarget: target,
       // Si c'est un bloc, le sélectionner
-      selectedBlockId: target.type === 'block' ? target.blockId : 
-                       target.type === 'items-table' && target.mode === 'layout' ? 
-                         get().blocks.find(b => b.type === 'invoice-items')?.id || null : 
-                       target.type === 'totals' ?
-                         get().blocks.find(b => b.type === 'totals')?.id || null :
-                         null
+      selectedBlockId: target.type === 'block' ? target.blockId :
+        target.type === 'items-table' && target.mode === 'layout' ?
+          get().blocks.find(b => b.type === 'invoice-items')?.id || null :
+          target.type === 'totals' ?
+            get().blocks.find(b => b.type === 'totals')?.id || null :
+            null
     });
   },
 

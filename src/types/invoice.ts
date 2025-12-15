@@ -18,11 +18,11 @@ export interface InvoiceItem {
   isOptional?: boolean;
   selected?: boolean;
   customFields?: Record<string, string>; // Valeurs des colonnes personnalisées
-  
+
   // Sous-lignes
   hasSubItems: boolean; // Si true, ce line item contient des sub-items
   subItems?: SubItem[]; // Liste des sous-lignes
-  
+
   // Mode de calcul pour les sous-lignes
   subItemsMode: 'parent-quantity' | 'individual-quantities' | 'no-prices';
   // - 'parent-quantity': Les sous-items n'ont pas de quantité, leur total est multiplié par la quantité parent
@@ -93,7 +93,7 @@ export type EditorSection =
 // BLOCS MODULAIRES
 // ============================================
 
-export type BlockType = 
+export type BlockType =
   | "invoice-items"      // Lignes de facturation (existant)
   | "free-text"          // Texte libre
   | "detailed-table"     // Tableau détaillé
@@ -157,6 +157,7 @@ export interface SignatureBlock extends BaseBlock {
   showDate: boolean;
   showName: boolean;
   signerName: string;
+  signerRole?: string;         // Rôle du signataire (ex: Manager, Directeur)
   position: "left" | "center" | "right";
 }
 
@@ -217,7 +218,7 @@ export interface InvoiceItemsBlock extends BaseBlock {
 }
 
 // Union de tous les blocs
-export type InvoiceBlock = 
+export type InvoiceBlock =
   | InvoiceItemsBlock
   | FreeTextBlock
   | DetailedTableBlock

@@ -28,11 +28,10 @@ const TemplateGrid = () => {
           <div
             key={template.id}
             onClick={() => handleSelectTemplate(template.id)}
-            className={`cursor-pointer opacity-0 animate-fade-in-up ${
-              selectedTemplate === template.id
+            className={`cursor-pointer opacity-0 animate-fade-in-up ${selectedTemplate === template.id
                 ? "ring-2 ring-blue-500 ring-offset-2"
                 : ""
-            }`}
+              }`}
             style={{
               animationDelay: `${index * 0.1}s`,
               animationFillMode: "forwards",
@@ -100,6 +99,13 @@ const TemplateGrid = () => {
                 {selectedTemplate === template.id && (
                   <div className="absolute top-2 right-2 px-2 py-1 bg-blue-600 text-white text-xs font-medium">
                     Selectionne
+                  </div>
+                )}
+
+                {/* Default Model Badge */}
+                {index === 0 && (
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-emerald-600 text-white text-xs font-medium">
+                    Par defaut
                   </div>
                 )}
               </div>
