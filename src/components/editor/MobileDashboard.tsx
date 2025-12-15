@@ -56,7 +56,7 @@ const MobileDashboard = forwardRef<HTMLDivElement, MobileDashboardProps>(
 
           {/* Prévisualisation - s'adapte automatiquement à l'espace disponible */}
           <div className="flex-1 overflow-auto">
-            <InvoicePreview ref={ref} />
+            <InvoicePreview ref={ref} isMobile={true} />
           </div>
         </div>
       );

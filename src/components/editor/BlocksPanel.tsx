@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useInvoiceStore } from "@/store";
 import Button from "@/components/ui/Button";
 import { 
@@ -124,7 +124,42 @@ const BlocksPanel = () => {
     moveBlockUp,
     moveBlockDown,
     reorderBlocks,
+    focusTarget,
+    clearFocusTarget,
   } = useInvoiceStore();
+
+  // Refs pour le scroll
+  const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Effet pour gérer le scroll et le focus quand focusTarget change
+  useEffect(() => {
+    if (!focusTarget || focusTarget.type !== 'block') return;
+
+    const blockId = focusTarget.blockId;
+    if (!blockId) return;
+
+    // Sélectionner le bloc
+    selectBlock(blockId);
+
+    // Attendre un court instant pour que le DOM se mette à jour
+    requestAnimationFrame(() => {
+      const blockRef = blockRefs.current.get(blockId);
+      if (blockRef) {
+        // Scroll vers l'élément
+        blockRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Ajouter une animation de mise en évidence
+        blockRef.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
+        
+        // Retirer l'animation après un délai
+        setTimeout(() => {
+          blockRef.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2');
+          clearFocusTarget();
+        }, 2000);
+      }
+    });
+  }, [focusTarget, selectBlock, clearFocusTarget]);
 
   // Drag & Drop state
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
@@ -468,6 +503,13 @@ const BlocksPanel = () => {
                   return (
                     <div
                       key={block.id}
+                      ref={(el) => {
+                        if (el) {
+                          blockRefs.current.set(block.id, el);
+                        } else {
+                          blockRefs.current.delete(block.id);
+                        }
+                      }}
                       draggable
                       onDragStart={(e) => handleDragStart(e, block.id)}
                       onDragEnd={handleDragEnd}

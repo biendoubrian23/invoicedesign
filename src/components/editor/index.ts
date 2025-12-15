@@ -6,3 +6,4 @@ export { default as InvoicePreview } from "./InvoicePreview";
 export { default as EditPanel } from "./EditPanel";
 export { default as MobileEditPanel } from "./MobileEditPanel";
 export { default as MobileDashboard } from "./MobileDashboard";
+export { default as ClickableZone } from "./ClickableZone";

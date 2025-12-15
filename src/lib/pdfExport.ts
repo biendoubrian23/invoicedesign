@@ -61,6 +61,10 @@ function generateExportHTML(element: HTMLElement): string {
     }
   });
   
+  // APRÈS avoir appliqué les styles, supprimer les éléments UI qui ne doivent pas apparaître dans l'export
+  const elementsToRemove = clone.querySelectorAll('[data-export-hidden]');
+  elementsToRemove.forEach(el => el.remove());
+  
   // Récupérer les polices Google utilisées
   const fontFamily = window.getComputedStyle(element).fontFamily;
   const primaryFont = fontFamily.split(',')[0].replace(/['"]/g, '').trim();

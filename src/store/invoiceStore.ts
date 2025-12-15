@@ -17,6 +17,17 @@ import {
   BlockType,
 } from "@/types/invoice";
 
+// Types pour la navigation depuis la preview
+export type PreviewClickTarget = 
+  | { type: 'logo' }
+  | { type: 'invoice-info' }
+  | { type: 'issuer' }
+  | { type: 'client' }
+  | { type: 'items-table'; mode: 'content' | 'layout' }
+  | { type: 'item'; itemId: string }
+  | { type: 'totals' }
+  | { type: 'block'; blockId: string; mode?: 'content' | 'layout' };
+
 interface InvoiceStore {
   // Current invoice being edited
   invoice: Invoice;
@@ -30,6 +41,9 @@ interface InvoiceStore {
   // Blocs modulaires
   blocks: InvoiceBlock[];
   selectedBlockId: string | null;
+  
+  // Navigation depuis la preview (pour scroll vers l'élément)
+  focusTarget: PreviewClickTarget | null;
   
   // Actions
   setInvoice: (invoice: Partial<Invoice>) => void;
@@ -63,6 +77,10 @@ interface InvoiceStore {
   selectTemplate: (templateId: string) => void;
   resetInvoice: () => void;
   calculateTotals: () => { subtotal: number; tax: number; total: number };
+  
+  // Navigation depuis la preview
+  navigateFromPreview: (target: PreviewClickTarget) => void;
+  clearFocusTarget: () => void;
 }
 
 const defaultInvoice: Invoice = {
@@ -353,6 +371,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
   templates: defaultTemplates,
   blocks: defaultBlocks,
   selectedBlockId: null,
+  focusTarget: null,
 
   setInvoice: (invoiceData) =>
     set((state) => ({
@@ -740,4 +759,45 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
     const total = subtotal + tax;
     return { subtotal, tax, total };
   },
+
+  navigateFromPreview: (target) => {
+    // Déterminer la section à ouvrir selon le type de cible
+    let section: EditorSection = "info";
+    
+    switch (target.type) {
+      case 'logo':
+        section = "logo";
+        break;
+      case 'invoice-info':
+      case 'issuer':
+      case 'client':
+      case 'item':
+        section = "info";
+        break;
+      case 'items-table':
+        // Pour le tableau, content = info, layout = blocks
+        section = target.mode === 'layout' ? "blocks" : "info";
+        break;
+      case 'totals':
+        section = "blocks";
+        break;
+      case 'block':
+        section = "blocks";
+        break;
+    }
+    
+    set({ 
+      activeSection: section, 
+      focusTarget: target,
+      // Si c'est un bloc, le sélectionner
+      selectedBlockId: target.type === 'block' ? target.blockId : 
+                       target.type === 'items-table' && target.mode === 'layout' ? 
+                         get().blocks.find(b => b.type === 'invoice-items')?.id || null : 
+                       target.type === 'totals' ?
+                         get().blocks.find(b => b.type === 'totals')?.id || null :
+                         null
+    });
+  },
+
+  clearFocusTarget: () => set({ focusTarget: null }),
 }));

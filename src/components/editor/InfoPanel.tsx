@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import { useInvoiceStore } from "@/store";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -8,8 +9,56 @@ import { Plus } from "lucide-react";
 import { InvoiceItemsBlock } from "@/types/invoice";
 
 const InfoPanel = () => {
-  const { invoice, setInvoice, setIssuer, setClient, addItem, blocks } =
+  const { invoice, setInvoice, setIssuer, setClient, addItem, blocks, focusTarget, clearFocusTarget } =
     useInvoiceStore();
+
+  // Refs pour le scroll
+  const invoiceInfoRef = useRef<HTMLElement>(null);
+  const issuerRef = useRef<HTMLElement>(null);
+  const clientRef = useRef<HTMLElement>(null);
+  const itemsRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Effet pour gérer le scroll et le focus quand focusTarget change
+  useEffect(() => {
+    if (!focusTarget) return;
+
+    let targetRef: React.RefObject<HTMLElement | null> | null = null;
+
+    switch (focusTarget.type) {
+      case 'invoice-info':
+        targetRef = invoiceInfoRef;
+        break;
+      case 'issuer':
+        targetRef = issuerRef;
+        break;
+      case 'client':
+        targetRef = clientRef;
+        break;
+      case 'items-table':
+      case 'item':
+        targetRef = itemsRef;
+        break;
+      default:
+        return;
+    }
+
+    if (targetRef?.current) {
+      // Scroll vers l'élément
+      targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // Ajouter une animation de mise en évidence
+      targetRef.current.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2', 'bg-blue-50/50');
+      
+      // Retirer l'animation après un délai
+      const timer = setTimeout(() => {
+        targetRef?.current?.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2', 'bg-blue-50/50');
+        clearFocusTarget();
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [focusTarget, clearFocusTarget]);
 
   // Récupérer le bloc invoice-items pour les colonnes personnalisées
   const invoiceItemsBlock = blocks.find(
@@ -22,9 +71,9 @@ const InfoPanel = () => {
   ) || [];
 
   return (
-    <div className="p-6 space-y-8 overflow-y-auto h-full">
+    <div ref={containerRef} className="p-6 space-y-8 overflow-y-auto h-full">
       {/* Invoice Info */}
-      <section className="animate-fade-in">
+      <section ref={invoiceInfoRef} className="animate-fade-in transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
           Informations de base
         </h3>
@@ -78,7 +127,7 @@ const InfoPanel = () => {
       </section>
 
       {/* Issuer Info */}
-      <section className="animate-fade-in stagger-1">
+      <section ref={issuerRef} className="animate-fade-in stagger-1 transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
           Emetteur (Votre entreprise)
         </h3>
@@ -121,7 +170,7 @@ const InfoPanel = () => {
       </section>
 
       {/* Client Info */}
-      <section className="animate-fade-in stagger-2">
+      <section ref={clientRef} className="animate-fade-in stagger-2 transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
           Destinataire (Client)
         </h3>
@@ -157,7 +206,7 @@ const InfoPanel = () => {
       </section>
 
       {/* Line Items */}
-      <section className="animate-fade-in stagger-3">
+      <section ref={itemsRef} className="animate-fade-in stagger-3 transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
           Lignes de facturation
         </h3>

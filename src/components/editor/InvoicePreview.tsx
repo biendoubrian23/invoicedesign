@@ -22,14 +22,19 @@ import {
 } from "./blocks/renderers";
 import TotalsRenderer from "./blocks/renderers/TotalsRenderer";
 import PaymentTermsRenderer from "./blocks/renderers/PaymentTermsRenderer";
+import ClickableZone from "./ClickableZone";
 import { GripVertical, ZoomIn, ZoomOut } from "lucide-react";
 
 // Dimensions A4 en pixels (à 96 DPI: 210mm = 793.7px, 297mm = 1122.5px)
 const A4_WIDTH_PX = 794;
 const A4_MIN_HEIGHT_PX = 1123;
 
-const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
-  const { invoice, calculateTotals, blocks, reorderBlocks, selectBlock, selectedBlockId } = useInvoiceStore();
+interface InvoicePreviewProps {
+  isMobile?: boolean;
+}
+
+const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ isMobile = false }, ref) => {
+  const { invoice, calculateTotals, blocks, reorderBlocks, selectBlock, selectedBlockId, navigateFromPreview } = useInvoiceStore();
   const { subtotal, tax, total } = calculateTotals();
   const { styling } = invoice;
 
@@ -271,7 +276,11 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
           {/* Header */}
           <div className="flex justify-between items-start mb-8">
             {/* Logo */}
-            <div className={`flex-1 flex ${logoAlignments[invoice.logoPosition]}`}>
+            <ClickableZone 
+              target={{ type: 'logo' }} 
+              disabled={isMobile}
+              className={`flex-1 flex ${logoAlignments[invoice.logoPosition]}`}
+            >
               {invoice.logo ? (
                 <img
                   src={invoice.logo}
@@ -291,10 +300,14 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
                   }}
                 ></div>
               )}
-            </div>
+            </ClickableZone>
 
             {/* Invoice Info */}
-            <div className="text-right">
+            <ClickableZone 
+              target={{ type: 'invoice-info' }} 
+              disabled={isMobile}
+              className="text-right"
+            >
               <h1
                 className="text-2xl font-bold mb-1"
                 style={{ color: styling.primaryColor }}
@@ -306,13 +319,17 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
               <p className="text-sm text-gray-600">
                 Echeance : {invoice.dueDate}
               </p>
-            </div>
+            </ClickableZone>
           </div>
 
           {/* Addresses */}
           <div className="grid grid-cols-12 gap-8 mb-10">
             {/* Issuer */}
-            <div className="col-span-5">
+            <ClickableZone 
+              target={{ type: 'issuer' }} 
+              disabled={isMobile}
+              className="col-span-5"
+            >
               <h2
                 className="text-sm font-semibold mb-2"
                 style={{ color: styling.primaryColor }}
@@ -326,13 +343,17 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
                 <p>{invoice.issuer.email}</p>
                 <p>{invoice.issuer.phone}</p>
               </div>
-            </div>
+            </ClickableZone>
 
             {/* Spacer */}
             <div className="col-span-3"></div>
 
             {/* Client */}
-            <div className="col-span-4 text-right">
+            <ClickableZone 
+              target={{ type: 'client' }} 
+              disabled={isMobile}
+              className="col-span-4 text-right"
+            >
               <h2
                 className="text-sm font-semibold mb-2"
                 style={{ color: styling.primaryColor }}
@@ -345,12 +366,17 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
                 <p className="whitespace-pre-line">{invoice.client.address}</p>
                 <p>{invoice.client.email}</p>
               </div>
-            </div>
+            </ClickableZone>
           </div>
 
           {/* Items Table - Dynamique basé sur le bloc invoice-items */}
           {invoiceItemsBlock && (
-            <div className="mb-8">
+            <ClickableZone 
+              target={{ type: 'items-table', mode: 'content' }} 
+              showLayoutOption={true}
+              disabled={isMobile}
+              className="mb-8"
+            >
               {/* Titre optionnel */}
               {invoiceItemsBlock.showTitle && invoiceItemsBlock.title && (
                 <h3
@@ -522,15 +548,23 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
                   )}
                 </div>
               ))}
-            </div>
+            </ClickableZone>
           )}
 
           {/* Blocs modulaires avec drag & drop */}
           {sortedBlocks.length > 0 && (
             <div className="space-y-2 mt-6">
-              {sortedBlocks.map(block => (
-                <div
+              {sortedBlocks.map(block => {
+                const isTableBlock = block.type === 'detailed-table';
+                
+                return (
+                <ClickableZone
                   key={block.id}
+                  target={{ type: 'block', blockId: block.id, mode: 'content' }}
+                  showLayoutOption={isTableBlock}
+                  disabled={isMobile}
+                >
+                <div
                   draggable
                   onDragStart={(e) => handleDragStart(e, block.id)}
                   onDragEnd={handleDragEnd}
@@ -552,8 +586,9 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
                       : ""
                   }`}
                 >
-                  {/* Drag handle - visible on hover */}
+                  {/* Drag handle - visible on hover, masqué à l'export */}
                   <div 
+                    data-export-hidden
                     className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing print:hidden"
                     onMouseDown={(e) => e.stopPropagation()}
                   >
@@ -562,7 +597,9 @@ const InvoicePreview = forwardRef<HTMLDivElement>((_, ref) => {
                   
                   {renderBlock(block)}
                 </div>
-              ))}
+                </ClickableZone>
+              );
+              })}
             </div>
           )}
         </div>
