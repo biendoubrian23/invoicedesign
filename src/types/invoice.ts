@@ -215,6 +215,8 @@ export interface InvoiceItemsBlock extends BaseBlock {
   columns: InvoiceItemsColumn[];
   showHeader: boolean;
   striped: boolean;
+  showBorders?: boolean; // Afficher les bordures du tableau
+  headerStyle?: 'filled' | 'simple'; // Style de l'en-tête (rempli couleur ou simple souligné)
 }
 
 // Union de tous les blocs

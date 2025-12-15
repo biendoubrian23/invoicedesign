@@ -36,6 +36,8 @@ const elegantDefaultBlocks: InvoiceBlock[] = [
         ],
         showHeader: true,
         striped: false,
+        showBorders: false,
+        headerStyle: 'simple',
     } as InvoiceItemsBlock,
     {
         id: "totals-elegant",

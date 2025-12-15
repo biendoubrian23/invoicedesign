@@ -22,6 +22,7 @@ import QRCodeRenderer from "./blocks/renderers/QRCodeRenderer";
 import ConditionsRenderer from "./blocks/renderers/ConditionsRenderer";
 import TotalsRenderer from "./blocks/renderers/TotalsRenderer";
 import PaymentTermsRenderer from "./blocks/renderers/PaymentTermsRenderer";
+import InvoiceItemsRenderer from "./blocks/renderers/InvoiceItemsRenderer";
 import ClickableZone from "./ClickableZone";
 import { GripVertical, ZoomIn, ZoomOut } from "lucide-react";
 
@@ -386,174 +387,10 @@ const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ isMobi
                   disabled={isMobile}
                   className="mb-8"
                 >
-                  {/* Titre optionnel */}
-                  {invoiceItemsBlock.showTitle && invoiceItemsBlock.title && (
-                    <h3
-                      className="text-sm font-semibold mb-3"
-                      style={{ color: styling.primaryColor }}
-                    >
-                      {invoiceItemsBlock.title}
-                    </h3>
-                  )}
-
-                  {/* Header */}
-                  {invoiceItemsBlock.showHeader && (
-                    <div
-                      className="flex gap-2 py-3 px-4 text-sm font-semibold text-white"
-                      style={{ backgroundColor: styling.primaryColor }}
-                    >
-                      {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
-                        // Calculer la largeur : dernière colonne prend le reste
-                        const isLast = idx === arr.length - 1;
-                        const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
-                        const width = isLast ? 100 - usedWidth : column.width;
-
-                        return (
-                          <div
-                            key={column.id}
-                            style={{ width: `${width}%`, minWidth: 0 }}
-                            className={`${column.key === 'quantity' || column.key === 'unitPrice' || column.key === 'total'
-                              ? 'text-right'
-                              : column.key === 'description'
-                                ? ''
-                                : 'text-center'
-                              }`}
-                          >
-                            {column.header}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Rows */}
-                  {invoice.items.map((item, index) => (
-                    <div key={item.id}>
-                      {/* Ligne principale */}
-                      <div
-                        className={`flex gap-2 py-3 px-4 text-sm ${invoiceItemsBlock.striped
-                          ? index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          : "bg-white"
-                          }`}
-                      >
-                        {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
-                          // Calculer la largeur : dernière colonne prend le reste
-                          const isLast = idx === arr.length - 1;
-                          const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
-                          const width = isLast ? 100 - usedWidth : column.width;
-
-                          let content = "";
-                          let alignment = "";
-
-                          switch (column.key) {
-                            case "description":
-                              content = item.description;
-                              alignment = "";
-                              break;
-                            case "quantity":
-                              content = (!item.hasSubItems || item.subItemsMode === 'parent-quantity')
-                                ? item.quantity.toString()
-                                : '-';
-                              alignment = "text-right";
-                              break;
-                            case "unitPrice":
-                              content = !item.hasSubItems
-                                ? `${item.unitPrice.toFixed(2)} ${invoice.currency}`
-                                : item.subItemsMode === 'parent-quantity'
-                                  ? `${item.unitPrice.toFixed(2)} ${invoice.currency}`
-                                  : '-';
-                              alignment = "text-right";
-                              break;
-                            case "total":
-                              content = `${item.total.toFixed(2)} ${invoice.currency}`;
-                              alignment = "text-right font-medium";
-                              break;
-                            default:
-                              // Colonnes personnalisées
-                              content = item.customFields?.[column.key] || "-";
-                              alignment = "text-center";
-                          }
-
-                          return (
-                            <div
-                              key={column.id}
-                              style={{ width: `${width}%`, minWidth: 0 }}
-                              className={`text-gray-800 ${alignment}`}
-                            >
-                              {content}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Sous-lignes */}
-                      {item.hasSubItems && item.subItems && item.subItems.length > 0 && (
-                        <div className={invoiceItemsBlock.striped ? (index % 2 === 0 ? "bg-gray-50" : "bg-white") : "bg-white"}>
-                          {item.subItems.map((subItem) => (
-                            <div
-                              key={subItem.id}
-                              className="flex gap-2 py-2 px-4 text-xs"
-                            >
-                              {invoiceItemsBlock.columns.filter(col => col.visible).map((column, idx, arr) => {
-                                // Calculer la largeur : dernière colonne prend le reste
-                                const isLast = idx === arr.length - 1;
-                                const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
-                                const width = isLast ? 100 - usedWidth : column.width;
-
-                                let content = "";
-                                let alignment = "";
-
-                                switch (column.key) {
-                                  case "description":
-                                    content = subItem.description;
-                                    alignment = "text-gray-700";
-                                    break;
-                                  case "quantity":
-                                    content = item.subItemsMode === 'individual-quantities' && subItem.hasQuantity
-                                      ? subItem.quantity?.toString() || '-'
-                                      : '-';
-                                    alignment = "text-right text-gray-500";
-                                    break;
-                                  case "unitPrice":
-                                    content = item.subItemsMode !== 'no-prices'
-                                      ? `${subItem.unitPrice.toFixed(2)} ${invoice.currency}`
-                                      : '-';
-                                    alignment = "text-right text-gray-500";
-                                    break;
-                                  case "total":
-                                    content = item.subItemsMode === 'individual-quantities'
-                                      ? `${subItem.total.toFixed(2)} ${invoice.currency}`
-                                      : item.subItemsMode === 'parent-quantity'
-                                        ? `${subItem.unitPrice.toFixed(2)} ${invoice.currency}`
-                                        : '-';
-                                    alignment = "text-right text-gray-700";
-                                    break;
-                                  default:
-                                    // Colonnes personnalisées
-                                    content = subItem.customFields?.[column.key] || "-";
-                                    alignment = "text-center text-gray-500";
-                                }
-
-                                return (
-                                  <div
-                                    key={column.id}
-                                    style={{ width: `${width}%`, minWidth: 0 }}
-                                    className={`${alignment} ${column.key === "description" ? "flex items-center pl-8" : ""
-                                      }`}
-                                  >
-                                    {column.key === "description" && (
-                                      <span className="mr-2 text-gray-400">-</span>
-                                    )}
-                                    {content}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  <InvoiceItemsRenderer
+                    block={invoiceItemsBlock}
+                    primaryColor={styling.primaryColor}
+                  />
                 </ClickableZone>
               )}
 

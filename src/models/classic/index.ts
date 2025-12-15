@@ -28,6 +28,8 @@ const classicDefaultBlocks: InvoiceBlock[] = [
         ],
         showHeader: true,
         striped: true,
+        showBorders: false,
+        headerStyle: 'filled',
     } as InvoiceItemsBlock,
     {
         id: "totals-default",

@@ -24,7 +24,7 @@ const TotalsRenderer = ({ block, primaryColor }: TotalsRendererProps) => {
           {block.title}
         </h3>
       )}
-      
+
       <div className="grid grid-cols-12 gap-4 px-4">
         <div className="col-span-8"></div>
         <div className="col-span-4">
@@ -34,14 +34,14 @@ const TotalsRenderer = ({ block, primaryColor }: TotalsRendererProps) => {
               <span className="font-medium text-right">{subtotal.toFixed(2)} {invoice.currency}</span>
             </div>
           )}
-          
+
           {block.showTax && (
-            <div className="flex justify-between py-2 text-sm border-b border-gray-200">
-              <span className="text-gray-600">{block.taxLabel} ({invoice.taxRate}%)</span>
-              <span className="font-medium text-right">{tax.toFixed(2)} {invoice.currency}</span>
+            <div className="flex justify-between items-center py-2 text-sm border-b border-gray-200">
+              <span className="text-gray-600 whitespace-nowrap">{block.taxLabel} ({invoice.taxRate}%)</span>
+              <span className="font-medium text-right whitespace-nowrap">{tax.toFixed(2)} {invoice.currency}</span>
             </div>
           )}
-          
+
           {block.showTotal && (
             <div
               className="flex justify-between py-3 text-lg font-bold"

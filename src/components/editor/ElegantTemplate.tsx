@@ -222,7 +222,7 @@ const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
             const sigBlock = (block1.type === 'signature' ? block1 : block2) as SignatureBlock;
 
             return (
-                <div key={`group-${block1.id}-${block2.id}`} className="flex justify-between items-end pt-8 border-t border-gray-200 gap-8 animate-scale-in">
+                <div key={`group-${block1.id}-${block2.id}`} className="flex justify-between items-start pt-8 border-t border-gray-200 gap-8 animate-scale-in">
                     {/* Terms & Conditions (left) */}
                     <ClickableZone
                         target={{
@@ -252,40 +252,11 @@ const ElegantTemplate = forwardRef<HTMLDivElement, ElegantTemplateProps>(
                         disabled={isMobile}
                         className="flex-1 text-right"
                     >
-                        <div className="inline-block text-right">
-                            {/* Signature line/text rendering (Inline or reuse renderer logic?) 
-                                Reuse logic from previous ElegantTemplate footer 
-                             */}
-                            {sigBlock.signatureText ? (
-                                <p
-                                    className="text-2xl mb-2"
-                                    style={{
-                                        fontFamily: sigBlock.signatureFont || "cursive",
-                                    }}
-                                >
-                                    {sigBlock.signatureText}
-                                </p>
-                            ) : sigBlock.signatureData ? (
-                                <img
-                                    src={sigBlock.signatureData}
-                                    alt="Signature"
-                                    className="h-12 ml-auto mb-2"
-                                />
-                            ) : (
-                                <div className="h-12 border-b border-gray-400 w-40 ml-auto mb-2"></div>
-                            )}
-                            {/* Name & Role */}
-                            {sigBlock.showName && sigBlock.signerName && (
-                                <p className="text-sm font-medium text-gray-900">
-                                    {sigBlock.signerName}
-                                </p>
-                            )}
-                            {sigBlock.signerRole && (
-                                <p className="text-xs text-gray-500">{sigBlock.signerRole}</p>
-                            )}
-                            {sigBlock.showDate && (
-                                <p className="text-xs text-gray-500">Le {new Date().toLocaleDateString("fr-FR")}</p>
-                            )}
+                        <div className="w-full">
+                            <SignatureRenderer
+                                block={sigBlock}
+                                primaryColor={styling.primaryColor}
+                            />
                         </div>
                     </ClickableZone>
                 </div>

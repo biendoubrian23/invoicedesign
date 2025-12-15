@@ -55,14 +55,14 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
 
   const handleColDrop = useCallback((e: React.DragEvent, targetIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedColIndex !== null && draggedColIndex !== targetIndex) {
       const newColumns = [...block.columns];
       const [draggedCol] = newColumns.splice(draggedColIndex, 1);
       newColumns.splice(targetIndex, 0, draggedCol);
       onChange({ columns: newColumns });
     }
-    
+
     setDraggedColIndex(null);
     setDragOverColIndex(null);
   }, [block.columns, draggedColIndex, onChange]);
@@ -71,11 +71,11 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
   const updateColumnWidth = (index: number, newWidth: number) => {
     // Limites : minimum 5%, maximum 70%
     const clampedWidth = Math.max(5, Math.min(70, newWidth));
-    
+
     const updatedColumns = block.columns.map((col, idx) =>
       idx === index ? { ...col, width: clampedWidth } : col
     );
-    
+
     onChange({ columns: updatedColumns });
   };
 
@@ -89,7 +89,7 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
   const removeColumn = (index: number) => {
     const column = block.columns[index];
     if (column.required) return; // Ne pas supprimer les colonnes obligatoires
-    
+
     const updatedColumns = block.columns.filter((_, idx) => idx !== index);
     onChange({ columns: updatedColumns });
   };
@@ -97,7 +97,7 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
   const toggleColumnVisibility = (index: number) => {
     const column = block.columns[index];
     if (column.required) return; // Les colonnes obligatoires restent visibles
-    
+
     updateColumn(index, { visible: !column.visible });
   };
 
@@ -139,6 +139,24 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
           />
           Lignes alternées
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={block.showBorders || false}
+            onChange={(e) => onChange({ showBorders: e.target.checked })}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          Afficher le quadrillage
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={block.headerStyle === 'filled'}
+            onChange={(e) => onChange({ headerStyle: e.target.checked ? 'filled' : 'simple' })}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          En-tête coloré
+        </label>
       </div>
 
       {/* Gestion des colonnes */}
@@ -160,13 +178,10 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
               onDragOver={(e) => handleColDragOver(e, index)}
               onDragLeave={handleColDragLeave}
               onDrop={(e) => handleColDrop(e, index)}
-              className={`p-3 border rounded-lg transition-all ${
-                !column.visible ? "bg-gray-50" : "bg-white"
-              } ${
-                dragOverColIndex === index ? "border-t-4 border-t-blue-500" : ""
-              } ${
-                draggedColIndex === index ? "opacity-50" : ""
-              }`}
+              className={`p-3 border rounded-lg transition-all ${!column.visible ? "bg-gray-50" : "bg-white"
+                } ${dragOverColIndex === index ? "border-t-4 border-t-blue-500" : ""
+                } ${draggedColIndex === index ? "opacity-50" : ""
+                }`}
             >
               <div className="flex items-center gap-2 mb-2">
                 <div
@@ -187,11 +202,10 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
                 <button
                   onClick={() => toggleColumnVisibility(index)}
                   disabled={column.required}
-                  className={`p-2 rounded ${
-                    column.required
-                      ? "text-gray-300 cursor-not-allowed"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                  className={`p-2 rounded ${column.required
+                    ? "text-gray-300 cursor-not-allowed"
+                    : "text-gray-600 hover:bg-gray-100"
+                    }`}
                   title={column.visible ? "Masquer" : "Afficher"}
                 >
                   {column.visible ? (
@@ -204,11 +218,10 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
                 <button
                   onClick={() => removeColumn(index)}
                   disabled={column.required}
-                  className={`p-2 rounded ${
-                    column.required
-                      ? "text-gray-300 cursor-not-allowed"
-                      : "text-red-600 hover:bg-red-50"
-                  }`}
+                  className={`p-2 rounded ${column.required
+                    ? "text-gray-300 cursor-not-allowed"
+                    : "text-red-600 hover:bg-red-50"
+                    }`}
                   title={column.required ? "Colonne obligatoire" : "Supprimer"}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -225,7 +238,7 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
                     break;
                   }
                 }
-                
+
                 // La dernière colonne s'adapte automatiquement
                 if (isLastVisible) {
                   // Calculer l'espace restant
@@ -233,7 +246,7 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
                     .filter((col, idx) => col.visible && idx !== index)
                     .reduce((sum, col) => sum + col.width, 0);
                   const remainingWidth = 100 - usedWidth;
-                  
+
                   return (
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-xs text-gray-400 italic">
@@ -242,7 +255,7 @@ const InvoiceItemsEditor = ({ block, onChange }: InvoiceItemsEditorProps) => {
                     </div>
                   );
                 }
-                
+
                 return (
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-xs text-gray-500 w-12">Largeur:</span>

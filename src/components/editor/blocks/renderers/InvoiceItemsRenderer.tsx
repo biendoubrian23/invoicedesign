@@ -9,22 +9,64 @@ interface InvoiceItemsRendererProps {
 }
 
 const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps) => {
-    const { invoice } = useInvoiceStore();
+    const { invoice, selectedTemplate } = useInvoiceStore();
 
     if (!block.enabled) return null;
+
+    // Grid styles
+    const showBorders = block.showBorders;
+    // Default to 'filled' for classic template, 'simple' for others if not specified
+    const defaultHeaderStyle = selectedTemplate === 'classic' ? 'filled' : 'simple';
+    const headerStyle = block.headerStyle || defaultHeaderStyle;
+    const borderColor = "border-gray-300";
+    const containerClasses = showBorders || (headerStyle === 'filled' && !showBorders) ? "gap-0" : "gap-2";
+    const cellPadding = showBorders ? "px-3 py-2" : "px-4 py-3";
+
+    // Header styling logic
+    const isFilledHeader = headerStyle === 'filled';
+
+    let headerClasses = "";
+    if (showBorders) {
+        headerClasses = `border-t border-l border-r ${borderColor}`;
+        // If filled, use colored background (via inline style) and white text
+        // If simple, use gray background
+        headerClasses += isFilledHeader ? " text-white" : " bg-gray-50";
+    } else {
+        // No borders
+        if (isFilledHeader) {
+            headerClasses = "text-white rounded-t-lg"; // Rounded corners for Classic look
+        } else {
+            headerClasses = "border-b-2 text-gray-900";
+        }
+    }
+
+    // Row borders
+    const rowClasses = showBorders
+        ? `border-l border-r border-b ${borderColor}`
+        : `border-b border-gray-200`;
 
     return (
         <div className="mb-8">
             {/* Table Header - Dynamic based on columns */}
             {block.showHeader && (
                 <div
-                    className="flex gap-2 py-3 px-4 text-sm font-bold border-b-2"
-                    style={{ borderColor: primaryColor }}
+                    className={`flex ${containerClasses} text-sm font-bold ${headerClasses}`}
+                    style={{
+                        borderColor: !showBorders && !isFilledHeader ? primaryColor : undefined,
+                        backgroundColor: isFilledHeader ? primaryColor : undefined
+                    }}
                 >
                     {block.columns.filter(col => col.visible).map((column, idx, arr) => {
                         const isLast = idx === arr.length - 1;
                         const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
                         const width = isLast ? 100 - usedWidth : column.width;
+
+                        // Border logic for filled header needs care
+                        // If filled and borders enabled, maybe white borders? Or standard borderColor?
+                        // Usually filled headers have white separators or no separators
+                        // Let's stick to standard borderColor but beware visibility on dark bg.
+                        // For now keep it simple: borders are visible if showBorders is true.
+                        const cellBorder = showBorders && !isLast ? `border-r ${borderColor}` : "";
 
                         return (
                             <div
@@ -35,7 +77,7 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                                     : column.key === 'description'
                                         ? ''
                                         : 'text-center'
-                                    }`}
+                                    } ${cellPadding} ${cellBorder}`}
                             >
                                 {column.header}
                             </div>
@@ -48,7 +90,7 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
             {invoice.items.map((item, index) => (
                 <div key={item.id}>
                     {/* Main row */}
-                    <div className={`flex gap-2 py-3 px-4 text-sm border-b border-gray-200 ${block.striped
+                    <div className={`flex ${containerClasses} text-sm ${rowClasses} ${block.striped && !showBorders
                         ? index % 2 === 0 ? "bg-gray-50" : "bg-white"
                         : "bg-white"
                         }`}>
@@ -56,6 +98,7 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                             const isLast = idx === arr.length - 1;
                             const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
                             const width = isLast ? 100 - usedWidth : column.width;
+                            const cellBorder = showBorders && !isLast ? `border-r ${borderColor}` : "";
 
                             let content = "";
                             // Use same alignment as header
@@ -95,7 +138,7 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                                 <div
                                     key={column.id}
                                     style={{ width: `${width}%`, minWidth: 0 }}
-                                    className={alignment}
+                                    className={`${alignment} ${cellPadding} ${cellBorder}`}
                                 >
                                     {column.key === "description" ? (
                                         <>
@@ -117,16 +160,17 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                         item.subItems &&
                         item.subItems.length > 0 &&
                         item.subItemsMode !== "no-prices" && (
-                            <div className="bg-gray-50">
+                            <div className={showBorders ? `border-l border-r border-b ${borderColor} bg-gray-50` : "bg-gray-50"}>
                                 {item.subItems.map((subItem) => (
                                     <div
                                         key={subItem.id}
-                                        className="flex gap-2 py-2 px-4 text-xs border-b border-gray-100"
+                                        className={`flex ${containerClasses} text-xs ${!showBorders ? "border-b border-gray-100" : ""}`}
                                     >
                                         {block.columns.filter(col => col.visible).map((column, idx, arr) => {
                                             const isLast = idx === arr.length - 1;
                                             const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
                                             const width = isLast ? 100 - usedWidth : column.width;
+                                            const cellBorder = showBorders && !isLast ? `border-r ${borderColor}` : "";
 
                                             let content = "";
                                             let alignment = column.key === 'quantity' || column.key === 'unitPrice' || column.key === 'total'
@@ -166,7 +210,7 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                                                 <div
                                                     key={column.id}
                                                     style={{ width: `${width}%`, minWidth: 0 }}
-                                                    className={alignment}
+                                                    className={`${alignment} ${cellPadding} ${cellBorder}`}
                                                 >
                                                     {content}
                                                 </div>

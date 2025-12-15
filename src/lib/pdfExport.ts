@@ -20,7 +20,7 @@ interface ImageExportOptions {
 function generateExportHTML(element: HTMLElement): string {
   // Cloner l'élément pour ne pas modifier l'original
   const clone = element.cloneNode(true) as HTMLElement;
-  
+
   // Récupérer tous les styles computés et les appliquer inline
   const applyComputedStyles = (source: Element, target: HTMLElement) => {
     const computed = window.getComputedStyle(source);
@@ -29,7 +29,11 @@ function generateExportHTML(element: HTMLElement): string {
       'color', 'background-color', 'background',
       'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
       'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-      'border', 'border-radius',
+      'border', 'border-top', 'border-right', 'border-bottom', 'border-left',
+      'border-width', 'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+      'border-style', 'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
+      'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+      'border-radius', 'border-collapse',
       'display', 'flex-direction', 'justify-content', 'align-items', 'gap',
       'grid-template-columns', 'grid-column',
       'width', 'min-width', 'max-width',
@@ -38,7 +42,7 @@ function generateExportHTML(element: HTMLElement): string {
       'white-space', 'overflow',
       'box-sizing', 'position',
     ];
-    
+
     importantStyles.forEach(prop => {
       const value = computed.getPropertyValue(prop);
       if (value && value !== 'initial' && value !== 'none' && value !== 'normal') {
@@ -46,29 +50,29 @@ function generateExportHTML(element: HTMLElement): string {
       }
     });
   };
-  
+
   // Appliquer les styles à l'élément racine
   applyComputedStyles(element, clone);
-  
+
   // Appliquer les styles à tous les enfants
   const sourceElements = element.querySelectorAll('*');
   const cloneElements = clone.querySelectorAll('*');
-  
+
   sourceElements.forEach((sourceEl, index) => {
     const targetEl = cloneElements[index] as HTMLElement;
     if (targetEl) {
       applyComputedStyles(sourceEl, targetEl);
     }
   });
-  
+
   // APRÈS avoir appliqué les styles, supprimer les éléments UI qui ne doivent pas apparaître dans l'export
   const elementsToRemove = clone.querySelectorAll('[data-export-hidden]');
   elementsToRemove.forEach(el => el.remove());
-  
+
   // Récupérer les polices Google utilisées
   const fontFamily = window.getComputedStyle(element).fontFamily;
   const primaryFont = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
-  
+
   // Construire le HTML complet
   const html = `
 <!DOCTYPE html>
@@ -79,6 +83,7 @@ function generateExportHTML(element: HTMLElement): string {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(primaryFont)}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Great+Vibes&family=Pacifico&family=Satisfy&family=Allura&family=Alex+Brush&family=Tangerine&family=Pinyon+Script&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -112,7 +117,7 @@ function generateExportHTML(element: HTMLElement): string {
 </body>
 </html>
   `.trim();
-  
+
   return html;
 }
 
