@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, FileText } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 const Header = () => {
@@ -27,12 +28,14 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-blue-600 flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">
-              Invoice<span className="text-blue-600">Design</span>
-            </span>
+            <Image
+              src="/logoheader.png"
+              alt="InvoiceDesign Logo"
+              width={160}
+              height={40}
+              className="h-14 w-auto transition-transform duration-200 group-hover:scale-105"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -41,11 +44,10 @@ const Header = () => {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                  isActive(link.href)
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 ${isActive(link.href)
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -75,9 +77,8 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ${
-            isMobileMenuOpen ? "max-h-64 pb-4" : "max-h-0"
-          }`}
+          className={`md:hidden overflow-hidden transition-all duration-300 ${isMobileMenuOpen ? "max-h-64 pb-4" : "max-h-0"
+            }`}
         >
           <nav className="flex flex-col gap-1 pt-2">
             {navLinks.map((link) => (
@@ -85,11 +86,10 @@ const Header = () => {
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-3 text-sm font-medium transition-colors duration-200 ${
-                  isActive(link.href)
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-3 text-sm font-medium transition-colors duration-200 ${isActive(link.href)
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
               >
                 {link.label}
               </Link>

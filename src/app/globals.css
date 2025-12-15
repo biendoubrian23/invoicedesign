@@ -206,6 +206,68 @@ body {
 .stagger-5 { animation-delay: 0.5s; }
 .stagger-6 { animation-delay: 0.6s; }
 
+/* Smooth floating animations for modular blocks - GPU accelerated */
+@keyframes floatSmooth {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes floatSmoothAlt {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes floatSmoothSlow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Floating block animations - synchronized with different timings */
+.animate-float {
+  animation: floatSmooth 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-alt {
+  animation: floatSmoothAlt 3.5s ease-in-out infinite;
+  animation-delay: 0.5s;
+  will-change: transform;
+}
+
+.animate-float-slow {
+  animation: floatSmoothSlow 4s ease-in-out infinite;
+  animation-delay: 1s;
+  will-change: transform;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-alt,
+  .animate-float-slow,
+  .animate-fade-in,
+  .animate-fade-in-up,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-scale-in {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
 /* Transition utilities */
 .transition-base {
   transition: all 0.2s ease;

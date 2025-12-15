@@ -8,34 +8,15 @@ import Card from "@/components/ui/Card";
 
 const plans = [
   {
-    id: "free",
-    name: "Gratuit",
-    price: "0",
-    period: "/mois",
-    description: "Ideal pour demarrer et tester",
-    features: [
-      { name: "5 factures par mois", included: true },
-      { name: "2 templates de base", included: true },
-      { name: "Export PDF", included: true },
-      { name: "Filigrane InvoiceDesign", included: true },
-      { name: "Tous les templates", included: false },
-      { name: "Logo personnalise", included: false },
-      { name: "Factures dynamiques", included: false },
-      { name: "Support prioritaire", included: false },
-    ],
-    cta: "Essayer gratuitement",
-    popular: false,
-  },
-  {
     id: "standard",
     name: "Standard",
-    price: "9",
-    period: "/mois",
+    price: "5.99",
+    period: "€/mois",
     description: "Pour les independants et PME",
     features: [
       { name: "Factures illimitees", included: true },
       { name: "Tous les templates", included: true },
-      { name: "Export PDF", included: true },
+      { name: "Export PDF haute qualite", included: true },
       { name: "Sans filigrane", included: true },
       { name: "Logo personnalise", included: true },
       { name: "Support email", included: true },
@@ -48,8 +29,8 @@ const plans = [
   {
     id: "premium",
     name: "Premium",
-    price: "19",
-    period: "/mois",
+    price: "9.99",
+    period: "€/mois",
     description: "Pour les entreprises exigeantes",
     features: [
       { name: "Tout de Standard", included: true },
@@ -75,7 +56,7 @@ const faqs = [
   {
     question: "Y a-t-il une periode d'essai ?",
     answer:
-      "Le plan Gratuit vous permet de tester toutes les fonctionnalites de base sans limite de temps. Pour les plans payants, vous beneficiez d'une garantie satisfait ou rembourse de 14 jours.",
+      "Oui ! Vous beneficiez d'un essai gratuit de 7 jours sur tous nos plans. Une garantie satisfait ou rembourse de 14 jours est egalement disponible.",
   },
   {
     question: "Comment fonctionne la facturation ?",
@@ -121,16 +102,15 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <section className="py-16 -mt-8">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {plans.map((plan, index) => (
                 <Card
                   key={plan.id}
-                  className={`relative opacity-0 animate-fade-in-up ${
-                    plan.popular
-                      ? "border-2 border-blue-500 shadow-xl scale-105 z-10"
-                      : "border border-gray-200"
-                  }`}
+                  className={`relative opacity-0 animate-fade-in-up ${plan.popular
+                    ? "border-2 border-blue-500 shadow-xl scale-105 z-10"
+                    : "border border-gray-200"
+                    }`}
                   style={{
                     animationDelay: `${index * 0.1}s`,
                     animationFillMode: "forwards",
@@ -173,9 +153,8 @@ export default function PricingPage() {
                             <Minus className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
                           )}
                           <span
-                            className={`text-sm ${
-                              feature.included ? "text-gray-700" : "text-gray-400"
-                            }`}
+                            className={`text-sm ${feature.included ? "text-gray-700" : "text-gray-400"
+                              }`}
                           >
                             {feature.name}
                           </span>
@@ -224,17 +203,15 @@ export default function PricingPage() {
                       {faq.question}
                     </span>
                     <span
-                      className={`ml-4 flex-shrink-0 w-6 h-6 flex items-center justify-center border border-gray-300 transition-transform duration-200 ${
-                        openFaq === index ? "rotate-45" : ""
-                      }`}
+                      className={`ml-4 flex-shrink-0 w-6 h-6 flex items-center justify-center border border-gray-300 transition-transform duration-200 ${openFaq === index ? "rotate-45" : ""
+                        }`}
                     >
                       <span className="text-gray-600">+</span>
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      openFaq === index ? "max-h-48" : "max-h-0"
-                    }`}
+                    className={`overflow-hidden transition-all duration-300 ${openFaq === index ? "max-h-48" : "max-h-0"
+                      }`}
                   >
                     <p className="px-6 pb-4 text-gray-600 text-sm leading-relaxed">
                       {faq.answer}
@@ -245,26 +222,9 @@ export default function PricingPage() {
             </div>
           </div>
         </section>
-
-        {/* CTA Section */}
-        <section className="py-16 bg-blue-600">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Pret a simplifier votre facturation ?
-            </h2>
-            <p className="text-blue-100 mb-8">
-              Commencez gratuitement, sans carte bancaire requise.
-            </p>
-            <Button
-              size="lg"
-              className="bg-white text-blue-600 hover:bg-gray-100"
-            >
-              Commencer gratuitement
-            </Button>
-          </div>
-        </section>
       </main>
       <Footer />
     </>
   );
 }
+

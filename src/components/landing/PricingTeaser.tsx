@@ -7,42 +7,36 @@ import { Check, ArrowRight } from "lucide-react";
 
 const plans = [
   {
-    name: "Gratuit",
-    price: "0",
-    period: "/mois",
-    description: "Pour demarrer",
-    features: ["5 factures par mois", "2 templates", "Filigrane InvoiceDesign", "Export PDF"],
-    cta: "Essayer",
-    popular: false,
-  },
-  {
     name: "Standard",
-    price: "9",
-    period: "/mois",
-    description: "Pour les independants",
+    price: "5.99",
+    period: "€/mois",
+    description: "Pour les independants et PME",
     features: [
       "Factures illimitees",
       "Tous les templates",
       "Sans filigrane",
       "Logo personnalise",
       "Support email",
+      "Export PDF haute qualite",
     ],
-    cta: "Choisir",
+    cta: "Choisir Standard",
     popular: true,
   },
   {
     name: "Premium",
-    price: "19",
-    period: "/mois",
-    description: "Pour les entreprises",
+    price: "9.99",
+    period: "€/mois",
+    description: "Pour les entreprises exigeantes",
     features: [
       "Tout de Standard",
       "Factures dynamiques",
       "Support prioritaire",
-      "API access",
+      "Acces API",
       "Multi-utilisateurs",
+      "Statistiques avancees",
+      "Export multi-formats",
     ],
-    cta: "Choisir",
+    cta: "Choisir Premium",
     popular: false,
   },
 ];
@@ -62,15 +56,14 @@ const PricingTeaser = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => (
             <Card
               key={plan.name}
-              className={`relative opacity-0 animate-fade-in-up ${
-                plan.popular
+              className={`relative opacity-0 animate-fade-in-up ${plan.popular
                   ? "border-2 border-blue-500 shadow-lg"
                   : "border border-gray-200"
-              }`}
+                }`}
               style={{ animationDelay: `${index * 0.1}s`, animationFillMode: "forwards" }}
               padding="lg"
             >

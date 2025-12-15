@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { 
-  Inter, 
+import {
+  Inter,
   Roboto,
   Open_Sans,
   Lato,
@@ -183,6 +183,10 @@ export const metadata: Metadata = {
   description:
     "Creez, personnalisez et exportez des factures professionnelles en quelques clics. Interface intuitive, calculs automatiques et export PDF.",
   keywords: ["facture", "facturation", "PDF", "professionnel", "design"],
+  icons: {
+    icon: "/iconfav.png",
+    apple: "/iconfav.png",
+  },
 };
 
 export default function RootLayout({
