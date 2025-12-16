@@ -23,6 +23,11 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  // Hydrate store on mount to prevent hydration mismatch
+  useEffect(() => {
+    useInvoiceStore.persist.rehydrate();
+  }, []);
+
   // Auto-save client state when changes occur
   useAutoSaveClientState();
 

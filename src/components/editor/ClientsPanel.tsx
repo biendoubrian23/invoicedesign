@@ -8,7 +8,8 @@ import {
     listClients,
     createClient,
     deleteClient,
-    loadClientState
+    loadClientState,
+    saveClientState
 } from '@/services/clientService';
 import { Users, Plus, Trash2, Search, User, Loader2, ArrowRight } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -94,6 +95,24 @@ const ClientsPanel = () => {
     };
 
     const handleSelectClient = async (client: Client) => {
+        // Explicitly Save Current Client State before switching
+        // This ensures pending changes are saved even if auto-save debounce hasn't fired yet
+        const currentStore = useInvoiceStore.getState();
+        if (user && currentStore.currentClientId && !currentStore.isLoadingClient) {
+            try {
+                // Don't await this if you want instant UI switch, but awaiting ensures consistency
+                // Given the user issue, let's await it to be 100% sure before loading the next one
+                await saveClientState(
+                    currentStore.currentClientId,
+                    currentStore.invoice,
+                    currentStore.blocks,
+                    currentStore.selectedTemplate || 'classic'
+                );
+            } catch (err) {
+                console.error("Failed to save previous client state:", err);
+            }
+        }
+
         setCurrentClientId(client.id);
 
         // Load client's saved state
@@ -102,10 +121,14 @@ const ClientsPanel = () => {
         if (state && state.invoice_data && Object.keys(state.invoice_data).length > 0) {
             // Client has saved state - load it
             loadClientInvoiceState(state.invoice_data, state.blocks_data, state.selected_template);
+        } else {
+            // No saved state - load fresh default state for this new client
+            // This ensures we clean up the previous client's data
+            loadClientInvoiceState({}, [], 'classic');
         }
 
-        // Navigate to info panel
-        setActiveSection('info');
+        // Navigate to info panel - REMOVED per user request
+        // setActiveSection('info');
     };
 
     const filteredClients = clients.filter(c =>

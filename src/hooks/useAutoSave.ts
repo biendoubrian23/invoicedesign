@@ -22,6 +22,12 @@ export function useAutoSaveClientState() {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSavedRef = useRef<string>('');
 
+    // Reset lastSavedRef when switching clients to force a save of the current state
+    // This allows "cloning" the state to a new client immediately
+    useEffect(() => {
+        lastSavedRef.current = '';
+    }, [currentClientId]);
+
     useEffect(() => {
         // Only auto-save if user is logged in, client is selected, and not currently loading client state
         if (!user || !currentClientId || isLoadingClient) return;

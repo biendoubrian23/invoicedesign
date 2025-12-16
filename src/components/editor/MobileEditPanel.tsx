@@ -5,15 +5,23 @@ import InfoPanel from "./InfoPanel";
 import OptionsPanel from "./OptionsPanel";
 import LogoPanel from "./LogoPanel";
 import BlocksPanel from "./BlocksPanel";
+import ClientsPanel from "./ClientsPanel";
+import StockagePanel from "./StockagePanel";
+import PricingPanel from "./PricingPanel";
+import SettingsPanel from "./SettingsPanel";
 import { TemplateGrid } from "@/components/dashboard";
-import { 
-  LayoutGrid, 
-  FileText, 
-  Palette, 
-  Image, 
-  PlusSquare, 
+import {
+  LayoutGrid,
+  FileText,
+  Palette,
+  Image,
+  PlusSquare,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FolderOpen,
+  Users,
+  CreditCard,
+  Settings
 } from "lucide-react";
 
 interface AccordionSection {
@@ -35,35 +43,59 @@ const MobileEditPanel = () => {
   };
 
   const sections: AccordionSection[] = [
-    { 
-      id: "templates", 
-      label: "Modèles", 
-      icon: LayoutGrid, 
-      content: <TemplateGrid /> 
+    {
+      id: "templates",
+      label: "Modèles",
+      icon: LayoutGrid,
+      content: <TemplateGrid />
     },
-    { 
-      id: "info", 
-      label: "Informations", 
-      icon: FileText, 
-      content: <InfoPanel /> 
+    {
+      id: "info",
+      label: "Informations",
+      icon: FileText,
+      content: <InfoPanel />
     },
-    { 
-      id: "options", 
-      label: "Options", 
-      icon: Palette, 
-      content: <OptionsPanel /> 
+    {
+      id: "options",
+      label: "Options",
+      icon: Palette,
+      content: <OptionsPanel />
     },
-    { 
-      id: "logo", 
-      label: "Logo", 
-      icon: Image, 
-      content: <LogoPanel /> 
+    {
+      id: "logo",
+      label: "Logo",
+      icon: Image,
+      content: <LogoPanel />
     },
-    { 
-      id: "blocks", 
-      label: "Ajouter un bloc", 
-      icon: PlusSquare, 
-      content: <BlocksPanel /> 
+    {
+      id: "blocks",
+      label: "Ajouter un bloc",
+      icon: PlusSquare,
+      content: <BlocksPanel />
+    },
+    {
+      id: "clients",
+      label: "Clients",
+      icon: Users,
+      content: <ClientsPanel />
+    },
+    {
+      id: "stockage",
+      label: "Stockage",
+      icon: FolderOpen,
+      content: <StockagePanel />
+    },
+    {
+      id: "pricing",
+      label: "Tarifs",
+      icon: CreditCard,
+      content: <PricingPanel />
+    },
+    {
+      id: "settings",
+      label: "Paramètres",
+      icon: Settings,
+      content: <SettingsPanel />
     },
   ];
 
@@ -73,10 +105,10 @@ const MobileEditPanel = () => {
         {sections.map((section) => {
           const isOpen = openSections.includes(section.id);
           const Icon = section.icon;
-          
+
           return (
-            <div 
-              key={section.id} 
+            <div
+              key={section.id}
               className="bg-white rounded-xl shadow-sm overflow-hidden"
             >
               {/* Header accordéon */}

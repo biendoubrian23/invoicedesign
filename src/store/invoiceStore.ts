@@ -908,6 +908,7 @@ export const useInvoiceStore = create<InvoiceStore>()(
         activeSection: state.activeSection,
         currentClientId: state.currentClientId,
       }),
+      skipHydration: true,
     }
   )
 );
