@@ -1,6 +1,7 @@
 "use client";
 
 import { PaymentTermsBlock } from "@/types/invoice";
+import { useInvoiceStore } from "@/store";
 
 interface PaymentTermsRendererProps {
   block: PaymentTermsBlock;
@@ -8,6 +9,8 @@ interface PaymentTermsRendererProps {
 }
 
 const PaymentTermsRenderer = ({ block, primaryColor }: PaymentTermsRendererProps) => {
+  const { invoice } = useInvoiceStore();
+
   if (!block.enabled) return null;
 
   return (
@@ -20,9 +23,15 @@ const PaymentTermsRenderer = ({ block, primaryColor }: PaymentTermsRendererProps
           {block.title}
         </h3>
       )}
-      
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+
+      <div
+        className="border border-gray-200 rounded-lg p-4"
+        style={{ backgroundColor: invoice.styling.backgroundColor }}
+      >
+        <p
+          className="text-sm whitespace-pre-line leading-relaxed"
+          style={{ color: invoice.styling.secondaryColor }}
+        >
           {block.content}
         </p>
       </div>

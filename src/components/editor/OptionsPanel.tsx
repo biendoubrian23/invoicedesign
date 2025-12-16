@@ -37,7 +37,7 @@ const OptionsPanel = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Couleur secondaire
+              Couleur du texte
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -49,6 +49,25 @@ const OptionsPanel = () => {
               <Input
                 value={styling.secondaryColor}
                 onChange={(e) => setStyling({ secondaryColor: e.target.value })}
+                className="flex-1"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Couleur de fond
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={styling.backgroundColor}
+                onChange={(e) => setStyling({ backgroundColor: e.target.value })}
+                className="w-12 h-12 border border-gray-300 cursor-pointer"
+              />
+              <Input
+                value={styling.backgroundColor}
+                onChange={(e) => setStyling({ backgroundColor: e.target.value })}
                 className="flex-1"
               />
             </div>
@@ -77,9 +96,9 @@ const OptionsPanel = () => {
                 </option>
               ))}
             </select>
-            
+
             {/* Preview de la police */}
-            <div 
+            <div
               className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg"
               style={{ fontFamily: styling.fontFamily }}
             >
@@ -109,12 +128,24 @@ const OptionsPanel = () => {
           </div>
           <div className="flex items-center gap-3">
             <div
+              className="w-16 h-16 border border-gray-200 flex items-center justify-center"
+              style={{ backgroundColor: styling.backgroundColor }}
+            >
+              <span style={{ color: styling.secondaryColor, fontSize: '20px', fontWeight: 'bold' }}>Aa</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Texte</p>
+              <p className="text-xs text-gray-500">{styling.secondaryColor}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div
               className="w-16 h-16 border border-gray-200"
-              style={{ backgroundColor: styling.secondaryColor }}
+              style={{ backgroundColor: styling.backgroundColor }}
             ></div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Secondaire</p>
-              <p className="text-xs text-gray-500">{styling.secondaryColor}</p>
+              <p className="text-sm font-medium text-gray-900">Fond</p>
+              <p className="text-xs text-gray-500">{styling.backgroundColor}</p>
             </div>
           </div>
         </div>

@@ -89,11 +89,11 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
             {/* Table Rows - Dynamic */}
             {invoice.items.map((item, index) => (
                 <div key={item.id}>
-                    {/* Main row */}
-                    <div className={`flex ${containerClasses} text-sm ${rowClasses} ${block.striped && !showBorders
-                        ? index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                        : "bg-white"
-                        }`}>
+                    {/* Main row - use dynamic backgroundColor */}
+                    <div
+                        className={`flex ${containerClasses} text-sm ${rowClasses}`}
+                        style={{ backgroundColor: invoice.styling.backgroundColor }}
+                    >
                         {block.columns.filter(col => col.visible).map((column, idx, arr) => {
                             const isLast = idx === arr.length - 1;
                             const usedWidth = arr.slice(0, arr.length - 1).reduce((sum, c) => sum + c.width, 0);
@@ -162,7 +162,10 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                         item.subItems &&
                         item.subItems.length > 0 &&
                         item.subItemsMode !== "no-prices" && (
-                            <div className={showBorders ? `border-l border-r border-b ${borderColor} bg-gray-50` : "bg-gray-50"}>
+                            <div
+                                className={showBorders ? `border-l border-r border-b ${borderColor}` : ""}
+                                style={{ backgroundColor: invoice.styling.backgroundColor }}
+                            >
                                 {item.subItems.map((subItem) => (
                                     <div
                                         key={subItem.id}

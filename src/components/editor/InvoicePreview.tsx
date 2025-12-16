@@ -274,9 +274,11 @@ const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ isMobi
             <div
               ref={ref}
               data-invoice-preview
-              className="bg-white paper-shadow animate-scale-in"
+              className="paper-shadow animate-scale-in"
               style={{
                 fontFamily: styling.fontFamily,
+                backgroundColor: styling.backgroundColor,
+                color: styling.secondaryColor,
                 width: '210mm',
                 minHeight: 'auto',
                 padding: '15mm',

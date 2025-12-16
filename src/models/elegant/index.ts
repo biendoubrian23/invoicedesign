@@ -102,7 +102,8 @@ export const elegantModel: TemplateModel = {
     // Visual configuration
     styling: {
         primaryColor: "#000000",
-        secondaryColor: "#666666",
+        secondaryColor: "#111827",
+        backgroundColor: "#ffffff",
         fontFamily: "Inter",
         fontSize: {
             title: "28px",

@@ -76,7 +76,8 @@ export const classicModel: TemplateModel = {
     // Visual configuration
     styling: {
         primaryColor: "#2563eb",
-        secondaryColor: "#64748b",
+        secondaryColor: "#111827",
+        backgroundColor: "#ffffff",
         fontFamily: "Inter",
         fontSize: {
             title: "24px",

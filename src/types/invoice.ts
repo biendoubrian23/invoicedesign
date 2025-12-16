@@ -47,7 +47,8 @@ export interface ClientInfo {
 
 export interface InvoiceStyling {
   primaryColor: string;
-  secondaryColor: string;
+  secondaryColor: string; // Couleur du texte principal
+  backgroundColor: string; // Couleur de fond de la facture
   fontFamily: string;
   fontSize: {
     title: string;

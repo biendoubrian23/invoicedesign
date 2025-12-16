@@ -157,7 +157,8 @@ const defaultInvoice: Invoice = {
   taxRate: 20,
   styling: {
     primaryColor: "#2563eb",
-    secondaryColor: "#1e40af",
+    secondaryColor: "#111827", // Couleur du texte principal (gris foncé/noir)
+    backgroundColor: "#ffffff", // Fond blanc par défaut
     fontFamily: "Inter",
     fontSize: {
       title: "24px",

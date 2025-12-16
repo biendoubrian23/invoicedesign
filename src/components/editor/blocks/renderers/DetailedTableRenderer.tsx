@@ -1,6 +1,7 @@
 "use client";
 
 import { DetailedTableBlock } from "@/types/invoice";
+import { useInvoiceStore } from "@/store";
 
 interface DetailedTableRendererProps {
   block: DetailedTableBlock;
@@ -8,6 +9,8 @@ interface DetailedTableRendererProps {
 }
 
 const DetailedTableRenderer = ({ block, primaryColor }: DetailedTableRendererProps) => {
+  const { invoice } = useInvoiceStore();
+
   if (!block.enabled) return null;
 
   const getAlignClass = (align: "left" | "center" | "right") => {
@@ -41,7 +44,7 @@ const DetailedTableRenderer = ({ block, primaryColor }: DetailedTableRendererPro
           {block.title}
         </h3>
       )}
-      
+
       {/* Header */}
       {block.showHeader && (
         <div
@@ -59,27 +62,24 @@ const DetailedTableRenderer = ({ block, primaryColor }: DetailedTableRendererPro
           ))}
         </div>
       )}
-      
+
       {/* Rows */}
       {block.rows.map((row, rowIndex) => (
         <div
           key={row.id}
-          className={`flex gap-2 py-3 px-4 text-sm ${
-            block.striped
-              ? rowIndex % 2 === 0 ? "bg-gray-50" : "bg-white"
-              : "bg-white"
-          }`}
+          className="flex gap-2 py-3 px-4 text-sm"
+          style={{ backgroundColor: invoice.styling.backgroundColor }}
         >
           {visibleColumns.map((col, colIdx) => {
             // Trouver l'index original de la colonne pour obtenir la bonne cellule
             const originalIndex = block.columns.findIndex(c => c.id === col.id);
             const cellContent = row.cells[originalIndex] || "";
-            
+
             return (
               <div
                 key={col.id}
-                style={{ width: `${getColumnWidth(col, colIdx)}%`, minWidth: 0 }}
-                className={`text-gray-800 ${getAlignClass(col.align)}`}
+                style={{ width: `${getColumnWidth(col, colIdx)}%`, minWidth: 0, color: invoice.styling.secondaryColor }}
+                className={getAlignClass(col.align)}
               >
                 {cellContent}
               </div>
