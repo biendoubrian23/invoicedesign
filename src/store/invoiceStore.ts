@@ -791,10 +791,12 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
       case 'totals':
         section = "blocks";
         break;
-      case 'block':
+      case 'block': {
         // Si c'est le bloc items en mode contenu, aller vers info
-        if ('blockId' in target && target.mode === 'content') {
-          const block = get().blocks.find(b => b.id === target.blockId);
+        // Utiliser une variable locale pour satisfaire TypeScript
+        const blockTarget = target as { type: 'block'; blockId: string; mode?: 'content' | 'layout' };
+        if (blockTarget.mode === 'content') {
+          const block = get().blocks.find(b => b.id === blockTarget.blockId);
           if (block?.type === 'invoice-items') {
             section = "info";
             // Important : Transformer la target en 'items-table' pour que InfoPanel scrolle dessus
@@ -806,6 +808,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
           section = "blocks";
         }
         break;
+      }
     }
 
     set({
