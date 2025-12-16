@@ -5,7 +5,6 @@ import {
   HowItWorks,
   TemplateGallery,
   PricingTeaser,
-  CTA,
 } from "@/components/landing";
 
 export default function Home() {
@@ -18,7 +17,6 @@ export default function Home() {
         <HowItWorks />
         <TemplateGallery />
         <PricingTeaser />
-        <CTA />
       </main>
       <Footer />
     </>

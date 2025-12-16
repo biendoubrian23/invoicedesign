@@ -420,14 +420,12 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
           return item.quantity * item.unitPrice;
         }
 
-        // Calculer le total des sous-items sélectionnés
+        // Calculer le total des sous-items sélectionnés (toujours avec quantité)
         const subItemsTotal = item.subItems
           .filter(sub => sub.selected !== false)
           .reduce((sum, sub) => {
-            if (item.subItemsMode === 'individual-quantities' && sub.hasQuantity) {
-              return sum + (sub.quantity || 1) * sub.unitPrice;
-            }
-            return sum + sub.unitPrice;
+            // Toujours utiliser la quantité (défaut: 1) × prix unitaire
+            return sum + (sub.quantity || 1) * sub.unitPrice;
           }, 0);
 
         // Mode parent-quantity : total des sous-items × quantité parent
@@ -486,7 +484,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
               description: "Nouvelle sous-ligne",
               quantity: 1,
               unitPrice: 0,
-              hasQuantity: item.subItemsMode === 'individual-quantities',
+              hasQuantity: item.subItemsMode !== 'no-prices',
               total: 0,
               selected: true,
             };
@@ -505,10 +503,9 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
   updateSubItem: (itemId, subItemId, subItemData) =>
     set((state) => {
       const calculateSubItemTotal = (subItem: SubItem): number => {
-        if (subItem.hasQuantity && subItem.quantity !== undefined) {
-          return subItem.quantity * subItem.unitPrice;
-        }
-        return subItem.unitPrice;
+        // Toujours calculer avec la quantité (défaut: 1)
+        const qty = subItem.quantity || 1;
+        return qty * subItem.unitPrice;
       };
 
       return {
@@ -525,24 +522,32 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
                 return sub;
               });
 
-              // Recalculer le total de l'item parent
-              const subItemsSum = updatedSubItems
+              // Recalculer le total de l'item parent basé sur les sous-items avec leurs quantités
+              // Utiliser le calcul dynamique pour chaque sous-item
+              const subItemsTotalSum = updatedSubItems
+                .filter(sub => sub.selected !== false)
+                .reduce((sum, sub) => sum + ((sub.quantity || 1) * sub.unitPrice), 0);
+
+              const subItemsUnitSum = updatedSubItems
                 .filter(sub => sub.selected !== false)
                 .reduce((sum, sub) => sum + sub.unitPrice, 0);
 
               let newTotal = 0;
               if (item.subItemsMode === 'parent-quantity') {
-                newTotal = item.quantity * subItemsSum;
-              } else if (item.subItemsMode === 'individual-quantities') {
-                newTotal = updatedSubItems
-                  .filter(sub => sub.selected !== false)
-                  .reduce((sum, sub) => sum + sub.total, 0);
+                // En mode parent-quantity, multiplier la somme des sous-items (avec leurs quantités) par la quantité parent
+                // Total = parentQty × SUM(subItemQty × subItemPrice)
+                newTotal = item.quantity * subItemsTotalSum;
+              } else {
+                // En mode individual-quantities ou autre, additionner les totaux calculés (qty * prix)
+                newTotal = subItemsTotalSum;
               }
 
               return {
                 ...item,
                 subItems: updatedSubItems,
-                unitPrice: item.subItemsMode === 'parent-quantity' ? subItemsSum : item.unitPrice,
+                // Prix unitaire = somme des prix unitaires (sans les quantités des sous-items)
+                unitPrice: item.subItemsMode === 'parent-quantity' ? subItemsUnitSum : item.unitPrice,
+                // Total = prend en compte les quantités des sous-items × quantité parent
                 total: newTotal || item.total,
               };
             }
@@ -577,10 +582,11 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
         ...state.invoice,
         items: state.invoice.items.map((item) => {
           if (item.id === itemId) {
+            // Préserver les sous-items existants - juste toggler le flag hasSubItems
             return {
               ...item,
               hasSubItems: enabled,
-              subItems: enabled ? (item.subItems || []) : [],
+              // Ne pas effacer les sous-items - les garder pour permettre de réactiver
             };
           }
           return item;
@@ -597,8 +603,8 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
             // Mettre à jour hasQuantity pour tous les sub-items
             const updatedSubItems = (item.subItems || []).map(sub => ({
               ...sub,
-              hasQuantity: mode === 'individual-quantities',
-              quantity: mode === 'individual-quantities' ? (sub.quantity || 1) : undefined,
+              hasQuantity: mode !== 'no-prices',
+              quantity: mode !== 'no-prices' ? (sub.quantity || 1) : undefined,
             }));
 
             return {

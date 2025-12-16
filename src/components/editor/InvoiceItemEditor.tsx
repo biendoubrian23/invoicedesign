@@ -77,16 +77,15 @@ const InvoiceItemEditor = ({ item, index, customColumns = [] }: InvoiceItemEdito
                 {/* Bouton activer/désactiver sous-lignes */}
                 <button
                   onClick={handleToggleSubItems}
-                  className={`px-2 py-1 text-xs font-medium transition-colors ${
-                    item.hasSubItems
-                      ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-2 py-1 text-xs font-medium transition-colors ${item.hasSubItems
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   title="Activer/désactiver les sous-lignes"
                 >
                   {item.hasSubItems ? "Sous-lignes actives" : "Ajouter sous-lignes"}
                 </button>
-                
+
                 <button
                   onClick={() => removeItem(item.id)}
                   className="p-1 text-gray-400 hover:text-red-500 transition-colors"
@@ -135,7 +134,7 @@ const InvoiceItemEditor = ({ item, index, customColumns = [] }: InvoiceItemEdito
                   </span>
                   <Settings className="w-4 h-4 text-gray-500" />
                 </button>
-                
+
                 {showModeSelector && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 shadow-lg z-10">
                     <button
@@ -182,7 +181,7 @@ const InvoiceItemEditor = ({ item, index, customColumns = [] }: InvoiceItemEdito
                   }
                 />
               )}
-              
+
               {/* Prix unitaire - visible uniquement si pas de sous-items */}
               {!item.hasSubItems && (
                 <Input
@@ -265,8 +264,8 @@ const InvoiceItemEditor = ({ item, index, customColumns = [] }: InvoiceItemEdito
                 )}
 
                 <div className="grid grid-cols-3 gap-2">
-                  {/* Quantité - visible uniquement en mode individual-quantities */}
-                  {item.subItemsMode === 'individual-quantities' && (
+                  {/* Quantité - visible dans tous les modes sauf no-prices */}
+                  {item.subItemsMode !== 'no-prices' && (
                     <Input
                       type="number"
                       placeholder="Qté"
@@ -274,6 +273,7 @@ const InvoiceItemEditor = ({ item, index, customColumns = [] }: InvoiceItemEdito
                       onChange={(e) =>
                         updateSubItem(item.id, subItem.id, {
                           quantity: Number(e.target.value),
+                          hasQuantity: true,
                         })
                       }
                       className="text-sm"
@@ -292,16 +292,14 @@ const InvoiceItemEditor = ({ item, index, customColumns = [] }: InvoiceItemEdito
                             unitPrice: Number(e.target.value),
                           })
                         }
-                        className={`text-sm ${item.subItemsMode === 'individual-quantities' ? '' : 'col-span-2'}`}
+                        className="text-sm"
                       />
-                      
-                      {item.subItemsMode === 'individual-quantities' && (
-                        <div className="flex items-center justify-end">
-                          <span className="text-xs font-medium text-gray-700">
-                            {subItem.total.toFixed(2)} {invoice.currency}
-                          </span>
-                        </div>
-                      )}
+
+                      <div className="flex items-center justify-end">
+                        <span className="text-xs font-medium text-gray-700">
+                          {subItem.total.toFixed(2)} {invoice.currency}
+                        </span>
+                      </div>
                     </>
                   )}
 

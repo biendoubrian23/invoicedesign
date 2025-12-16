@@ -149,6 +149,8 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                                                 </p>
                                             )}
                                         </>
+                                    ) : column.key === "total" ? (
+                                        <span className="font-bold">{content}</span>
                                     ) : content}
                                 </div>
                             );
@@ -188,8 +190,9 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                                                     content = `- ${subItem.description}`;
                                                     break;
                                                 case "quantity":
-                                                    content = item.subItemsMode === 'individual-quantities' && subItem.hasQuantity
-                                                        ? subItem.quantity?.toString() || '-'
+                                                    // Afficher la quantité si mode n'est pas no-prices
+                                                    content = item.subItemsMode !== 'no-prices'
+                                                        ? (subItem.quantity || 1).toString()
                                                         : '-';
                                                     break;
                                                 case "unitPrice":
@@ -198,8 +201,9 @@ const InvoiceItemsRenderer = ({ block, primaryColor }: InvoiceItemsRendererProps
                                                         : '-';
                                                     break;
                                                 case "total":
-                                                    content = item.subItemsMode === 'individual-quantities'
-                                                        ? `${subItem.total.toFixed(2)} ${invoice.currency}`
+                                                    // Afficher le total calculé (qty * prix) si mode n'est pas no-prices
+                                                    content = item.subItemsMode !== 'no-prices'
+                                                        ? `${((subItem.quantity || 1) * subItem.unitPrice).toFixed(2)} ${invoice.currency}`
                                                         : '-';
                                                     break;
                                                 default:
