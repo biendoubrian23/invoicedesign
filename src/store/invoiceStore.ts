@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import {
   Invoice,
   InvoiceItem,
@@ -45,6 +46,10 @@ interface InvoiceStore {
   // Navigation depuis la preview (pour scroll vers l'élément)
   focusTarget: PreviewClickTarget | null;
 
+  // Client management
+  currentClientId: string | null;
+  isLoadingClient: boolean;
+
   // Actions
   setInvoice: (invoice: Partial<Invoice>) => void;
   setIssuer: (issuer: Partial<Invoice["issuer"]>) => void;
@@ -81,6 +86,10 @@ interface InvoiceStore {
   // Navigation depuis la preview
   navigateFromPreview: (target: PreviewClickTarget) => void;
   clearFocusTarget: () => void;
+
+  // Client management actions
+  setCurrentClientId: (clientId: string | null) => void;
+  loadClientInvoiceState: (invoiceData: Partial<Invoice>, blocksData: InvoiceBlock[], selectedTemplate: string) => void;
 }
 
 const defaultInvoice: Invoice = {
@@ -97,12 +106,25 @@ const defaultInvoice: Invoice = {
     siret: "123 456 789 00010",
     email: "contact@votresociete.fr",
     phone: "+33 1 23 45 67 89",
+    visibility: {
+      address: true,
+      siret: true,
+      email: true,
+      phone: true,
+    },
+    customFields: [],
   },
   client: {
     name: "Client XYZ",
     company: "Entreprise Cliente",
     address: "456 Avenue du Client\n69001 Lyon",
     email: "client@example.com",
+    visibility: {
+      company: true,
+      address: true,
+      email: true,
+    },
+    customFields: [],
   },
   items: [
     {
@@ -363,467 +385,530 @@ const createBlock = (type: BlockType, order: number): InvoiceBlock => {
   }
 };
 
-export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
-  invoice: defaultInvoice,
-  selectedTemplate: "classic",
-  activeSection: "templates",
-  templates: defaultTemplates,
-  blocks: defaultBlocks,
-  selectedBlockId: null,
-  focusTarget: null,
+export const useInvoiceStore = create<InvoiceStore>()(
+  persist(
+    (set, get) => ({
+      invoice: defaultInvoice,
+      selectedTemplate: "classic",
+      activeSection: "templates",
+      templates: defaultTemplates,
+      blocks: defaultBlocks,
+      selectedBlockId: null,
+      focusTarget: null,
+      currentClientId: null,
+      isLoadingClient: false,
 
-  setInvoice: (invoiceData) =>
-    set((state) => ({
-      invoice: { ...state.invoice, ...invoiceData },
-    })),
+      setInvoice: (invoiceData) =>
+        set((state) => ({
+          invoice: { ...state.invoice, ...invoiceData },
+        })),
 
-  setIssuer: (issuerData) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        issuer: { ...state.invoice.issuer, ...issuerData },
-      },
-    })),
-
-  setClient: (clientData) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        client: { ...state.invoice.client, ...clientData },
-      },
-    })),
-
-  addItem: () =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        items: [
-          ...state.invoice.items,
-          {
-            id: crypto.randomUUID(),
-            description: "Nouvelle ligne",
-            quantity: 1,
-            unitPrice: 0,
-            total: 0,
-            selected: true,
-            hasSubItems: false,
-            subItemsMode: 'parent-quantity',
+      setIssuer: (issuerData) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            issuer: { ...state.invoice.issuer, ...issuerData },
           },
-        ],
-      },
-    })),
+        })),
 
-  updateItem: (id, itemData) =>
-    set((state) => {
-      const calculateItemTotal = (item: InvoiceItem): number => {
-        // Si pas de sous-items ou mode no-prices, calcul simple
-        if (!item.hasSubItems || !item.subItems || item.subItemsMode === 'no-prices') {
-          return item.quantity * item.unitPrice;
-        }
+      setClient: (clientData) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            client: { ...state.invoice.client, ...clientData },
+          },
+        })),
 
-        // Calculer le total des sous-items sélectionnés (toujours avec quantité)
-        const subItemsTotal = item.subItems
-          .filter(sub => sub.selected !== false)
-          .reduce((sum, sub) => {
-            // Toujours utiliser la quantité (défaut: 1) × prix unitaire
-            return sum + (sub.quantity || 1) * sub.unitPrice;
-          }, 0);
+      addItem: () =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            items: [
+              ...state.invoice.items,
+              {
+                id: crypto.randomUUID(),
+                description: "Nouvelle ligne",
+                quantity: 1,
+                unitPrice: 0,
+                total: 0,
+                selected: true,
+                hasSubItems: false,
+                subItemsMode: 'parent-quantity',
+              },
+            ],
+          },
+        })),
 
-        // Mode parent-quantity : total des sous-items × quantité parent
-        if (item.subItemsMode === 'parent-quantity') {
-          return item.quantity * subItemsTotal;
-        }
-
-        // Mode individual-quantities : on retourne juste le total des sous-items
-        return subItemsTotal;
-      };
-
-      return {
-        invoice: {
-          ...state.invoice,
-          items: state.invoice.items.map((item) => {
-            if (item.id === id) {
-              const updated = { ...item, ...itemData };
-
-              // Recalculer le unitPrice si on a des sous-items
-              if (updated.hasSubItems && updated.subItems) {
-                const subItemsSum = updated.subItems
-                  .filter(sub => sub.selected !== false)
-                  .reduce((sum, sub) => sum + sub.unitPrice, 0);
-
-                if (updated.subItemsMode === 'parent-quantity') {
-                  updated.unitPrice = subItemsSum;
-                }
-              }
-
-              updated.total = calculateItemTotal(updated);
-              return updated;
+      updateItem: (id, itemData) =>
+        set((state) => {
+          const calculateItemTotal = (item: InvoiceItem): number => {
+            // Si pas de sous-items ou mode no-prices, calcul simple
+            if (!item.hasSubItems || !item.subItems || item.subItemsMode === 'no-prices') {
+              return item.quantity * item.unitPrice;
             }
-            return item;
-          }),
-        },
-      };
-    }),
 
-  removeItem: (id) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        items: state.invoice.items.filter((item) => item.id !== id),
-      },
-    })),
+            // Calculer le total des sous-items sélectionnés (toujours avec quantité)
+            const subItemsTotal = item.subItems
+              .filter(sub => sub.selected !== false)
+              .reduce((sum, sub) => {
+                // Toujours utiliser la quantité (défaut: 1) × prix unitaire
+                return sum + (sub.quantity || 1) * sub.unitPrice;
+              }, 0);
 
-  // Sub-items actions
-  addSubItem: (itemId) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        items: state.invoice.items.map((item) => {
-          if (item.id === itemId) {
-            const newSubItem: SubItem = {
-              id: crypto.randomUUID(),
-              description: "Nouvelle sous-ligne",
-              quantity: 1,
-              unitPrice: 0,
-              hasQuantity: item.subItemsMode !== 'no-prices',
-              total: 0,
-              selected: true,
-            };
+            // Mode parent-quantity : total des sous-items × quantité parent
+            if (item.subItemsMode === 'parent-quantity') {
+              return item.quantity * subItemsTotal;
+            }
 
-            return {
-              ...item,
-              hasSubItems: true,
-              subItems: [...(item.subItems || []), newSubItem],
-            };
-          }
-          return item;
-        }),
-      },
-    })),
+            // Mode individual-quantities : on retourne juste le total des sous-items
+            return subItemsTotal;
+          };
 
-  updateSubItem: (itemId, subItemId, subItemData) =>
-    set((state) => {
-      const calculateSubItemTotal = (subItem: SubItem): number => {
-        // Toujours calculer avec la quantité (défaut: 1)
-        const qty = subItem.quantity || 1;
-        return qty * subItem.unitPrice;
-      };
+          return {
+            invoice: {
+              ...state.invoice,
+              items: state.invoice.items.map((item) => {
+                if (item.id === id) {
+                  const updated = { ...item, ...itemData };
 
-      return {
-        invoice: {
-          ...state.invoice,
-          items: state.invoice.items.map((item) => {
-            if (item.id === itemId && item.subItems) {
-              const updatedSubItems = item.subItems.map((sub) => {
-                if (sub.id === subItemId) {
-                  const updated = { ...sub, ...subItemData };
-                  updated.total = calculateSubItemTotal(updated);
+                  // Recalculer le unitPrice si on a des sous-items
+                  if (updated.hasSubItems && updated.subItems) {
+                    const subItemsSum = updated.subItems
+                      .filter(sub => sub.selected !== false)
+                      .reduce((sum, sub) => sum + sub.unitPrice, 0);
+
+                    if (updated.subItemsMode === 'parent-quantity') {
+                      updated.unitPrice = subItemsSum;
+                    }
+                  }
+
+                  updated.total = calculateItemTotal(updated);
                   return updated;
                 }
-                return sub;
-              });
+                return item;
+              }),
+            },
+          };
+        }),
 
-              // Recalculer le total de l'item parent basé sur les sous-items avec leurs quantités
-              // Utiliser le calcul dynamique pour chaque sous-item
-              const subItemsTotalSum = updatedSubItems
-                .filter(sub => sub.selected !== false)
-                .reduce((sum, sub) => sum + ((sub.quantity || 1) * sub.unitPrice), 0);
+      removeItem: (id) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            items: state.invoice.items.filter((item) => item.id !== id),
+          },
+        })),
 
-              const subItemsUnitSum = updatedSubItems
-                .filter(sub => sub.selected !== false)
-                .reduce((sum, sub) => sum + sub.unitPrice, 0);
+      // Sub-items actions
+      addSubItem: (itemId) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            items: state.invoice.items.map((item) => {
+              if (item.id === itemId) {
+                const newSubItem: SubItem = {
+                  id: crypto.randomUUID(),
+                  description: "Nouvelle sous-ligne",
+                  quantity: 1,
+                  unitPrice: 0,
+                  hasQuantity: item.subItemsMode !== 'no-prices',
+                  total: 0,
+                  selected: true,
+                };
 
-              let newTotal = 0;
-              if (item.subItemsMode === 'parent-quantity') {
-                // En mode parent-quantity, multiplier la somme des sous-items (avec leurs quantités) par la quantité parent
-                // Total = parentQty × SUM(subItemQty × subItemPrice)
-                newTotal = item.quantity * subItemsTotalSum;
-              } else {
-                // En mode individual-quantities ou autre, additionner les totaux calculés (qty * prix)
-                newTotal = subItemsTotalSum;
+                return {
+                  ...item,
+                  hasSubItems: true,
+                  subItems: [...(item.subItems || []), newSubItem],
+                };
               }
+              return item;
+            }),
+          },
+        })),
 
+      updateSubItem: (itemId, subItemId, subItemData) =>
+        set((state) => {
+          const calculateSubItemTotal = (subItem: SubItem): number => {
+            // Toujours calculer avec la quantité (défaut: 1)
+            const qty = subItem.quantity || 1;
+            return qty * subItem.unitPrice;
+          };
+
+          return {
+            invoice: {
+              ...state.invoice,
+              items: state.invoice.items.map((item) => {
+                if (item.id === itemId && item.subItems) {
+                  const updatedSubItems = item.subItems.map((sub) => {
+                    if (sub.id === subItemId) {
+                      const updated = { ...sub, ...subItemData };
+                      updated.total = calculateSubItemTotal(updated);
+                      return updated;
+                    }
+                    return sub;
+                  });
+
+                  // Recalculer le total de l'item parent basé sur les sous-items avec leurs quantités
+                  // Utiliser le calcul dynamique pour chaque sous-item
+                  const subItemsTotalSum = updatedSubItems
+                    .filter(sub => sub.selected !== false)
+                    .reduce((sum, sub) => sum + ((sub.quantity || 1) * sub.unitPrice), 0);
+
+                  const subItemsUnitSum = updatedSubItems
+                    .filter(sub => sub.selected !== false)
+                    .reduce((sum, sub) => sum + sub.unitPrice, 0);
+
+                  let newTotal = 0;
+                  if (item.subItemsMode === 'parent-quantity') {
+                    // En mode parent-quantity, multiplier la somme des sous-items (avec leurs quantités) par la quantité parent
+                    // Total = parentQty × SUM(subItemQty × subItemPrice)
+                    newTotal = item.quantity * subItemsTotalSum;
+                  } else {
+                    // En mode individual-quantities ou autre, additionner les totaux calculés (qty * prix)
+                    newTotal = subItemsTotalSum;
+                  }
+
+                  return {
+                    ...item,
+                    subItems: updatedSubItems,
+                    // Prix unitaire = somme des prix unitaires (sans les quantités des sous-items)
+                    unitPrice: item.subItemsMode === 'parent-quantity' ? subItemsUnitSum : item.unitPrice,
+                    // Total = prend en compte les quantités des sous-items × quantité parent
+                    total: newTotal || item.total,
+                  };
+                }
+                return item;
+              }),
+            },
+          };
+        }),
+
+      removeSubItem: (itemId, subItemId) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            items: state.invoice.items.map((item) => {
+              if (item.id === itemId && item.subItems) {
+                const updatedSubItems = item.subItems.filter((sub) => sub.id !== subItemId);
+
+                return {
+                  ...item,
+                  subItems: updatedSubItems,
+                  hasSubItems: updatedSubItems.length > 0,
+                };
+              }
+              return item;
+            }),
+          },
+        })),
+
+      toggleSubItems: (itemId, enabled) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            items: state.invoice.items.map((item) => {
+              if (item.id === itemId) {
+                // Préserver les sous-items existants - juste toggler le flag hasSubItems
+                return {
+                  ...item,
+                  hasSubItems: enabled,
+                  // Ne pas effacer les sous-items - les garder pour permettre de réactiver
+                };
+              }
+              return item;
+            }),
+          },
+        })),
+
+      setSubItemsMode: (itemId, mode) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            items: state.invoice.items.map((item) => {
+              if (item.id === itemId) {
+                // Mettre à jour hasQuantity pour tous les sub-items
+                const updatedSubItems = (item.subItems || []).map(sub => ({
+                  ...sub,
+                  hasQuantity: mode !== 'no-prices',
+                  quantity: mode !== 'no-prices' ? (sub.quantity || 1) : undefined,
+                }));
+
+                return {
+                  ...item,
+                  subItemsMode: mode,
+                  subItems: updatedSubItems,
+                };
+              }
+              return item;
+            }),
+          },
+        })),
+
+      setStyling: (stylingData) =>
+        set((state) => ({
+          invoice: {
+            ...state.invoice,
+            styling: { ...state.invoice.styling, ...stylingData },
+          },
+        })),
+
+      setLogo: (logo) =>
+        set((state) => ({
+          invoice: { ...state.invoice, logo },
+        })),
+
+      setLogoPosition: (logoPosition) =>
+        set((state) => ({
+          invoice: { ...state.invoice, logoPosition },
+        })),
+
+      setLogoSize: (logoSize) =>
+        set((state) => ({
+          invoice: { ...state.invoice, logoSize },
+        })),
+
+      setActiveSection: (activeSection) => set({ activeSection }),
+
+      selectTemplate: (templateId) => {
+        const template = get().templates.find((t) => t.id === templateId);
+        if (template) {
+          // Import the model to get its default blocks
+          const { getModelById } = require('@/models');
+          const model = getModelById(templateId);
+
+          set((state) => ({
+            selectedTemplate: templateId,
+            // Load model-specific blocks if available
+            blocks: model?.defaultBlocks || state.blocks,
+            invoice: {
+              ...state.invoice,
+              styling: {
+                ...state.invoice.styling,
+                primaryColor: template.color,
+              },
+            },
+          }));
+        }
+      },
+
+      resetInvoice: () => set({ invoice: defaultInvoice }),
+
+      // Block actions
+      addBlock: (type) =>
+        set((state) => {
+          let order: number;
+
+          // Si c'est un tableau détaillé, le placer juste après invoice-items (order 1)
+          if (type === "detailed-table") {
+            const invoiceItemsBlock = state.blocks.find(b => b.type === "invoice-items");
+            if (invoiceItemsBlock) {
+              order = invoiceItemsBlock.order + 1;
+              // Décaler tous les blocs suivants
+              const updatedBlocks = state.blocks.map(b =>
+                b.order >= order ? { ...b, order: b.order + 1 } : b
+              );
+              const newBlock = createBlock(type, order);
               return {
-                ...item,
-                subItems: updatedSubItems,
-                // Prix unitaire = somme des prix unitaires (sans les quantités des sous-items)
-                unitPrice: item.subItemsMode === 'parent-quantity' ? subItemsUnitSum : item.unitPrice,
-                // Total = prend en compte les quantités des sous-items × quantité parent
-                total: newTotal || item.total,
+                blocks: [...updatedBlocks, newBlock],
+                selectedBlockId: newBlock.id,
               };
             }
-            return item;
-          }),
-        },
-      };
-    }),
-
-  removeSubItem: (itemId, subItemId) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        items: state.invoice.items.map((item) => {
-          if (item.id === itemId && item.subItems) {
-            const updatedSubItems = item.subItems.filter((sub) => sub.id !== subItemId);
-
-            return {
-              ...item,
-              subItems: updatedSubItems,
-              hasSubItems: updatedSubItems.length > 0,
-            };
           }
-          return item;
-        }),
-      },
-    })),
 
-  toggleSubItems: (itemId, enabled) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        items: state.invoice.items.map((item) => {
-          if (item.id === itemId) {
-            // Préserver les sous-items existants - juste toggler le flag hasSubItems
-            return {
-              ...item,
-              hasSubItems: enabled,
-              // Ne pas effacer les sous-items - les garder pour permettre de réactiver
-            };
-          }
-          return item;
-        }),
-      },
-    })),
-
-  setSubItemsMode: (itemId, mode) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        items: state.invoice.items.map((item) => {
-          if (item.id === itemId) {
-            // Mettre à jour hasQuantity pour tous les sub-items
-            const updatedSubItems = (item.subItems || []).map(sub => ({
-              ...sub,
-              hasQuantity: mode !== 'no-prices',
-              quantity: mode !== 'no-prices' ? (sub.quantity || 1) : undefined,
-            }));
-
-            return {
-              ...item,
-              subItemsMode: mode,
-              subItems: updatedSubItems,
-            };
-          }
-          return item;
-        }),
-      },
-    })),
-
-  setStyling: (stylingData) =>
-    set((state) => ({
-      invoice: {
-        ...state.invoice,
-        styling: { ...state.invoice.styling, ...stylingData },
-      },
-    })),
-
-  setLogo: (logo) =>
-    set((state) => ({
-      invoice: { ...state.invoice, logo },
-    })),
-
-  setLogoPosition: (logoPosition) =>
-    set((state) => ({
-      invoice: { ...state.invoice, logoPosition },
-    })),
-
-  setLogoSize: (logoSize) =>
-    set((state) => ({
-      invoice: { ...state.invoice, logoSize },
-    })),
-
-  setActiveSection: (activeSection) => set({ activeSection }),
-
-  selectTemplate: (templateId) => {
-    const template = get().templates.find((t) => t.id === templateId);
-    if (template) {
-      // Import the model to get its default blocks
-      const { getModelById } = require('@/models');
-      const model = getModelById(templateId);
-
-      set((state) => ({
-        selectedTemplate: templateId,
-        // Load model-specific blocks if available
-        blocks: model?.defaultBlocks || state.blocks,
-        invoice: {
-          ...state.invoice,
-          styling: {
-            ...state.invoice.styling,
-            primaryColor: template.color,
-          },
-        },
-      }));
-    }
-  },
-
-  resetInvoice: () => set({ invoice: defaultInvoice }),
-
-  // Block actions
-  addBlock: (type) =>
-    set((state) => {
-      let order: number;
-
-      // Si c'est un tableau détaillé, le placer juste après invoice-items (order 1)
-      if (type === "detailed-table") {
-        const invoiceItemsBlock = state.blocks.find(b => b.type === "invoice-items");
-        if (invoiceItemsBlock) {
-          order = invoiceItemsBlock.order + 1;
-          // Décaler tous les blocs suivants
-          const updatedBlocks = state.blocks.map(b =>
-            b.order >= order ? { ...b, order: b.order + 1 } : b
-          );
-          const newBlock = createBlock(type, order);
+          // Sinon, ajouter à la fin
+          const maxOrder = Math.max(...state.blocks.map(b => b.order), -1);
+          const newBlock = createBlock(type, maxOrder + 1);
           return {
-            blocks: [...updatedBlocks, newBlock],
+            blocks: [...state.blocks, newBlock],
             selectedBlockId: newBlock.id,
           };
-        }
-      }
+        }),
 
-      // Sinon, ajouter à la fin
-      const maxOrder = Math.max(...state.blocks.map(b => b.order), -1);
-      const newBlock = createBlock(type, maxOrder + 1);
-      return {
-        blocks: [...state.blocks, newBlock],
-        selectedBlockId: newBlock.id,
-      };
-    }),
+      updateBlock: (id, data) =>
+        set((state) => ({
+          blocks: state.blocks.map((block) =>
+            block.id === id ? { ...block, ...data } : block
+          ) as InvoiceBlock[],
+        })),
 
-  updateBlock: (id, data) =>
-    set((state) => ({
-      blocks: state.blocks.map((block) =>
-        block.id === id ? { ...block, ...data } : block
-      ) as InvoiceBlock[],
-    })),
+      removeBlock: (id) =>
+        set((state) => ({
+          blocks: state.blocks.filter((block) => block.id !== id),
+          selectedBlockId: state.selectedBlockId === id ? null : state.selectedBlockId,
+        })),
 
-  removeBlock: (id) =>
-    set((state) => ({
-      blocks: state.blocks.filter((block) => block.id !== id),
-      selectedBlockId: state.selectedBlockId === id ? null : state.selectedBlockId,
-    })),
+      reorderBlocks: (startIndex, endIndex) =>
+        set((state) => {
+          const result = [...state.blocks].sort((a, b) => a.order - b.order);
+          const [removed] = result.splice(startIndex, 1);
+          result.splice(endIndex, 0, removed);
 
-  reorderBlocks: (startIndex, endIndex) =>
-    set((state) => {
-      const result = [...state.blocks].sort((a, b) => a.order - b.order);
-      const [removed] = result.splice(startIndex, 1);
-      result.splice(endIndex, 0, removed);
+          // Recalculer les ordres
+          const reordered = result.map((block, index) => ({
+            ...block,
+            order: index,
+          }));
 
-      // Recalculer les ordres
-      const reordered = result.map((block, index) => ({
-        ...block,
-        order: index,
-      }));
+          return { blocks: reordered };
+        }),
 
-      return { blocks: reordered };
-    }),
+      selectBlock: (id) => set({ selectedBlockId: id }),
 
-  selectBlock: (id) => set({ selectedBlockId: id }),
+      moveBlockUp: (id) =>
+        set((state) => {
+          const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
+          const index = sorted.findIndex(b => b.id === id);
+          if (index <= 0) return state;
 
-  moveBlockUp: (id) =>
-    set((state) => {
-      const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
-      const index = sorted.findIndex(b => b.id === id);
-      if (index <= 0) return state;
+          // Échanger les ordres
+          const newBlocks = sorted.map((block, i) => {
+            if (i === index) return { ...block, order: index - 1 };
+            if (i === index - 1) return { ...block, order: index };
+            return block;
+          });
 
-      // Échanger les ordres
-      const newBlocks = sorted.map((block, i) => {
-        if (i === index) return { ...block, order: index - 1 };
-        if (i === index - 1) return { ...block, order: index };
-        return block;
-      });
+          return { blocks: newBlocks };
+        }),
 
-      return { blocks: newBlocks };
-    }),
+      moveBlockDown: (id) =>
+        set((state) => {
+          const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
+          const index = sorted.findIndex(b => b.id === id);
+          if (index >= sorted.length - 1) return state;
 
-  moveBlockDown: (id) =>
-    set((state) => {
-      const sorted = [...state.blocks].sort((a, b) => a.order - b.order);
-      const index = sorted.findIndex(b => b.id === id);
-      if (index >= sorted.length - 1) return state;
+          // Échanger les ordres
+          const newBlocks = sorted.map((block, i) => {
+            if (i === index) return { ...block, order: index + 1 };
+            if (i === index + 1) return { ...block, order: index };
+            return block;
+          });
 
-      // Échanger les ordres
-      const newBlocks = sorted.map((block, i) => {
-        if (i === index) return { ...block, order: index + 1 };
-        if (i === index + 1) return { ...block, order: index };
-        return block;
-      });
+          return { blocks: newBlocks };
+        }),
 
-      return { blocks: newBlocks };
-    }),
+      calculateTotals: () => {
+        const { invoice } = get();
+        const subtotal = invoice.items
+          .filter((item) => item.selected !== false)
+          .reduce((sum, item) => sum + item.total, 0);
+        const tax = subtotal * (invoice.taxRate / 100);
+        const total = subtotal + tax;
+        return { subtotal, tax, total };
+      },
 
-  calculateTotals: () => {
-    const { invoice } = get();
-    const subtotal = invoice.items
-      .filter((item) => item.selected !== false)
-      .reduce((sum, item) => sum + item.total, 0);
-    const tax = subtotal * (invoice.taxRate / 100);
-    const total = subtotal + tax;
-    return { subtotal, tax, total };
-  },
+      navigateFromPreview: (target) => {
+        // Déterminer la section à ouvrir selon le type de cible
+        let section: EditorSection = "info";
 
-  navigateFromPreview: (target) => {
-    // Déterminer la section à ouvrir selon le type de cible
-    let section: EditorSection = "info";
-
-    switch (target.type) {
-      case 'logo':
-        section = "logo";
-        break;
-      case 'invoice-info':
-      case 'issuer':
-      case 'client':
-      case 'item':
-        section = "info";
-        break;
-      case 'items-table':
-        // Pour le tableau, content = info, layout = blocks
-        section = target.mode === 'layout' ? "blocks" : "info";
-        break;
-      case 'totals':
-        section = "blocks";
-        break;
-      case 'block': {
-        // Si c'est le bloc items en mode contenu, aller vers info
-        // Utiliser une variable locale pour satisfaire TypeScript
-        const blockTarget = target as { type: 'block'; blockId: string; mode?: 'content' | 'layout' };
-        if (blockTarget.mode === 'content') {
-          const block = get().blocks.find(b => b.id === blockTarget.blockId);
-          if (block?.type === 'invoice-items') {
+        switch (target.type) {
+          case 'logo':
+            section = "logo";
+            break;
+          case 'invoice-info':
+          case 'issuer':
+          case 'client':
+          case 'item':
             section = "info";
-            // Important : Transformer la target en 'items-table' pour que InfoPanel scrolle dessus
-            target = { type: 'items-table', mode: 'content' };
-          } else {
+            break;
+          case 'items-table':
+            // Pour le tableau, content = info, layout = blocks
+            section = target.mode === 'layout' ? "blocks" : "info";
+            break;
+          case 'totals':
             section = "blocks";
+            break;
+          case 'block': {
+            // Si c'est le bloc items en mode contenu, aller vers info
+            // Utiliser une variable locale pour satisfaire TypeScript
+            const blockTarget = target as { type: 'block'; blockId: string; mode?: 'content' | 'layout' };
+            if (blockTarget.mode === 'content') {
+              const block = get().blocks.find(b => b.id === blockTarget.blockId);
+              if (block?.type === 'invoice-items') {
+                section = "info";
+                // Important : Transformer la target en 'items-table' pour que InfoPanel scrolle dessus
+                target = { type: 'items-table', mode: 'content' };
+              } else {
+                section = "blocks";
+              }
+            } else {
+              section = "blocks";
+            }
+            break;
+          }
+        }
+
+        set({
+          activeSection: section,
+          focusTarget: target,
+          // Si c'est un bloc, le sélectionner
+          selectedBlockId: target.type === 'block' ? target.blockId :
+            target.type === 'items-table' && target.mode === 'layout' ?
+              get().blocks.find(b => b.type === 'invoice-items')?.id || null :
+              target.type === 'totals' ?
+                get().blocks.find(b => b.type === 'totals')?.id || null :
+                null
+        });
+      },
+
+      clearFocusTarget: () => set({ focusTarget: null }),
+
+      // Client management actions
+      setCurrentClientId: (clientId) => set({
+        currentClientId: clientId,
+        isLoadingClient: clientId !== null // Flag to skip auto-save until state is loaded
+      }),
+
+      loadClientInvoiceState: (invoiceData, blocksData, selectedTemplate) => {
+        // Logic to increment invoice number
+        let nextInvoiceNumber = invoiceData.invoiceNumber || defaultInvoice.invoiceNumber;
+
+        // Try to find a trailing number pattern (e.g. FAC-001 -> FAC-002)
+        const match = nextInvoiceNumber.match(/^(.*?)(\d+)$/);
+        if (match) {
+          const prefix = match[1];
+          const numberPart = match[2];
+          try {
+            const nextNumber = parseInt(numberPart, 10) + 1;
+            // Keep the same padding length (e.g. 001 -> 002)
+            const paddedNumber = nextNumber.toString().padStart(numberPart.length, '0');
+            nextInvoiceNumber = `${prefix}${paddedNumber}`;
+          } catch (e) {
+            // Keep original if parsing fails
           }
         } else {
-          section = "blocks";
+          // Try strict number parsing
+          const num = parseInt(nextInvoiceNumber, 10);
+          if (!isNaN(num)) {
+            nextInvoiceNumber = (num + 1).toString();
+          }
         }
-        break;
-      }
+
+        set({
+          invoice: {
+            ...defaultInvoice,
+            ...invoiceData,
+            // Force reset specific fields for a NEW invoice based on this client
+            date: new Date().toISOString(),
+            dueDate: "", // Clear due date to force user choice or recalculation
+            invoiceNumber: nextInvoiceNumber,
+          } as Invoice,
+          blocks: blocksData.length > 0 ? blocksData : defaultBlocks,
+          selectedTemplate: selectedTemplate || "classic",
+          isLoadingClient: false, // Done loading, allow auto-save
+        });
+      },
+    }),
+    {
+      name: 'invoice-storage',
+      partialize: (state) => ({
+        invoice: state.invoice,
+        blocks: state.blocks,
+        selectedTemplate: state.selectedTemplate,
+        activeSection: state.activeSection,
+        currentClientId: state.currentClientId,
+      }),
     }
+  )
+);
 
-    set({
-      activeSection: section,
-      focusTarget: target,
-      // Si c'est un bloc, le sélectionner
-      selectedBlockId: target.type === 'block' ? target.blockId :
-        target.type === 'items-table' && target.mode === 'layout' ?
-          get().blocks.find(b => b.type === 'invoice-items')?.id || null :
-          target.type === 'totals' ?
-            get().blocks.find(b => b.type === 'totals')?.id || null :
-            null
-    });
-  },
-
-  clearFocusTarget: () => set({ focusTarget: null }),
-}));

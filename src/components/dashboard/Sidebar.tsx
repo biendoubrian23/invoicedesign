@@ -3,7 +3,7 @@
 import { useInvoiceStore } from "@/store";
 import { useAuth } from "@/context/AuthContext";
 import { EditorSection } from "@/types/invoice";
-import { LayoutGrid, FileText, Palette, Image, PlusSquare, FolderOpen, Settings, LogOut, CreditCard } from "lucide-react";
+import { LayoutGrid, FileText, Palette, Image, PlusSquare, FolderOpen, Settings, LogOut, CreditCard, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const menuItems: { id: EditorSection; label: string; icon: React.ElementType }[] = [
@@ -12,6 +12,7 @@ const menuItems: { id: EditorSection; label: string; icon: React.ElementType }[]
   { id: "options", label: "Options", icon: Palette },
   { id: "logo", label: "Logo", icon: Image },
   { id: "blocks", label: "Ajouter un bloc", icon: PlusSquare },
+  { id: "clients", label: "Clients", icon: Users },
   { id: "stockage", label: "Stockage", icon: FolderOpen },
 ];
 

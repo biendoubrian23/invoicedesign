@@ -5,8 +5,10 @@ import { useInvoiceStore } from "@/store";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import InvoiceItemEditor from "./InvoiceItemEditor";
+import ClientCombobox from "./ClientCombobox";
+import { FieldWithVisibility, CustomFieldsEditor } from "./FieldWithVisibility";
 import { Plus } from "lucide-react";
-import { InvoiceItemsBlock } from "@/types/invoice";
+import { InvoiceItemsBlock, CustomField } from "@/types/invoice";
 
 const InfoPanel = () => {
   const { invoice, setInvoice, setIssuer, setClient, addItem, blocks, focusTarget, clearFocusTarget } =
@@ -46,10 +48,10 @@ const InfoPanel = () => {
     if (targetRef?.current) {
       // Scroll vers l'élément
       targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      
+
       // Ajouter une animation de mise en évidence
       targetRef.current.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2', 'bg-blue-50/50');
-      
+
       // Retirer l'animation après un délai
       const timer = setTimeout(() => {
         targetRef?.current?.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2', 'bg-blue-50/50');
@@ -137,35 +139,76 @@ const InfoPanel = () => {
             value={invoice.issuer.name}
             onChange={(e) => setIssuer({ name: e.target.value })}
           />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Adresse
-            </label>
-            <textarea
-              className="w-full px-4 py-2.5 text-sm border border-gray-300 bg-white transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
-              rows={2}
-              value={invoice.issuer.address}
-              onChange={(e) => setIssuer({ address: e.target.value })}
-            />
-          </div>
-          <Input
+          <FieldWithVisibility
+            label="Adresse"
+            value={invoice.issuer.address}
+            onChange={(value) => setIssuer({ address: value })}
+            visible={invoice.issuer.visibility?.address ?? true}
+            onToggleVisibility={() => setIssuer({
+              visibility: {
+                ...invoice.issuer.visibility,
+                address: !(invoice.issuer.visibility?.address ?? true)
+              }
+            })}
+            type="textarea"
+            rows={2}
+          />
+          <FieldWithVisibility
             label="SIRET"
             value={invoice.issuer.siret}
-            onChange={(e) => setIssuer({ siret: e.target.value })}
+            onChange={(value) => setIssuer({ siret: value })}
+            visible={invoice.issuer.visibility?.siret ?? true}
+            onToggleVisibility={() => setIssuer({
+              visibility: {
+                ...invoice.issuer.visibility,
+                siret: !(invoice.issuer.visibility?.siret ?? true)
+              }
+            })}
           />
           <div className="grid grid-cols-2 gap-4">
-            <Input
+            <FieldWithVisibility
               label="Email"
-              type="email"
               value={invoice.issuer.email}
-              onChange={(e) => setIssuer({ email: e.target.value })}
+              onChange={(value) => setIssuer({ email: value })}
+              visible={invoice.issuer.visibility?.email ?? true}
+              onToggleVisibility={() => setIssuer({
+                visibility: {
+                  ...invoice.issuer.visibility,
+                  email: !(invoice.issuer.visibility?.email ?? true)
+                }
+              })}
+              type="email"
             />
-            <Input
+            <FieldWithVisibility
               label="Telephone"
               value={invoice.issuer.phone}
-              onChange={(e) => setIssuer({ phone: e.target.value })}
+              onChange={(value) => setIssuer({ phone: value })}
+              visible={invoice.issuer.visibility?.phone ?? true}
+              onToggleVisibility={() => setIssuer({
+                visibility: {
+                  ...invoice.issuer.visibility,
+                  phone: !(invoice.issuer.visibility?.phone ?? true)
+                }
+              })}
             />
           </div>
+          <CustomFieldsEditor
+            fields={invoice.issuer.customFields || []}
+            onAdd={() => setIssuer({
+              customFields: [
+                ...(invoice.issuer.customFields || []),
+                { id: crypto.randomUUID(), label: '', value: '' }
+              ]
+            })}
+            onUpdate={(id, updates) => setIssuer({
+              customFields: (invoice.issuer.customFields || []).map(f =>
+                f.id === id ? { ...f, ...updates } : f
+              )
+            })}
+            onRemove={(id) => setIssuer({
+              customFields: (invoice.issuer.customFields || []).filter(f => f.id !== id)
+            })}
+          />
         </div>
       </section>
 
@@ -180,27 +223,53 @@ const InfoPanel = () => {
             value={invoice.client.name}
             onChange={(e) => setClient({ name: e.target.value })}
           />
-          <Input
-            label="Societe"
+          <ClientCombobox
             value={invoice.client.company}
-            onChange={(e) => setClient({ company: e.target.value })}
+            onChange={(value) => setClient({ company: value })}
           />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Adresse
-            </label>
-            <textarea
-              className="w-full px-4 py-2.5 text-sm border border-gray-300 bg-white transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
-              rows={2}
-              value={invoice.client.address}
-              onChange={(e) => setClient({ address: e.target.value })}
-            />
-          </div>
-          <Input
+          <FieldWithVisibility
+            label="Adresse"
+            value={invoice.client.address}
+            onChange={(value) => setClient({ address: value })}
+            visible={invoice.client.visibility?.address ?? true}
+            onToggleVisibility={() => setClient({
+              visibility: {
+                ...invoice.client.visibility,
+                address: !(invoice.client.visibility?.address ?? true)
+              }
+            })}
+            type="textarea"
+            rows={2}
+          />
+          <FieldWithVisibility
             label="Email"
-            type="email"
             value={invoice.client.email}
-            onChange={(e) => setClient({ email: e.target.value })}
+            onChange={(value) => setClient({ email: value })}
+            visible={invoice.client.visibility?.email ?? true}
+            onToggleVisibility={() => setClient({
+              visibility: {
+                ...invoice.client.visibility,
+                email: !(invoice.client.visibility?.email ?? true)
+              }
+            })}
+            type="email"
+          />
+          <CustomFieldsEditor
+            fields={invoice.client.customFields || []}
+            onAdd={() => setClient({
+              customFields: [
+                ...(invoice.client.customFields || []),
+                { id: crypto.randomUUID(), label: '', value: '' }
+              ]
+            })}
+            onUpdate={(id, updates) => setClient({
+              customFields: (invoice.client.customFields || []).map(f =>
+                f.id === id ? { ...f, ...updates } : f
+              )
+            })}
+            onRemove={(id) => setClient({
+              customFields: (invoice.client.customFields || []).filter(f => f.id !== id)
+            })}
           />
         </div>
       </section>
@@ -212,9 +281,9 @@ const InfoPanel = () => {
         </h3>
         <div className="space-y-4">
           {invoice.items.map((item, index) => (
-            <InvoiceItemEditor 
-              key={item.id} 
-              item={item} 
+            <InvoiceItemEditor
+              key={item.id}
+              item={item}
               index={index}
               customColumns={customColumns}
             />

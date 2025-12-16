@@ -4,6 +4,7 @@ import { useState, useCallback, RefObject } from 'react';
 import { exportToPDF, exportToImage } from '@/lib/pdfExport';
 import { uploadExportedFile } from '@/services/invoiceService';
 import { useAuth } from '@/context/AuthContext';
+import { useInvoiceStore } from '@/store';
 
 interface UseExportOptions {
   filename?: string;
@@ -24,8 +25,14 @@ export function useExport(
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { invoice, currentClientId } = useInvoiceStore();
 
   const { filename = 'facture', format = 'A4' } = options;
+
+  // Get client folder name from invoice (company name)
+  const clientFolder = currentClientId && invoice.client?.company
+    ? invoice.client.company
+    : undefined;
 
   const exportPDF = useCallback(async () => {
     if (!elementRef.current) {
@@ -47,7 +54,7 @@ export function useExport(
       if (user && blob) {
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
         const storageFilename = `${filename}_${timestamp}`;
-        await uploadExportedFile(blob, storageFilename, 'pdf');
+        await uploadExportedFile(blob, storageFilename, 'pdf', clientFolder);
       }
     } catch (err) {
       setError('Erreur lors de l\'export PDF');
@@ -55,7 +62,7 @@ export function useExport(
     } finally {
       setIsExporting(false);
     }
-  }, [elementRef, filename, format, user]);
+  }, [elementRef, filename, format, user, clientFolder]);
 
   const exportImage = useCallback(async () => {
     if (!elementRef.current) {
@@ -74,7 +81,7 @@ export function useExport(
       if (user && blob) {
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
         const storageFilename = `${filename}_${timestamp}`;
-        await uploadExportedFile(blob, storageFilename, 'png');
+        await uploadExportedFile(blob, storageFilename, 'png', clientFolder);
       }
     } catch (err) {
       setError('Erreur lors de l\'export image');
@@ -82,7 +89,7 @@ export function useExport(
     } finally {
       setIsExporting(false);
     }
-  }, [elementRef, filename, user]);
+  }, [elementRef, filename, user, clientFolder]);
 
   return {
     isExporting,

@@ -350,10 +350,23 @@ const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ isMobi
                   </h2>
                   <div className="text-sm text-gray-700 space-y-1">
                     <p className="font-semibold">{invoice.issuer.name}</p>
-                    <p className="whitespace-pre-line">{invoice.issuer.address}</p>
-                    <p>SIRET : {invoice.issuer.siret}</p>
-                    <p>{invoice.issuer.email}</p>
-                    <p>{invoice.issuer.phone}</p>
+                    {(invoice.issuer.visibility?.address ?? true) && (
+                      <p className="whitespace-pre-line">{invoice.issuer.address}</p>
+                    )}
+                    {(invoice.issuer.visibility?.siret ?? true) && (
+                      <p>SIRET : {invoice.issuer.siret}</p>
+                    )}
+                    {(invoice.issuer.visibility?.email ?? true) && (
+                      <p>{invoice.issuer.email}</p>
+                    )}
+                    {(invoice.issuer.visibility?.phone ?? true) && (
+                      <p>{invoice.issuer.phone}</p>
+                    )}
+                    {invoice.issuer.customFields?.map((field) => (
+                      field.label && field.value && (
+                        <p key={field.id}>{field.label} : {field.value}</p>
+                      )
+                    ))}
                   </div>
                 </ClickableZone>
 
@@ -374,9 +387,20 @@ const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ isMobi
                   </h2>
                   <div className="text-sm text-gray-700 space-y-1">
                     <p className="font-semibold">{invoice.client.name}</p>
-                    <p>{invoice.client.company}</p>
-                    <p className="whitespace-pre-line">{invoice.client.address}</p>
-                    <p>{invoice.client.email}</p>
+                    {(invoice.client.visibility?.company ?? true) && (
+                      <p>{invoice.client.company}</p>
+                    )}
+                    {(invoice.client.visibility?.address ?? true) && (
+                      <p className="whitespace-pre-line">{invoice.client.address}</p>
+                    )}
+                    {(invoice.client.visibility?.email ?? true) && (
+                      <p>{invoice.client.email}</p>
+                    )}
+                    {invoice.client.customFields?.map((field) => (
+                      field.label && field.value && (
+                        <p key={field.id}>{field.label} : {field.value}</p>
+                      )
+                    ))}
                   </div>
                 </ClickableZone>
               </div>

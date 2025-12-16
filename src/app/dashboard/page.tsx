@@ -6,6 +6,7 @@ import { DashboardHeader, Sidebar } from "@/components/dashboard";
 import { EditPanel, InvoicePreview, MobileDashboard } from "@/components/editor";
 import { useInvoiceStore } from "@/store";
 import { useExport } from "@/hooks/useExport";
+import { useAutoSaveClientState } from "@/hooks/useAutoSave";
 import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/ui/Button";
 import { Download, Image, Loader2, X } from "lucide-react";
@@ -21,6 +22,9 @@ export default function DashboardPage() {
   const { total } = calculateTotals();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Auto-save client state when changes occur
+  useAutoSaveClientState();
 
   // File preview state
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);

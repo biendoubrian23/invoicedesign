@@ -30,12 +30,33 @@ export interface InvoiceItem {
   // - 'no-prices': Les sous-items sont juste descriptifs (pas de prix)
 }
 
+export interface CompanyFieldVisibility {
+  address?: boolean;
+  siret?: boolean;
+  email?: boolean;
+  phone?: boolean;
+}
+
+export interface ClientFieldVisibility {
+  company?: boolean;
+  address?: boolean;
+  email?: boolean;
+}
+
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+}
+
 export interface CompanyInfo {
   name: string;
   address: string;
   siret: string;
   email: string;
   phone: string;
+  visibility?: CompanyFieldVisibility;
+  customFields?: CustomField[];
 }
 
 export interface ClientInfo {
@@ -43,6 +64,8 @@ export interface ClientInfo {
   company: string;
   address: string;
   email: string;
+  visibility?: ClientFieldVisibility;
+  customFields?: CustomField[];
 }
 
 export interface InvoiceStyling {
@@ -91,7 +114,8 @@ export type EditorSection =
   | "blocks"
   | "stockage"
   | "settings"
-  | "pricing";
+  | "pricing"
+  | "clients";
 
 // ============================================
 // BLOCS MODULAIRES

@@ -105,7 +105,8 @@ export async function deleteInvoice(invoiceId: string): Promise<{ error: Error |
 export async function uploadExportedFile(
     file: Blob,
     filename: string,
-    type: 'pdf' | 'png'
+    type: 'pdf' | 'png',
+    clientFolder?: string
 ): Promise<{ url: string | null; error: Error | null }> {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -115,7 +116,12 @@ export async function uploadExportedFile(
 
     const extension = type === 'pdf' ? 'pdf' : 'png';
     const contentType = type === 'pdf' ? 'application/pdf' : 'image/png';
-    const filePath = `${user.id}/${filename}.${extension}`;
+
+    // If clientFolder is provided, use it as subfolder
+    const basePath = clientFolder
+        ? `${user.id}/${sanitizeFolderName(clientFolder)}`
+        : user.id;
+    const filePath = `${basePath}/${filename}.${extension}`;
 
     const { error } = await supabase.storage
         .from('Facture')
@@ -133,6 +139,16 @@ export async function uploadExportedFile(
         .getPublicUrl(filePath);
 
     return { url: publicUrl, error: null };
+}
+
+// Helper function to sanitize folder names
+function sanitizeFolderName(name: string): string {
+    return name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9-_]/g, '_')
+        .replace(/_+/g, '_')
+        .substring(0, 50);
 }
 
 export async function listStoredFiles(): Promise<{ data: StoredFile[]; error: Error | null }> {
@@ -167,6 +183,94 @@ export async function listStoredFiles(): Promise<{ data: StoredFile[]; error: Er
     };
 }
 
+// Extended type for file with folder info
+export interface StoredFileWithFolder extends StoredFile {
+    folderPath?: string;
+}
+
+export interface StorageFolder {
+    name: string;
+    files: StoredFile[];
+}
+
+/**
+ * List stored files with real folder structure from Supabase Storage
+ */
+export async function listStoredFilesWithFolders(): Promise<{
+    rootFiles: StoredFile[];
+    folders: StorageFolder[];
+    error: Error | null
+}> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { rootFiles: [], folders: [], error: new Error('User not authenticated') };
+    }
+
+    // List root level items (files and folders)
+    const { data: rootItems, error } = await supabase.storage
+        .from('Facture')
+        .list(user.id, {
+            sortBy: { column: 'created_at', order: 'desc' },
+        });
+
+    if (error) {
+        return { rootFiles: [], folders: [], error: error as Error };
+    }
+
+    const rootFiles: StoredFile[] = [];
+    const folders: StorageFolder[] = [];
+
+    for (const item of (rootItems || [])) {
+        // Items without metadata.mimetype are folders in Supabase Storage
+        if (!item.metadata?.mimetype) {
+            // This is a folder - list its contents
+            const { data: folderContents } = await supabase.storage
+                .from('Facture')
+                .list(`${user.id}/${item.name}`, {
+                    sortBy: { column: 'created_at', order: 'desc' },
+                });
+
+            const folderFiles = (folderContents || [])
+                .filter((f: { name: string }) => !f.name.startsWith('.')) // Exclude hidden files like .folder
+                .map((file: { id: string; name: string; created_at: string; updated_at: string; metadata?: { size?: number; mimetype?: string } }) => ({
+                    id: file.id,
+                    name: `${item.name}/${file.name}`,
+                    created_at: file.created_at,
+                    updated_at: file.updated_at,
+                    metadata: {
+                        size: file.metadata?.size || 0,
+                        mimetype: file.metadata?.mimetype || '',
+                    },
+                })) as StoredFile[];
+
+            if (folderFiles.length > 0 || item.name) {
+                folders.push({
+                    name: item.name,
+                    files: folderFiles.map(f => ({
+                        ...f,
+                        name: f.name.split('/').pop() || f.name // Just the filename for display
+                    }))
+                });
+            }
+        } else {
+            // Regular file at root
+            rootFiles.push({
+                id: item.id,
+                name: item.name,
+                created_at: item.created_at,
+                updated_at: item.updated_at,
+                metadata: {
+                    size: item.metadata?.size || 0,
+                    mimetype: item.metadata?.mimetype || '',
+                },
+            });
+        }
+    }
+
+    return { rootFiles, folders, error: null };
+}
+
 export async function getFileUrl(filename: string): Promise<string> {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -193,4 +297,40 @@ export async function deleteStoredFile(filename: string): Promise<{ error: Error
         .remove([`${user.id}/${filename}`]);
 
     return { error: error as Error | null };
+}
+
+/**
+ * Delete a client folder and all its contents
+ */
+export async function deleteClientFolder(folderName: string): Promise<{ error: Error | null }> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: new Error('User not authenticated') };
+    }
+
+    const folderPath = `${user.id}/${folderName}`;
+
+    // List all files in the folder
+    const { data: files, error: listError } = await supabase.storage
+        .from('Facture')
+        .list(folderPath);
+
+    if (listError) {
+        return { error: listError };
+    }
+
+    if (files && files.length > 0) {
+        // Delete all files in the folder
+        const filePaths = files.map((f: { name: string }) => `${folderPath}/${f.name}`);
+        const { error: removeError } = await supabase.storage
+            .from('Facture')
+            .remove(filePaths);
+
+        if (removeError) {
+            return { error: removeError };
+        }
+    }
+
+    return { error: null };
 }

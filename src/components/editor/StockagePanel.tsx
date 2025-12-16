@@ -2,7 +2,9 @@
 
 import { useState, useEffect, DragEvent } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { listStoredFiles, deleteStoredFile, getFileUrl, StoredFile } from '@/services/invoiceService';
+import { listStoredFilesWithFolders, deleteStoredFile, getFileUrl, StoredFile, StorageFolder, deleteClientFolder } from '@/services/invoiceService';
+import { getClientByName, deleteClient, Client } from '@/services/clientService';
+import DeleteConfirmModal from '@/components/ui/DeleteConfirmModal';
 import { FileText, Trash2, Download, RefreshCw, FolderOpen, FolderPlus, Folder, X, Eye, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface FolderItem {
@@ -32,6 +34,11 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
     const [draggedFile, setDraggedFile] = useState<StoredFile | null>(null);
     const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
 
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<{ name: string, type: 'file' | 'folder', client?: Client } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const loadFiles = async () => {
         if (!user) {
             setLoading(false);
@@ -41,28 +48,50 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
         setLoading(true);
         setError(null);
 
-        const { data, error } = await listStoredFiles();
+        const { rootFiles, folders: realFolders, error } = await listStoredFilesWithFolders();
 
         if (error) {
             setError('Erreur lors du chargement des fichiers');
         } else {
-            // Load folders from localStorage
+            // Load localStorage virtual folders
             const savedFolders = localStorage.getItem(`folders_${user.id}`);
-            if (savedFolders) {
-                const folderData = JSON.parse(savedFolders) as { name: string; fileNames: string[]; isOpen?: boolean }[];
-                const foldersWithFiles = folderData.map(folder => ({
-                    name: folder.name,
-                    files: data.filter(f => folder.fileNames.includes(f.name)),
-                    isOpen: folder.isOpen ?? false
-                }));
-                setFolders(foldersWithFiles);
+            let localFolders: { name: string; fileNames: string[]; isOpen?: boolean }[] = [];
 
-                // Filter out files that are in folders from root
-                const filesInFolders = folderData.flatMap(f => f.fileNames);
-                setFiles(data.filter(f => !filesInFolders.includes(f.name)));
-            } else {
-                setFiles(data);
+            if (savedFolders) {
+                localFolders = JSON.parse(savedFolders);
             }
+
+            // Merge real Supabase folders with localStorage folders
+            const allFolderNames = new Set<string>();
+
+            // Add real folders from Supabase
+            const mergedFolders: FolderItem[] = realFolders.map((folder: StorageFolder) => {
+                allFolderNames.add(folder.name);
+                const localFolder = localFolders.find(lf => lf.name === folder.name);
+                return {
+                    name: folder.name,
+                    files: folder.files,
+                    isOpen: localFolder?.isOpen ?? false
+                };
+            });
+
+            // Add localStorage-only folders that don't exist in Supabase
+            for (const localFolder of localFolders) {
+                if (!allFolderNames.has(localFolder.name)) {
+                    const filesInFolder = rootFiles.filter((f: StoredFile) => localFolder.fileNames.includes(f.name));
+                    mergedFolders.push({
+                        name: localFolder.name,
+                        files: filesInFolder,
+                        isOpen: localFolder.isOpen ?? false
+                    });
+                }
+            }
+
+            setFolders(mergedFolders);
+
+            // Filter out root files that are in localStorage folders
+            const filesInLocalFolders = localFolders.flatMap(f => f.fileNames);
+            setFiles(rootFiles.filter((f: StoredFile) => !filesInLocalFolders.includes(f.name)));
         }
 
         setLoading(false);
@@ -90,15 +119,12 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
         saveFoldersToStorage(newFolders);
     };
 
-    const handleDelete = async (filename: string) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) return;
-
-        const { error } = await deleteStoredFile(filename);
-        if (error) {
-            setError('Erreur lors de la suppression');
-        } else {
-            loadFiles();
-        }
+    const handleDelete = (filename: string) => {
+        setItemToDelete({
+            name: filename,
+            type: 'file'
+        });
+        setDeleteModalOpen(true);
     };
 
     const handleDownload = async (filename: string) => {
@@ -108,8 +134,9 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
         }
     };
 
-    const handlePreview = async (file: StoredFile) => {
-        const url = await getFileUrl(file.name);
+    const handlePreview = async (file: StoredFile, folderName?: string) => {
+        const fullPath = folderName ? `${folderName}/${file.name}` : file.name;
+        const url = await getFileUrl(fullPath);
         if (url && onPreviewFile) {
             const type = file.name.endsWith('.pdf') ? 'pdf' : 'image';
             onPreviewFile({ url, name: file.name, type });
@@ -134,17 +161,50 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
         setShowNewFolderInput(false);
     };
 
-    const handleDeleteFolder = (folderName: string) => {
-        if (!confirm(`Supprimer le dossier "${folderName}" ? Les fichiers seront remis à la racine.`)) return;
+    const handleDeleteFolder = async (folderName: string) => {
+        // Check for associated client
+        const { data: client } = await getClientByName(folderName);
 
-        const folder = folders.find(f => f.name === folderName);
-        if (folder) {
-            setFiles(prev => [...prev, ...folder.files]);
+        setItemToDelete({
+            name: folderName,
+            type: 'folder',
+            client: client || undefined
+        });
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!itemToDelete) return;
+        setIsDeleting(true);
+
+        try {
+            if (itemToDelete.type === 'folder' && itemToDelete.client) {
+                // Delete client cascade (Client + Folder + Files)
+                const { error } = await deleteClient(itemToDelete.client.id);
+                if (error) throw new Error(error);
+            } else if (itemToDelete.type === 'folder') {
+                // Delete folder only
+                const { error } = await deleteClientFolder(itemToDelete.name);
+                if (error) throw new Error(error.message);
+
+                // Update local virtual folders
+                const newFolders = folders.filter(f => f.name !== itemToDelete.name);
+                setFolders(newFolders);
+                saveFoldersToStorage(newFolders);
+            } else {
+                // Delete file
+                const { error } = await deleteStoredFile(itemToDelete.name);
+                if (error) throw new Error(error.message);
+            }
+
+            await loadFiles();
+        } catch (err: any) {
+            setError(err.message || 'Erreur lors de la suppression');
+        } finally {
+            setIsDeleting(false);
+            setDeleteModalOpen(false);
+            setItemToDelete(null);
         }
-
-        const newFolders = folders.filter(f => f.name !== folderName);
-        setFolders(newFolders);
-        saveFoldersToStorage(newFolders);
     };
 
     // Drag and Drop handlers
@@ -224,46 +284,50 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
     }
 
     // Compact file item for inside folders
-    const CompactFileItem = ({ file }: { file: StoredFile }) => (
-        <div
-            draggable={true}
-            onDragStart={(e) => handleDragStart(e, file)}
-            onDragEnd={handleDragEnd}
-            className={`flex items-center gap-2 p-2 bg-white rounded border border-gray-100 hover:border-gray-300 transition-colors cursor-grab active:cursor-grabbing ${draggedFile?.name === file.name ? 'opacity-50 ring-2 ring-blue-400' : ''
-                }`}
-            onClick={() => handlePreview(file)}
-        >
-            <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-900 truncate">{file.name}</p>
-                <p className="text-[10px] text-gray-400">{formatFileSize(file.metadata.size)} • {formatDate(file.created_at)}</p>
+    const CompactFileItem = ({ file, folderName }: { file: StoredFile, folderName?: string }) => {
+        const fullPath = folderName ? `${folderName}/${file.name}` : file.name;
+
+        return (
+            <div
+                draggable={true}
+                onDragStart={(e) => handleDragStart(e, file)}
+                onDragEnd={handleDragEnd}
+                className={`flex items-center gap-2 p-2 bg-white rounded border border-gray-100 hover:border-gray-300 transition-colors cursor-grab active:cursor-grabbing ${draggedFile?.name === file.name ? 'opacity-50 ring-2 ring-blue-400' : ''
+                    }`}
+                onClick={() => handlePreview(file, folderName)}
+            >
+                <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-900 truncate">{file.name}</p>
+                    <p className="text-[10px] text-gray-400">{formatFileSize(file.metadata.size)} • {formatDate(file.created_at)}</p>
+                </div>
+                {/* Buttons on the right */}
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handlePreview(file, folderName); }}
+                        className="p-1 text-[10px] text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors flex items-center gap-0.5"
+                        title="Prévisualiser"
+                    >
+                        <Eye className="w-3 h-3" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleDownload(fullPath); }}
+                        className="p-1 text-[10px] text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex items-center gap-0.5"
+                        title="Télécharger"
+                    >
+                        <Download className="w-3 h-3" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(fullPath); }}
+                        className="p-1 text-[10px] text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex items-center gap-0.5"
+                        title="Supprimer"
+                    >
+                        <Trash2 className="w-3 h-3" />
+                    </button>
+                </div>
             </div>
-            {/* Buttons on the right */}
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-                <button
-                    onClick={(e) => { e.stopPropagation(); handlePreview(file); }}
-                    className="p-1 text-[10px] text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors flex items-center gap-0.5"
-                    title="Prévisualiser"
-                >
-                    <Eye className="w-3 h-3" />
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); handleDownload(file.name); }}
-                    className="p-1 text-[10px] text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex items-center gap-0.5"
-                    title="Télécharger"
-                >
-                    <Download className="w-3 h-3" />
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete(file.name); }}
-                    className="p-1 text-[10px] text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex items-center gap-0.5"
-                    title="Supprimer"
-                >
-                    <Trash2 className="w-3 h-3" />
-                </button>
-            </div>
-        </div>
-    );
+        );
+    };
 
     // Root file item (larger)
     const RootFileItem = ({ file }: { file: StoredFile }) => (
@@ -437,7 +501,7 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
                                             {folder.files.length > 0 ? (
                                                 <div className="space-y-2 pt-2">
                                                     {folder.files.map((file) => (
-                                                        <CompactFileItem key={file.id} file={file} />
+                                                        <CompactFileItem key={file.id} file={file} folderName={folder.name} />
                                                     ))}
                                                 </div>
                                             ) : (
@@ -474,6 +538,34 @@ const StockagePanel = ({ onPreviewFile }: StockagePanelProps) => {
                     </p>
                 </div>
             )}
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => { setDeleteModalOpen(false); setItemToDelete(null); }}
+                onConfirm={handleConfirmDelete}
+                clientName={itemToDelete?.client?.name || itemToDelete?.name || ''}
+                isDeleting={isDeleting}
+                title={itemToDelete?.type === 'folder' && itemToDelete?.client ? "Supprimer ce client ?" : `Supprimer ce ${itemToDelete?.type === 'folder' ? 'dossier' : 'fichier'} ?`}
+                customWarning={
+                    itemToDelete?.type === 'folder' && !itemToDelete?.client ? (
+                        <div className="bg-amber-50 border border-amber-200 p-4">
+                            <p className="text-sm text-amber-800">
+                                <strong>Attention !</strong> Cette action est irréversible et va supprimer :
+                            </p>
+                            <ul className="mt-2 text-sm text-amber-700 list-disc list-inside space-y-1">
+                                <li>Le dossier <strong>{itemToDelete.name}</strong></li>
+                                <li>Tous les fichiers contenus dans ce dossier</li>
+                            </ul>
+                        </div>
+                    ) : itemToDelete?.type === 'file' ? (
+                        <div className="bg-amber-50 border border-amber-200 p-4">
+                            <p className="text-sm text-amber-800">
+                                Action irréversible. Le fichier <strong>{itemToDelete.name}</strong> sera définitivement supprimé.
+                            </p>
+                        </div>
+                    ) : undefined
+                }
+            />
         </div>
     );
 };

@@ -145,3 +145,87 @@ CREATE POLICY "Users can delete own invoices"
 CREATE POLICY "Public can read invoices"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'Facture');
+
+-- =============================================
+-- CLIENTS TABLE
+-- =============================================
+CREATE TABLE IF NOT EXISTS public.clients (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  address TEXT,
+  city TEXT,
+  postal_code TEXT,
+  email TEXT,
+  phone TEXT,
+  siret TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, name)
+);
+
+-- RLS Policies for clients
+ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own clients"
+  ON public.clients FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own clients"
+  ON public.clients FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own clients"
+  ON public.clients FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own clients"
+  ON public.clients FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- =============================================
+-- CLIENT INVOICE STATES TABLE
+-- Stores the FULL invoice state for each client
+-- =============================================
+CREATE TABLE IF NOT EXISTS public.client_invoice_states (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  client_id UUID REFERENCES public.clients(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  
+  -- Full invoice JSON (items, issuer, client info, etc.)
+  invoice_data JSONB NOT NULL DEFAULT '{}',
+  
+  -- Full blocks JSON (all block configurations)
+  blocks_data JSONB NOT NULL DEFAULT '[]',
+  
+  -- Selected template
+  selected_template TEXT DEFAULT 'classic',
+  
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(client_id)
+);
+
+-- RLS Policies for client_invoice_states
+ALTER TABLE public.client_invoice_states ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own client states"
+  ON public.client_invoice_states FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own client states"
+  ON public.client_invoice_states FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own client states"
+  ON public.client_invoice_states FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own client states"
+  ON public.client_invoice_states FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Indexes for faster lookups
+CREATE INDEX IF NOT EXISTS idx_clients_user_id ON public.clients(user_id);
+CREATE INDEX IF NOT EXISTS idx_client_states_client_id ON public.client_invoice_states(client_id);
