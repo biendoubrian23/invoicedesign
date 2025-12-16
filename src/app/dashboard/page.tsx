@@ -1,22 +1,64 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DashboardHeader, Sidebar } from "@/components/dashboard";
 import { EditPanel, InvoicePreview, MobileDashboard } from "@/components/editor";
 import { useInvoiceStore } from "@/store";
 import { useExport } from "@/hooks/useExport";
+import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/ui/Button";
-import { Download, Image, Loader2 } from "lucide-react";
+import { Download, Image, Loader2, X } from "lucide-react";
+
+interface PreviewFile {
+  url: string;
+  name: string;
+  type: 'pdf' | 'image';
+}
 
 export default function DashboardPage() {
-  const { invoice, calculateTotals } = useInvoiceStore();
+  const { invoice, calculateTotals, activeSection } = useInvoiceStore();
   const { total } = calculateTotals();
-  
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  // File preview state
+  const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
+
   const previewRef = useRef<HTMLDivElement>(null);
   const { isExporting, exportPDF, exportImage, error } = useExport(previewRef, {
     filename: `facture-${invoice.invoiceNumber}`,
     format: 'A4',
   });
+
+  // Auth-protected export handlers
+  const handleExportPDF = useCallback(() => {
+    if (!user) {
+      router.push('/auth/login?redirect=/dashboard');
+      return;
+    }
+    exportPDF();
+  }, [user, router, exportPDF]);
+
+  const handleExportImage = useCallback(() => {
+    if (!user) {
+      router.push('/auth/login?redirect=/dashboard');
+      return;
+    }
+    exportImage();
+  }, [user, router, exportImage]);
+
+  // Handle file preview from Stockage
+  const handlePreviewFile = useCallback((file: PreviewFile | null) => {
+    setPreviewFile(file);
+  }, []);
+
+  // Clear preview when changing sections
+  useEffect(() => {
+    if (activeSection !== 'stockage') {
+      setPreviewFile(null);
+    }
+  }, [activeSection]);
 
   // Détection mobile/tablette - mode mobile si écran < 1024px (pas assez d'espace pour la prévisualisation)
   const [isMobile, setIsMobile] = useState(false);
@@ -27,7 +69,7 @@ export default function DashboardPage() {
       // Passer en mode mobile si largeur < 1024px pour éviter que la prévisualisation soit coupée
       setIsMobile(window.innerWidth < 1024);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -36,7 +78,7 @@ export default function DashboardPage() {
   // Splitter states
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [editPanelWidth, setEditPanelWidth] = useState(420);
-  
+
   // Sidebar splitter
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
   const sidebarStartX = useRef(0);
@@ -104,7 +146,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div 
+    <div
       className="h-screen flex flex-col bg-gray-50"
       onMouseMove={(e) => handleMouseMove(e.nativeEvent)}
       onMouseUp={handleMouseUp}
@@ -141,18 +183,18 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={exportImage}
+                onClick={handleExportImage}
                 disabled={isExporting}
               >
                 <Image className="w-4 h-4 mr-2" />
                 Exporter PNG
               </Button>
-              <Button 
-                size="sm" 
-                onClick={exportPDF}
+              <Button
+                size="sm"
+                onClick={handleExportPDF}
                 disabled={isExporting}
               >
                 {isExporting ? (
@@ -169,7 +211,7 @@ export default function DashboardPage() {
           <div className="flex-1 flex overflow-hidden">
             {/* Edit Panel */}
             <div style={{ width: editPanelWidth }} className="overflow-hidden flex-shrink-0">
-              <EditPanel />
+              <EditPanel onPreviewFile={handlePreviewFile} />
             </div>
 
             {/* Edit Panel Splitter */}
@@ -179,8 +221,46 @@ export default function DashboardPage() {
             />
 
             {/* Preview Panel */}
-            <div className="flex-1 overflow-hidden">
-              <InvoicePreview ref={previewRef} />
+            <div className="flex-1 overflow-hidden relative">
+              {previewFile ? (
+                /* File Preview Mode */
+                <div className="h-full flex flex-col bg-gray-100">
+                  {/* Preview Header */}
+                  <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+                    <span className="text-sm font-medium text-gray-900 truncate">
+                      {previewFile.name}
+                    </span>
+                    <button
+                      onClick={() => setPreviewFile(null)}
+                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Fermer l'aperçu"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {/* File Display */}
+                  <div className="flex-1 overflow-auto p-4">
+                    {previewFile.type === 'pdf' ? (
+                      <iframe
+                        src={previewFile.url}
+                        className="w-full h-full min-h-[800px] bg-white rounded-lg shadow-lg"
+                        title={previewFile.name}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <img
+                          src={previewFile.url}
+                          alt={previewFile.name}
+                          className="max-w-full max-h-full object-contain bg-white rounded-lg shadow-lg"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* Normal Invoice Preview */
+                <InvoicePreview ref={previewRef} />
+              )}
             </div>
           </div>
         </div>

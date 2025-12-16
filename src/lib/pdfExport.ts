@@ -127,7 +127,7 @@ function generateExportHTML(element: HTMLElement): string {
 export async function exportToPDF(
   element: HTMLElement,
   options: ExportOptions = {}
-): Promise<void> {
+): Promise<Blob> {
   const {
     filename = 'facture',
     format = 'A4',
@@ -169,6 +169,9 @@ export async function exportToPDF(
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    // Return blob for storage upload
+    return blob;
   } catch (error) {
     console.error('Erreur export PDF:', error);
     throw error;
@@ -182,7 +185,7 @@ export async function exportToImage(
   element: HTMLElement,
   filename: string = 'facture',
   options: ImageExportOptions = {}
-): Promise<void> {
+): Promise<Blob> {
   const {
     type = 'png',
     quality = 100,
@@ -224,6 +227,9 @@ export async function exportToImage(
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    // Return blob for storage upload
+    return blob;
   } catch (error) {
     console.error('Erreur export image:', error);
     throw error;

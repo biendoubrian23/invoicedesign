@@ -5,9 +5,22 @@ import InfoPanel from "./InfoPanel";
 import OptionsPanel from "./OptionsPanel";
 import LogoPanel from "./LogoPanel";
 import BlocksPanel from "./BlocksPanel";
+import StockagePanel from "./StockagePanel";
+import SettingsPanel from "./SettingsPanel";
+import PricingPanel from "./PricingPanel";
 import { TemplateGrid } from "@/components/dashboard";
 
-const EditPanel = () => {
+interface PreviewFile {
+  url: string;
+  name: string;
+  type: 'pdf' | 'image';
+}
+
+interface EditPanelProps {
+  onPreviewFile?: (file: PreviewFile | null) => void;
+}
+
+const EditPanel = ({ onPreviewFile }: EditPanelProps) => {
   const { activeSection } = useInvoiceStore();
 
   const renderPanel = () => {
@@ -22,6 +35,12 @@ const EditPanel = () => {
         return <LogoPanel />;
       case "blocks":
         return <BlocksPanel />;
+      case "stockage":
+        return <StockagePanel onPreviewFile={onPreviewFile} />;
+      case "settings":
+        return <SettingsPanel />;
+      case "pricing":
+        return <PricingPanel />;
       default:
         return <InfoPanel />;
     }

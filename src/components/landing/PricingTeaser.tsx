@@ -8,7 +8,7 @@ import { Check, ArrowRight } from "lucide-react";
 const plans = [
   {
     name: "Standard",
-    price: "5.99",
+    price: "3.99",
     period: "€/mois",
     description: "Pour les independants et PME",
     features: [
@@ -24,7 +24,7 @@ const plans = [
   },
   {
     name: "Premium",
-    price: "9.99",
+    price: "6.99",
     period: "€/mois",
     description: "Pour les entreprises exigeantes",
     features: [
@@ -61,8 +61,8 @@ const PricingTeaser = () => {
             <Card
               key={plan.name}
               className={`relative opacity-0 animate-fade-in-up ${plan.popular
-                  ? "border-2 border-blue-500 shadow-lg"
-                  : "border border-gray-200"
+                ? "border-2 border-blue-500 shadow-lg"
+                : "border border-gray-200"
                 }`}
               style={{ animationDelay: `${index * 0.1}s`, animationFillMode: "forwards" }}
               padding="lg"

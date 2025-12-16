@@ -88,7 +88,10 @@ export type EditorSection =
   | "info"
   | "options"
   | "logo"
-  | "blocks";
+  | "blocks"
+  | "stockage"
+  | "settings"
+  | "pricing";
 
 // ============================================
 // BLOCS MODULAIRES

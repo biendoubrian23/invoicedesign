@@ -177,6 +177,7 @@ const fontVariables = [
   kaushanScript.variable,
   tangerine.variable,
 ].join(' ');
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: "InvoiceDesign - Creez des factures professionnelles",
@@ -197,8 +198,11 @@ export default function RootLayout({
   return (
     <html lang="fr" className="scroll-smooth">
       <body className={`${fontVariables} font-sans antialiased bg-white`}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
 }
+

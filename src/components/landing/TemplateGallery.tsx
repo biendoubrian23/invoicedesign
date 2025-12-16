@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Card from "@/components/ui/Card";
 
 const templates = [
@@ -9,14 +10,14 @@ const templates = [
     name: "Classic",
     description: "Template traditionnel et professionnel",
     color: "#2563eb",
-    previewStyle: "modern", // Blue header style
+    image: "/model1.png",
   },
   {
     id: "elegant",
     name: "Elegant",
     description: "Design epure et minimaliste",
     color: "#000000",
-    previewStyle: "minimal", // Black/white minimal style
+    image: "/model2.jpeg",
   },
 ];
 
@@ -47,62 +48,15 @@ const TemplateGallery = () => {
               onClick={() => setActiveTemplate(template.id)}
             >
               <Card hover className="overflow-hidden">
-                {/* Template Preview */}
+                {/* Template Preview Image */}
                 <div className="aspect-[3/4] bg-gray-100 mb-4 relative overflow-hidden group">
-                  {/* Mini Invoice Preview */}
-                  <div className="absolute inset-4 bg-white shadow-md p-4 transition-transform duration-300 group-hover:scale-[1.02]">
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-4">
-                      <div
-                        className="w-8 h-8"
-                        style={{ backgroundColor: template.color }}
-                      ></div>
-                      <div className="text-right">
-                        <div className="text-xs font-bold text-gray-900">FACTURE</div>
-                        <div className="text-[10px] text-gray-500">N 2024-001</div>
-                      </div>
-                    </div>
-
-                    {/* Info Section */}
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      <div>
-                        <div className="w-12 h-1 bg-gray-200 mb-1"></div>
-                        <div className="w-16 h-1 bg-gray-200"></div>
-                      </div>
-                      <div>
-                        <div className="w-12 h-1 bg-gray-200 mb-1"></div>
-                        <div className="w-16 h-1 bg-gray-200"></div>
-                      </div>
-                    </div>
-
-                    {/* Table Lines */}
-                    <div className="space-y-2 mb-4">
-                      <div
-                        className="h-1"
-                        style={{ backgroundColor: template.color, opacity: 0.3 }}
-                      ></div>
-                      <div className="flex justify-between">
-                        <div className="w-20 h-1 bg-gray-200"></div>
-                        <div className="w-8 h-1 bg-gray-200"></div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="w-16 h-1 bg-gray-200"></div>
-                        <div className="w-8 h-1 bg-gray-200"></div>
-                      </div>
-                    </div>
-
-                    {/* Total */}
-                    <div className="border-t border-gray-200 pt-2">
-                      <div className="flex justify-between items-center">
-                        <div className="w-12 h-1 bg-gray-300"></div>
-                        <div
-                          className="w-10 h-3"
-                          style={{ backgroundColor: template.color }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-
+                  <Image
+                    src={template.image}
+                    alt={`Aperçu du template ${template.name}`}
+                    fill
+                    className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300"></div>
                 </div>
@@ -128,3 +82,4 @@ const TemplateGallery = () => {
 };
 
 export default TemplateGallery;
+
