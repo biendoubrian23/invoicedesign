@@ -1,15 +1,27 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { Check, Sparkles, Zap } from "lucide-react";
+import { Check, Sparkles, Zap, Loader2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
+
+const STRIPE_PRICES = {
+    standard: process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD || "price_1SfHFeF1KbAA4r3RD2jREmmL",
+    premium: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM || "price_1SfHGQF1KbAA4r3RUgSIvI10",
+};
 
 const PricingPanel = () => {
     const { t } = useLanguage();
+    const { user } = useAuth();
+    const router = useRouter();
+    const [loading, setLoading] = useState<string | null>(null);
 
     const plans = [
         {
+            id: "standard",
             name: t("pricing.standardName"),
             price: "3.99",
             period: t("pricing.perMonth"),
@@ -25,9 +37,10 @@ const PricingPanel = () => {
             cta: t("pricing.chooseStandard"),
             popular: true,
             icon: Sparkles,
-            stripeLink: "https://buy.stripe.com/test_xxx",
+            priceId: STRIPE_PRICES.standard,
         },
         {
+            id: "premium",
             name: t("pricing.premiumName"),
             price: "6.99",
             period: t("pricing.perMonth"),
@@ -44,9 +57,45 @@ const PricingPanel = () => {
             cta: t("pricing.choosePremium"),
             popular: false,
             icon: Zap,
-            stripeLink: "https://buy.stripe.com/test_yyy",
+            priceId: STRIPE_PRICES.premium,
         },
     ];
+
+    const handleSubscribe = async (plan: typeof plans[0]) => {
+        if (!user) {
+            router.push("/auth/login?redirect=/dashboard");
+            return;
+        }
+
+        setLoading(plan.id);
+
+        try {
+            const response = await fetch("/api/create-checkout-session", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    priceId: plan.priceId,
+                    plan: plan.id,
+                    userId: user.id,
+                    userEmail: user.email,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                console.error("No checkout URL returned");
+            }
+        } catch (error) {
+            console.error("Error creating checkout session:", error);
+        } finally {
+            setLoading(null);
+        }
+    };
 
     return (
         <div className="p-6 space-y-6 overflow-y-auto h-full">
@@ -101,19 +150,21 @@ const PricingPanel = () => {
                             ))}
                         </ul>
 
-                        <a
-                            href={plan.stripeLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block"
+                        <Button
+                            className="w-full"
+                            variant={plan.popular ? "primary" : "outline"}
+                            onClick={() => handleSubscribe(plan)}
+                            disabled={loading !== null}
                         >
-                            <Button
-                                className="w-full"
-                                variant={plan.popular ? "primary" : "outline"}
-                            >
-                                {plan.cta}
-                            </Button>
-                        </a>
+                            {loading === plan.id ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    {t("common.loading")}
+                                </>
+                            ) : (
+                                plan.cta
+                            )}
+                        </Button>
                     </Card>
                 ))}
             </div>
@@ -139,4 +190,5 @@ const PricingPanel = () => {
 };
 
 export default PricingPanel;
+
 
