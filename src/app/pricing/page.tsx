@@ -5,83 +5,79 @@ import { Check, Minus } from "lucide-react";
 import { Header, Footer } from "@/components/layout";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-
-const plans = [
-  {
-    id: "standard",
-    name: "Standard",
-    price: "5.99",
-    period: "€/mois",
-    description: "Pour les independants et PME",
-    features: [
-      { name: "Factures illimitees", included: true },
-      { name: "Tous les templates", included: true },
-      { name: "Export PDF haute qualite", included: true },
-      { name: "Sans filigrane", included: true },
-      { name: "Logo personnalise", included: true },
-      { name: "Support email", included: true },
-      { name: "Factures dynamiques", included: false },
-      { name: "Support prioritaire", included: false },
-    ],
-    cta: "Choisir Standard",
-    popular: true,
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    price: "9.99",
-    period: "€/mois",
-    description: "Pour les entreprises exigeantes",
-    features: [
-      { name: "Tout de Standard", included: true },
-      { name: "Factures dynamiques", included: true },
-      { name: "Support prioritaire", included: true },
-      { name: "Acces API", included: true },
-      { name: "Multi-utilisateurs", included: true },
-      { name: "Statistiques avancees", included: true },
-      { name: "Export multi-formats", included: true },
-      { name: "Factures recurrentes", included: true },
-    ],
-    cta: "Choisir Premium",
-    popular: false,
-  },
-];
-
-const faqs = [
-  {
-    question: "Puis-je changer de plan a tout moment ?",
-    answer:
-      "Oui, vous pouvez passer a un plan superieur ou inferieur a tout moment. Le changement prend effet immediatement et le prorata est calcule automatiquement.",
-  },
-  {
-    question: "Y a-t-il une periode d'essai ?",
-    answer:
-      "Oui ! Vous beneficiez d'un essai gratuit de 7 jours sur tous nos plans. Une garantie satisfait ou rembourse de 14 jours est egalement disponible.",
-  },
-  {
-    question: "Comment fonctionne la facturation ?",
-    answer:
-      "La facturation est mensuelle. Vous serez debite le meme jour chaque mois. Vous pouvez annuler a tout moment depuis votre espace client.",
-  },
-  {
-    question: "Qu'est-ce qu'une facture dynamique ?",
-    answer:
-      "Une facture dynamique permet a votre client de choisir les options souhaitees directement depuis un lien. Le total se recalcule en temps reel selon ses choix.",
-  },
-  {
-    question: "Mes donnees sont-elles securisees ?",
-    answer:
-      "Absolument. Nous utilisons un chiffrement SSL/TLS pour toutes les communications et vos donnees sont stockees de maniere securisee sur des serveurs certifies.",
-  },
-  {
-    question: "Puis-je exporter mes factures ?",
-    answer:
-      "Oui, toutes vos factures peuvent etre exportees en PDF. Le plan Premium offre egalement l'export en Excel, CSV et via API.",
-  },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { t } = useLanguage();
+
+  const plans = [
+    {
+      id: "standard",
+      name: t("pricing.standardName"),
+      price: "5.99",
+      period: t("pricing.perMonth"),
+      description: t("pricing.standardDesc"),
+      features: [
+        { name: t("pricing.unlimitedInvoices"), included: true },
+        { name: t("pricing.allTemplates"), included: true },
+        { name: t("pricing.pdfExport"), included: true },
+        { name: t("pricing.noWatermark"), included: true },
+        { name: t("pricing.customLogo"), included: true },
+        { name: t("pricing.emailSupport"), included: true },
+        { name: t("pricing.dynamicInvoices"), included: false },
+        { name: t("pricing.prioritySupport"), included: false },
+      ],
+      cta: t("pricing.chooseStandard"),
+      popular: true,
+    },
+    {
+      id: "premium",
+      name: t("pricing.premiumName"),
+      price: "9.99",
+      period: t("pricing.perMonth"),
+      description: t("pricing.premiumDesc"),
+      features: [
+        { name: t("pricing.includesStandard"), included: true },
+        { name: t("pricing.dynamicInvoices"), included: true },
+        { name: t("pricing.prioritySupport"), included: true },
+        { name: t("pricing.apiAccess"), included: true },
+        { name: t("pricing.multiUsers"), included: true },
+        { name: t("pricing.advancedStats"), included: true },
+        { name: t("pricing.multiFormat"), included: true },
+        { name: t("pricing.recurringInvoices"), included: true },
+      ],
+      cta: t("pricing.choosePremium"),
+      popular: false,
+    },
+  ];
+
+  const faqs = [
+    {
+      question: t("pricing.faq1Q"),
+      answer: t("pricing.faq1A"),
+    },
+    {
+      question: t("pricing.faq2Q"),
+      answer: t("pricing.faq2A"),
+    },
+    {
+      question: t("pricing.faq3Q"),
+      answer: t("pricing.faq3A"),
+    },
+    {
+      question: t("pricing.faq4Q"),
+      answer: t("pricing.faq4A"),
+    },
+    {
+      question: t("pricing.faq5Q"),
+      answer: t("pricing.faq5A"),
+    },
+    {
+      question: t("pricing.faq6Q"),
+      answer: t("pricing.faq6A"),
+    },
+  ];
 
   return (
     <>
@@ -91,11 +87,10 @@ export default function PricingPage() {
         <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 animate-fade-in-up">
-              Des tarifs simples et transparents
+              {t("pricing.title")}
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto animate-fade-in-up stagger-1">
-              Choisissez le plan qui correspond a vos besoins. Changez ou annulez
-              a tout moment.
+              {t("pricing.subtitle")}
             </p>
           </div>
         </section>
@@ -120,7 +115,7 @@ export default function PricingPage() {
                   {/* Popular Badge */}
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1.5 bg-blue-600 text-white text-sm font-semibold">
-                      Le plus populaire
+                      {t("pricing.popular")}
                     </div>
                   )}
 
@@ -182,10 +177,10 @@ export default function PricingPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Questions frequentes
+                {t("pricing.faqTitle")}
               </h2>
               <p className="text-gray-600">
-                Vous avez des questions ? Nous avons les reponses.
+                {t("pricing.faqSubtitle")}
               </p>
             </div>
 
@@ -227,4 +222,5 @@ export default function PricingPage() {
     </>
   );
 }
+
 

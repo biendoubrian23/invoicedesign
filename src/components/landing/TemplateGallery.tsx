@@ -3,26 +3,28 @@
 import { useState } from "react";
 import Image from "next/image";
 import Card from "@/components/ui/Card";
-
-const templates = [
-  {
-    id: "classic",
-    name: "Classic",
-    description: "Template traditionnel et professionnel",
-    color: "#2563eb",
-    image: "/model1.png",
-  },
-  {
-    id: "elegant",
-    name: "Elegant",
-    description: "Design epure et minimaliste",
-    color: "#000000",
-    image: "/model2.jpeg",
-  },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 const TemplateGallery = () => {
+  const { t } = useLanguage();
   const [activeTemplate, setActiveTemplate] = useState("classic");
+
+  const templates = [
+    {
+      id: "classic",
+      name: t("templateGallery.classic"),
+      description: t("templateGallery.classicDesc"),
+      color: "#2563eb",
+      image: "/model1.png",
+    },
+    {
+      id: "elegant",
+      name: t("templateGallery.elegant"),
+      description: t("templateGallery.elegantDesc"),
+      color: "#000000",
+      image: "/model2.jpeg",
+    },
+  ];
 
   return (
     <section id="templates" className="py-20 bg-white">
@@ -30,10 +32,10 @@ const TemplateGallery = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Templates de factures
+            {t("templateGallery.title")}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Choisissez le modele qui correspond a votre style et personnalisez-le
+            {t("templateGallery.subtitle")}
           </p>
         </div>
 
@@ -52,7 +54,7 @@ const TemplateGallery = () => {
                 <div className="aspect-[3/4] bg-gray-100 mb-4 relative overflow-hidden group">
                   <Image
                     src={template.image}
-                    alt={`Aperçu du template ${template.name}`}
+                    alt={`${template.name}`}
                     fill
                     className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -82,4 +84,3 @@ const TemplateGallery = () => {
 };
 
 export default TemplateGallery;
-

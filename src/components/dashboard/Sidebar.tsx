@@ -2,24 +2,26 @@
 
 import { useInvoiceStore } from "@/store";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { EditorSection } from "@/types/invoice";
 import { LayoutGrid, FileText, Palette, Image, PlusSquare, FolderOpen, Settings, LogOut, CreditCard, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const menuItems: { id: EditorSection; label: string; icon: React.ElementType }[] = [
-  { id: "templates", label: "Modeles", icon: LayoutGrid },
-  { id: "info", label: "Informations", icon: FileText },
-  { id: "options", label: "Options", icon: Palette },
-  { id: "logo", label: "Logo", icon: Image },
-  { id: "blocks", label: "Ajouter un bloc", icon: PlusSquare },
-  { id: "clients", label: "Clients", icon: Users },
-  { id: "stockage", label: "Stockage", icon: FolderOpen },
-];
-
 const Sidebar = () => {
   const { activeSection, setActiveSection } = useInvoiceStore();
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
+
+  const menuItems: { id: EditorSection; labelKey: string; icon: React.ElementType }[] = [
+    { id: "templates", labelKey: "sidebar.templates", icon: LayoutGrid },
+    { id: "info", labelKey: "sidebar.info", icon: FileText },
+    { id: "options", labelKey: "sidebar.options", icon: Palette },
+    { id: "logo", labelKey: "sidebar.logo", icon: Image },
+    { id: "blocks", labelKey: "sidebar.addBlock", icon: PlusSquare },
+    { id: "clients", labelKey: "sidebar.clients", icon: Users },
+    { id: "stockage", labelKey: "sidebar.storage", icon: FolderOpen },
+  ];
 
   // Get user's initial from name or email
   const getUserInitial = () => {
@@ -33,10 +35,10 @@ const Sidebar = () => {
 
   // Get display name
   const getDisplayName = () => {
-    if (!user) return "Non connecté";
+    if (!user) return t("sidebar.notConnected");
     const fullName = user.user_metadata?.full_name;
     if (fullName) return fullName;
-    return user.email?.split("@")[0] || "Utilisateur";
+    return user.email?.split("@")[0] || t("sidebar.user");
   };
 
   const handleLogout = async () => {
@@ -59,7 +61,7 @@ const Sidebar = () => {
                   }`}
               >
                 <item.icon className="w-5 h-5" />
-                {item.label}
+                {t(item.labelKey)}
               </button>
             </li>
           ))}
@@ -77,7 +79,7 @@ const Sidebar = () => {
             }`}
         >
           <CreditCard className="w-5 h-5" />
-          Tarifs
+          {t("sidebar.pricing")}
         </button>
 
         {/* Settings Button */}
@@ -89,7 +91,7 @@ const Sidebar = () => {
             }`}
         >
           <Settings className="w-5 h-5" />
-          Paramètres
+          {t("sidebar.settings")}
         </button>
 
         {/* User Info */}
@@ -112,14 +114,14 @@ const Sidebar = () => {
                 className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1 mt-0.5"
               >
                 <LogOut className="w-3 h-3" />
-                Déconnexion
+                {t("sidebar.logout")}
               </button>
             ) : (
               <button
                 onClick={() => router.push("/auth/login")}
                 className="text-xs text-blue-600 hover:text-blue-700"
               >
-                Se connecter
+                {t("sidebar.login")}
               </button>
             )}
           </div>
@@ -130,3 +132,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

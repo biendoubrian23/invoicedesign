@@ -2,13 +2,14 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useInvoiceStore } from "@/store";
+import { useLanguage } from "@/context/LanguageContext";
 import Button from "@/components/ui/Button";
-import { 
-  FileText, 
-  Type, 
-  Table, 
-  PenTool, 
-  QrCode, 
+import {
+  FileText,
+  Type,
+  Table,
+  PenTool,
+  QrCode,
   FileCheck,
   ChevronUp,
   ChevronDown,
@@ -40,84 +41,104 @@ import TotalsEditor from "./blocks/TotalsEditor";
 import PaymentTermsEditor from "./blocks/PaymentTermsEditor";
 import { InvoiceItemsBlock, TotalsBlock, PaymentTermsBlock } from "@/types/invoice";
 
-const blockTypes: { 
-  type: BlockType; 
-  name: string; 
-  description: string; 
-  icon: React.ElementType;
-  isLineAction?: boolean; // Indique si c'est une action d'ajout de ligne (pas un bloc)
-}[] = [
-  {
-    type: "invoice-items",
-    name: "Nouvelle ligne",
-    description: "Ajouter une ligne de prestation",
-    icon: Plus,
-    isLineAction: true,
-  },
-  {
-    type: "free-text",
-    name: "Texte libre",
-    description: "Section de texte personnalisee",
-    icon: Type,
-  },
-  {
-    type: "detailed-table",
-    name: "Tableau detaille",
-    description: "Tableau avec colonnes",
-    icon: Table,
-  },
-  {
-    type: "totals",
-    name: "Totaux",
-    description: "Sous-total, TVA, total",
-    icon: FileText,
-  },
-  {
-    type: "payment-terms",
-    name: "Conditions de paiement",
-    description: "Modalites de paiement",
-    icon: FileCheck,
-  },
-  {
-    type: "signature",
-    name: "Signatures",
-    description: "Zone de signatures",
-    icon: PenTool,
-  },
-  {
-    type: "qr-code",
-    name: "QR Code",
-    description: "QR code de paiement",
-    icon: QrCode,
-  },
-  {
-    type: "conditions",
-    name: "Conditions",
-    description: "Conditions generales",
-    icon: FileCheck,
-  },
-];
-
 const getBlockIcon = (type: BlockType) => {
-  const blockType = blockTypes.find(b => b.type === type);
-  // Pour invoice-items dans les blocs actifs, utiliser Table
-  if (type === "invoice-items") return Table;
-  return blockType?.icon || FileText;
+  // Map block types to icons
+  const iconMap: Record<BlockType, React.ElementType> = {
+    "invoice-items": Table,
+    "free-text": Type,
+    "detailed-table": Table,
+    "totals": FileText,
+    "payment-terms": FileCheck,
+    "signature": PenTool,
+    "qr-code": QrCode,
+    "conditions": FileCheck,
+  };
+  return iconMap[type] || FileText;
 };
 
-const getBlockName = (type: BlockType) => {
-  // Noms spécifiques pour les blocs actifs (différent des boutons d'ajout)
-  if (type === "invoice-items") return "Tableau détaillé";
-  const blockType = blockTypes.find(b => b.type === type);
-  return blockType?.name || type;
+
+const getBlockName = (type: BlockType, t: (key: string) => string) => {
+  if (type === "invoice-items") return t("blocksPanel.detailedTable");
+  const nameMap: Record<BlockType, string> = {
+    "free-text": t("blocksPanel.freeText"),
+    "detailed-table": t("blocksPanel.detailedTable"),
+    "totals": t("blocksPanel.totals"),
+    "payment-terms": t("blocksPanel.paymentTerms"),
+    "signature": t("blocksPanel.signatures"),
+    "qr-code": t("blocksPanel.qrCode"),
+    "conditions": t("blocksPanel.generalConditions"),
+    "invoice-items": t("blocksPanel.invoiceLines"),
+  };
+  return nameMap[type] || type;
 };
 
 const BlocksPanel = () => {
-  const { 
-    addItem, 
-    addBlock, 
-    blocks, 
-    selectedBlockId, 
+  const { t } = useLanguage();
+
+  // Block types with translated names - must be inside component to access t()
+  const blockTypes: {
+    type: BlockType;
+    name: string;
+    description: string;
+    icon: React.ElementType;
+    isLineAction?: boolean;
+  }[] = [
+      {
+        type: "invoice-items",
+        name: t("blocksPanel.newLine"),
+        description: t("blocksPanel.addLineDesc"),
+        icon: Plus,
+        isLineAction: true,
+      },
+      {
+        type: "free-text",
+        name: t("blocksPanel.freeText"),
+        description: t("blocksPanel.freeTextDesc"),
+        icon: Type,
+      },
+      {
+        type: "detailed-table",
+        name: t("blocksPanel.detailedTable"),
+        description: t("blocksPanel.detailedTableDesc"),
+        icon: Table,
+      },
+      {
+        type: "totals",
+        name: t("blocksPanel.totals"),
+        description: t("blocksPanel.totalsDesc"),
+        icon: FileText,
+      },
+      {
+        type: "payment-terms",
+        name: t("blocksPanel.paymentTerms"),
+        description: t("blocksPanel.paymentTermsDesc"),
+        icon: FileCheck,
+      },
+      {
+        type: "signature",
+        name: t("blocksPanel.signatures"),
+        description: t("blocksPanel.signaturesDesc"),
+        icon: PenTool,
+      },
+      {
+        type: "qr-code",
+        name: t("blocksPanel.qrCode"),
+        description: t("blocksPanel.qrCodeDesc"),
+        icon: QrCode,
+      },
+      {
+        type: "conditions",
+        name: t("blocksPanel.generalConditions"),
+        description: t("blocksPanel.generalConditionsDesc"),
+        icon: FileCheck,
+      },
+    ];
+
+  const {
+    addItem,
+    addBlock,
+    blocks,
+    selectedBlockId,
     selectBlock,
     updateBlock,
     removeBlock,
@@ -148,10 +169,10 @@ const BlocksPanel = () => {
       if (blockRef) {
         // Scroll vers l'élément
         blockRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
+
         // Ajouter une animation de mise en évidence
         blockRef.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
-        
+
         // Retirer l'animation après un délai
         setTimeout(() => {
           blockRef.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2');
@@ -164,7 +185,7 @@ const BlocksPanel = () => {
   // Drag & Drop state
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
-  
+
   // État pour le sélecteur de tableau
   const [showTableSelector, setShowTableSelector] = useState(false);
 
@@ -191,16 +212,16 @@ const BlocksPanel = () => {
 
   const handleDrop = useCallback((e: React.DragEvent, targetBlockId: string) => {
     e.preventDefault();
-    
+
     if (draggedBlockId && draggedBlockId !== targetBlockId) {
       const draggedIndex = blocks.findIndex(b => b.id === draggedBlockId);
       const targetIndex = blocks.findIndex(b => b.id === targetBlockId);
-      
+
       if (draggedIndex !== -1 && targetIndex !== -1) {
         reorderBlocks(draggedIndex, targetIndex);
       }
     }
-    
+
     setDraggedBlockId(null);
     setDragOverBlockId(null);
   }, [blocks, draggedBlockId, reorderBlocks]);
@@ -211,7 +232,7 @@ const BlocksPanel = () => {
       const tableBlocks = blocks.filter(
         b => (b.type === "invoice-items" || b.type === "detailed-table") && b.enabled
       );
-      
+
       if (tableBlocks.length === 0) {
         // Pas de tableau, ajouter au tableau principal
         addItem();
@@ -337,7 +358,7 @@ const BlocksPanel = () => {
                   return <Icon className="w-5 h-5 text-blue-600" />;
                 })()}
                 <h3 className="font-semibold text-gray-900">
-                  {getBlockName(selectedBlock.type)}
+                  {getBlockName(selectedBlock.type, t)}
                 </h3>
               </div>
               <Button
@@ -365,7 +386,7 @@ const BlocksPanel = () => {
                 className="flex-1"
               >
                 <ChevronUp className="w-4 h-4 mr-1" />
-                Monter
+                {t("blocksPanel.moveUp")}
               </Button>
               <Button
                 variant="outline"
@@ -374,7 +395,7 @@ const BlocksPanel = () => {
                 className="flex-1"
               >
                 <ChevronDown className="w-4 h-4 mr-1" />
-                Descendre
+                {t("blocksPanel.moveDown")}
               </Button>
             </div>
             <Button
@@ -387,7 +408,7 @@ const BlocksPanel = () => {
               className="w-full text-red-600 hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Supprimer ce bloc
+              {t("blocksPanel.deleteBlock")}
             </Button>
           </div>
         </div>
@@ -397,7 +418,7 @@ const BlocksPanel = () => {
           {/* Section: Ajouter une ligne de facturation */}
           <div className="animate-fade-in">
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">
-              Lignes de facturation
+              {t("blocksPanel.invoiceLines")}
             </h3>
             {blockTypes.filter(b => b.isLineAction).map((block, index) => (
               <button
@@ -415,20 +436,20 @@ const BlocksPanel = () => {
                 <Plus className="w-4 h-4 text-blue-500 group-hover:text-blue-700" />
               </button>
             ))}
-            
+
             {/* Sélecteur de tableau quand plusieurs tableaux existent */}
             {showTableSelector && availableTableBlocks.length > 1 && (
               <div className="mt-2 p-3 bg-white border border-blue-300 rounded-lg shadow-lg">
                 <p className="text-sm font-medium text-gray-700 mb-2">
-                  Ajouter la ligne dans :
+                  {t("blocksPanel.addLineIn")}
                 </p>
                 <div className="space-y-2">
                   {availableTableBlocks.map((tableBlock, idx) => {
                     const Icon = getBlockIcon(tableBlock.type);
-                    const tableName = tableBlock.type === "invoice-items" 
-                      ? "Tableau détaillé (principal)" 
-                      : `Tableau: ${(tableBlock as DetailedTableBlock).title || "Sans titre"}`;
-                    
+                    const tableName = tableBlock.type === "invoice-items"
+                      ? t("blocksPanel.mainTable")
+                      : `${t("blocksPanel.tableN")}: ${(tableBlock as DetailedTableBlock).title || ""}`;
+
                     return (
                       <button
                         key={tableBlock.id}
@@ -443,7 +464,7 @@ const BlocksPanel = () => {
                       >
                         <Icon className="w-4 h-4 text-gray-600" />
                         <span className="text-sm text-gray-700">{tableName}</span>
-                        <span className="text-xs text-gray-400 ml-auto">Tableau {idx + 1}</span>
+                        <span className="text-xs text-gray-400 ml-auto">{t("blocksPanel.tableN")} {idx + 1}</span>
                       </button>
                     );
                   })}
@@ -452,7 +473,7 @@ const BlocksPanel = () => {
                   onClick={() => setShowTableSelector(false)}
                   className="mt-2 w-full text-xs text-gray-500 hover:text-gray-700 py-1"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </button>
               </div>
             )}
@@ -461,10 +482,10 @@ const BlocksPanel = () => {
           {/* Section: Ajouter un bloc */}
           <div className="animate-fade-in">
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">
-              Ajouter un bloc
+              {t("blocksPanel.addBlock")}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Cliquez sur un bloc pour l&apos;ajouter a votre facture
+              {t("blocksPanel.addBlockDesc")}
             </p>
 
             <div className="grid grid-cols-1 gap-2">
@@ -495,7 +516,7 @@ const BlocksPanel = () => {
           {sortedBlocks.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-                Blocs actifs ({sortedBlocks.length})
+                {t("blocksPanel.activeBlocks")} ({sortedBlocks.length})
               </h3>
               <div className="space-y-2">
                 {sortedBlocks.map((block) => {
@@ -516,31 +537,28 @@ const BlocksPanel = () => {
                       onDragOver={(e) => handleDragOver(e, block.id)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, block.id)}
-                      className={`flex items-center gap-2 p-3 bg-white border rounded-lg transition-all cursor-move ${
-                        block.enabled 
-                          ? "border-gray-200 hover:border-blue-300" 
-                          : "border-gray-100 opacity-50"
-                      } ${
-                        dragOverBlockId === block.id 
-                          ? "border-t-4 border-t-blue-500" 
+                      className={`flex items-center gap-2 p-3 bg-white border rounded-lg transition-all cursor-move ${block.enabled
+                        ? "border-gray-200 hover:border-blue-300"
+                        : "border-gray-100 opacity-50"
+                        } ${dragOverBlockId === block.id
+                          ? "border-t-4 border-t-blue-500"
                           : ""
-                      } ${
-                        draggedBlockId === block.id 
-                          ? "opacity-50" 
+                        } ${draggedBlockId === block.id
+                          ? "opacity-50"
                           : ""
-                      }`}
+                        }`}
                     >
                       <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
                       <Icon className="w-4 h-4 text-gray-600" />
                       <span className="flex-1 text-sm font-medium text-gray-700">
-                        {getBlockName(block.type)}
+                        {getBlockName(block.type, t)}
                       </span>
-                      
+
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => updateBlock(block.id, { enabled: !block.enabled })}
                           className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                          title={block.enabled ? "Masquer" : "Afficher"}
+                          title={block.enabled ? t("blocksPanel.hide") : t("blocksPanel.show")}
                         >
                           {block.enabled ? (
                             <Eye className="w-4 h-4" />
@@ -548,11 +566,11 @@ const BlocksPanel = () => {
                             <EyeOff className="w-4 h-4" />
                           )}
                         </button>
-                        
-                          <button
+
+                        <button
                           onClick={() => selectBlock(block.id)}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                          title="Modifier"
+                          title={t("common.edit")}
                         >
                           <PenTool className="w-4 h-4" />
                         </button>
@@ -560,7 +578,7 @@ const BlocksPanel = () => {
                           <button
                             onClick={() => removeBlock(block.id)}
                             className="p-1 text-red-500 hover:bg-red-50 rounded"
-                            title="Supprimer"
+                            title={t("common.delete")}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -576,8 +594,7 @@ const BlocksPanel = () => {
           {/* Info */}
           <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
             <p className="text-sm text-blue-800">
-              Les blocs ajoutes apparaissent dans votre facture. Vous pouvez les
-              reorganiser en utilisant les fleches ou par glisser-deposer sur la preview.
+              {t("blocksPanel.blockInfo")}
             </p>
           </div>
         </div>

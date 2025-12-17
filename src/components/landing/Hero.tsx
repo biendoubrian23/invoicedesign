@@ -3,9 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
+import { useLanguage } from "@/context/LanguageContext";
 import { ArrowRight, Edit3, Settings, Download, Puzzle, Move, Layers, Sparkles } from "lucide-react";
 
 const Hero = () => {
+  const { t } = useLanguage();
   return (
     <section className="relative pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-blue-50/50 via-white to-white overflow-hidden">
       {/* Elegant Wave Background */}
@@ -100,15 +102,14 @@ const Hero = () => {
             {/* Badge - Hidden on mobile, visible on desktop */}
             <div className="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium mb-6 animate-fade-in w-fit">
               <span className="w-2 h-2 bg-blue-500 animate-pulse"></span>
-              Nouveau : Templates personnalisables
+              {t("hero.badge")}
             </div>
 
             {/* Main Heading - Order 1 on mobile */}
             <h1 className="order-1 text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 animate-fade-in-up">
-              Creez des factures
+              {t("hero.title1")}
               <br />
-              <span className="text-blue-600">professionnelles</span> en quelques
-              clics
+              <span className="text-blue-600">{t("hero.title2")}</span> {t("hero.title3")}
             </h1>
 
             {/* Mobile Image - Order 2, hidden on desktop */}
@@ -128,7 +129,7 @@ const Hero = () => {
             <div className="order-3 lg:order-4 flex flex-row items-center gap-2 mb-4 lg:mb-0 animate-fade-in-up stagger-2">
               <Link href="/dashboard">
                 <Button size="sm" className="group text-sm py-2 px-4 lg:py-3 lg:px-6 lg:text-base">
-                  Essayer gratuitement
+                  {t("common.tryFree")}
                   <ArrowRight className="ml-1 w-3 h-3 lg:ml-2 lg:w-4 lg:h-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
@@ -137,15 +138,14 @@ const Hero = () => {
                   <svg className="w-3 h-3 mr-1 lg:w-4 lg:h-4 lg:mr-2" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z" />
                   </svg>
-                  Voir la demo
+                  {t("common.viewDemo")}
                 </Button>
               </Link>
             </div>
 
             {/* Subheading - Order 4 on mobile (after buttons) */}
             <p className="order-4 lg:order-3 text-lg md:text-xl text-gray-600 font-medium mb-8 lg:mb-8 animate-fade-in-up stagger-1">
-              Glissez-deposez vos blocs, personnalisez chaque element et exportez en PDF.
-              Une interface 100% modulaire pour des factures sur-mesure.
+              {t("hero.subtitle")}
             </p>
           </div>
 
@@ -178,7 +178,7 @@ const Hero = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
-                Parametres
+                {t("hero.parameters")}
               </div>
             </div>
             <div className="absolute -left-8 top-32 z-10 hidden lg:block animate-fade-in-up stagger-1 animate-float-alt">
@@ -186,7 +186,7 @@ const Hero = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
-                Signature
+                {t("hero.signature")}
               </div>
             </div>
             <div className="absolute -left-2 bottom-24 z-10 hidden lg:block animate-fade-in-up stagger-2 animate-float-slow">
@@ -194,7 +194,7 @@ const Hero = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                 </svg>
-                QR Code
+                {t("hero.qrCode")}
               </div>
             </div>
 
@@ -212,7 +212,7 @@ const Hero = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Conditions
+                {t("hero.conditions")}
               </div>
             </div>
             <div className="absolute -right-8 bottom-20 z-10 hidden lg:block animate-fade-in-up stagger-3 animate-float-slow">
@@ -220,7 +220,7 @@ const Hero = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
-                Tableaux
+                {t("hero.tables")}
               </div>
             </div>
 
@@ -246,21 +246,21 @@ const Hero = () => {
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
                       <Edit3 className="w-4 h-4" />
-                      Zone d&apos;edition
+                      {t("hero.editZone")}
                     </div>
 
                     {/* Form Preview */}
                     <div className="space-y-3">
                       <div className="bg-white border border-gray-200 p-3 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                        <span className="text-xs text-gray-500 block mb-1">Nom de l&apos;entreprise</span>
-                        <span className="text-sm font-medium text-gray-900">Votre Societe</span>
+                        <span className="text-xs text-gray-500 block mb-1">{t("hero.companyName")}</span>
+                        <span className="text-sm font-medium text-gray-900">{t("hero.yourCompany")}</span>
                       </div>
                       <div className="bg-white border border-gray-200 p-3 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                        <span className="text-xs text-gray-500 block mb-1">Client</span>
+                        <span className="text-xs text-gray-500 block mb-1">{t("hero.client")}</span>
                         <span className="text-sm font-medium text-gray-900">Client XYZ</span>
                       </div>
                       <div className="bg-white border border-gray-200 p-3 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                        <span className="text-xs text-gray-500 block mb-1">Montant Total</span>
+                        <span className="text-xs text-gray-500 block mb-1">{t("hero.totalAmount")}</span>
                         <span className="text-lg font-bold text-blue-600">1 200,00</span>
                       </div>
                     </div>
@@ -273,7 +273,7 @@ const Hero = () => {
                     <div className="flex justify-between items-start mb-6">
                       <div className="w-12 h-12 bg-blue-600 rounded"></div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-gray-900">FACTURE</div>
+                        <div className="text-lg font-bold text-gray-900">{t("hero.invoice")}</div>
                         <div className="text-xs text-gray-500">N° 2024-001</div>
                       </div>
                     </div>
@@ -281,11 +281,11 @@ const Hero = () => {
                     <div className="border-t border-gray-200 pt-4 mb-4">
                       <div className="grid grid-cols-2 gap-4 text-xs">
                         <div>
-                          <div className="font-medium text-gray-900">De :</div>
-                          <div className="text-gray-600">Votre Societe</div>
+                          <div className="font-medium text-gray-900">{t("hero.from")}</div>
+                          <div className="text-gray-600">{t("hero.yourCompany")}</div>
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900">A :</div>
+                          <div className="font-medium text-gray-900">{t("hero.to")}</div>
                           <div className="text-gray-600">Client XYZ</div>
                         </div>
                       </div>
@@ -293,15 +293,15 @@ const Hero = () => {
 
                     <div className="border-t border-gray-200 pt-4">
                       <div className="flex justify-between text-xs mb-2">
-                        <span className="text-gray-600">Service</span>
+                        <span className="text-gray-600">{t("hero.service")}</span>
                         <span className="font-medium">1 000,00</span>
                       </div>
                       <div className="flex justify-between text-xs mb-2">
-                        <span className="text-gray-600">TVA (20%)</span>
+                        <span className="text-gray-600">{t("hero.vat")} (20%)</span>
                         <span className="font-medium">200,00</span>
                       </div>
                       <div className="flex justify-between text-sm font-bold pt-2 border-t border-gray-200 mt-2">
-                        <span>Total TTC</span>
+                        <span>{t("hero.totalInc")}</span>
                         <span className="text-blue-600">1 200,00</span>
                       </div>
                     </div>
@@ -316,21 +316,19 @@ const Hero = () => {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 text-blue-700 text-sm font-medium rounded-full mb-6">
               <Puzzle className="w-4 h-4" />
-              Blocs 100% modulables
+              {t("hero.modularBadge")}
             </div>
 
             {/* Heading */}
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Construisez votre facture
+              {t("hero.modularTitle1")}
               <br />
-              <span className="text-blue-600">bloc par bloc</span>
+              <span className="text-blue-600">{t("hero.modularTitle2")}</span>
             </h2>
 
             {/* Description */}
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              Chaque element de votre facture est un <strong className="text-gray-900">bloc independant</strong> que vous pouvez
-              ajouter, deplacer ou personnaliser en un simple glisser-deposer.
-              Aucune competence technique requise.
+              {t("hero.modularDesc")}
             </p>
 
             {/* Features List */}
@@ -340,8 +338,8 @@ const Hero = () => {
                   <Move className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Glisser-deposer intuitif</h3>
-                  <p className="text-sm text-gray-600">Reorganisez vos blocs instantanement. Deplacez, reordonnez, c&apos;est aussi simple que de jouer aux LEGO.</p>
+                  <h3 className="font-semibold text-gray-900 mb-1">{t("hero.dragDrop")}</h3>
+                  <p className="text-sm text-gray-600">{t("hero.dragDropDesc")}</p>
                 </div>
               </div>
 
@@ -350,8 +348,8 @@ const Hero = () => {
                   <Layers className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Blocs personnalisables</h3>
-                  <p className="text-sm text-gray-600">Texte libre, tableaux detailles, signatures, QR codes... Ajoutez exactement ce dont vous avez besoin.</p>
+                  <h3 className="font-semibold text-gray-900 mb-1">{t("hero.customBlocks")}</h3>
+                  <p className="text-sm text-gray-600">{t("hero.customBlocksDesc")}</p>
                 </div>
               </div>
 
@@ -360,8 +358,8 @@ const Hero = () => {
                   <Sparkles className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Zero courbe d&apos;apprentissage</h3>
-                  <p className="text-sm text-gray-600">Interface tellement intuitive que vous creez votre premiere facture en moins de 2 minutes.</p>
+                  <h3 className="font-semibold text-gray-900 mb-1">{t("hero.zeroLearning")}</h3>
+                  <p className="text-sm text-gray-600">{t("hero.zeroLearningDesc")}</p>
                 </div>
               </div>
             </div>
@@ -369,7 +367,7 @@ const Hero = () => {
             {/* CTA */}
             <Link href="/dashboard">
               <Button size="lg" className="group">
-                Essayer maintenant
+                {t("common.tryNow")}
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>

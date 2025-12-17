@@ -2,10 +2,12 @@
 
 import { useInvoiceStore } from "@/store";
 import Card from "@/components/ui/Card";
+import { useLanguage } from "@/context/LanguageContext";
 
 const TemplateGrid = () => {
   const { templates, selectedTemplate, selectTemplate, setActiveSection } =
     useInvoiceStore();
+  const { t } = useLanguage();
 
   const handleSelectTemplate = (templateId: string) => {
     selectTemplate(templateId);
@@ -16,10 +18,10 @@ const TemplateGrid = () => {
     <div className="h-full overflow-y-auto p-6">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          Choisissez un modele
+          {t("templateGrid.title")}
         </h2>
         <p className="text-sm text-gray-600">
-          Selectionnez un template pour commencer votre facture
+          {t("templateGrid.subtitle")}
         </p>
       </div>
 
@@ -29,8 +31,8 @@ const TemplateGrid = () => {
             key={template.id}
             onClick={() => handleSelectTemplate(template.id)}
             className={`cursor-pointer opacity-0 animate-fade-in-up ${selectedTemplate === template.id
-                ? "ring-2 ring-blue-500 ring-offset-2"
-                : ""
+              ? "ring-2 ring-blue-500 ring-offset-2"
+              : ""
               }`}
             style={{
               animationDelay: `${index * 0.1}s`,
@@ -49,7 +51,7 @@ const TemplateGrid = () => {
                     ></div>
                     <div className="text-right">
                       <div className="text-xs font-bold text-gray-900">
-                        FACTURE
+                        {t("common.invoice").toUpperCase()}
                       </div>
                       <div className="text-[10px] text-gray-500">N 2024-001</div>
                     </div>
@@ -98,14 +100,14 @@ const TemplateGrid = () => {
                 {/* Selected Badge */}
                 {selectedTemplate === template.id && (
                   <div className="absolute top-2 right-2 px-2 py-1 bg-blue-600 text-white text-xs font-medium">
-                    Selectionne
+                    {t("templateGrid.selected")}
                   </div>
                 )}
 
                 {/* Default Model Badge */}
                 {index === 0 && (
                   <div className="absolute bottom-2 left-2 px-2 py-1 bg-emerald-600 text-white text-xs font-medium">
-                    Par defaut
+                    {t("templateGrid.default")}
                   </div>
                 )}
               </div>
@@ -130,3 +132,4 @@ const TemplateGrid = () => {
 };
 
 export default TemplateGrid;
+

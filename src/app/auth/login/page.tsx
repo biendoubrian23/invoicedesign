@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 function LoginForm() {
     const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ function LoginForm() {
     const [loading, setLoading] = useState(false);
 
     const { signIn } = useAuth();
+    const { t } = useLanguage();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect') || '/dashboard';
@@ -26,7 +28,7 @@ function LoginForm() {
 
         if (error) {
             setError(error.message === 'Invalid login credentials'
-                ? 'Email ou mot de passe incorrect'
+                ? t('auth.invalidCredentials')
                 : error.message
             );
             setLoading(false);
@@ -38,10 +40,10 @@ function LoginForm() {
     return (
         <div className="bg-white rounded-2xl shadow-xl p-8">
             <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                Connexion
+                {t('auth.login')}
             </h1>
             <p className="text-gray-600 text-center mb-8">
-                Accedez a votre espace de creation de factures
+                {t('auth.loginSubtitle')}
             </p>
 
             {error && (
@@ -53,7 +55,7 @@ function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Email
+                        {t('auth.email')}
                     </label>
                     <input
                         id="email"
@@ -62,13 +64,13 @@ function LoginForm() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="vous@example.com"
+                        placeholder={t('auth.emailPlaceholder')}
                     />
                 </div>
 
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Mot de passe
+                        {t('auth.password')}
                     </label>
                     <input
                         id="password"
@@ -78,7 +80,7 @@ function LoginForm() {
                         required
                         minLength={6}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="••••••••"
+                        placeholder={t('auth.passwordPlaceholder')}
                     />
                 </div>
 
@@ -87,19 +89,28 @@ function LoginForm() {
                     disabled={loading}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {loading ? 'Connexion...' : 'Se connecter'}
+                    {loading ? t('auth.loggingIn') : t('auth.loginButton')}
                 </button>
             </form>
 
             <div className="mt-6 text-center">
                 <p className="text-gray-600">
-                    Pas encore de compte ?{' '}
+                    {t('auth.noAccount')}{' '}
                     <Link href="/auth/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-                        Creer un compte
+                        {t('auth.createAccount')}
                     </Link>
                 </p>
             </div>
         </div>
+    );
+}
+
+function BackToHome() {
+    const { t } = useLanguage();
+    return (
+        <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
+            {t('auth.backToHome')}
+        </Link>
     );
 }
 
@@ -127,12 +138,11 @@ export default function LoginPage() {
 
                 {/* Back to home */}
                 <div className="text-center mt-6">
-                    <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
-                        ← Retour a l&apos;accueil
-                    </Link>
+                    <BackToHome />
                 </div>
             </div>
         </div>
     );
 }
+
 

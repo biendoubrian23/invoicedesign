@@ -4,54 +4,57 @@ import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { Check, ArrowRight } from "lucide-react";
-
-const plans = [
-  {
-    name: "Standard",
-    price: "3.99",
-    period: "€/mois",
-    description: "Pour les independants et PME",
-    features: [
-      "Factures illimitees",
-      "Tous les templates",
-      "Sans filigrane",
-      "Logo personnalise",
-      "Support email",
-      "Export PDF haute qualite",
-    ],
-    cta: "Choisir Standard",
-    popular: true,
-  },
-  {
-    name: "Premium",
-    price: "6.99",
-    period: "€/mois",
-    description: "Pour les entreprises exigeantes",
-    features: [
-      "Tout de Standard",
-      "Factures dynamiques",
-      "Support prioritaire",
-      "Acces API",
-      "Multi-utilisateurs",
-      "Statistiques avancees",
-      "Export multi-formats",
-    ],
-    cta: "Choisir Premium",
-    popular: false,
-  },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 const PricingTeaser = () => {
+  const { t } = useLanguage();
+
+  const plans = [
+    {
+      name: t("pricing.standardName"),
+      price: "3.99",
+      period: t("pricing.perMonth"),
+      description: t("pricing.standardDesc"),
+      features: [
+        t("pricing.unlimitedInvoices"),
+        t("pricing.allTemplates"),
+        t("pricing.noWatermark"),
+        t("pricing.customLogo"),
+        t("pricing.emailSupport"),
+        t("pricing.pdfExport"),
+      ],
+      cta: t("pricing.chooseStandard"),
+      popular: true,
+    },
+    {
+      name: t("pricing.premiumName"),
+      price: "6.99",
+      period: t("pricing.perMonth"),
+      description: t("pricing.premiumDesc"),
+      features: [
+        t("pricing.includesStandard"),
+        t("pricing.dynamicInvoices"),
+        t("pricing.prioritySupport"),
+        t("pricing.apiAccess"),
+        t("pricing.multiUsers"),
+        t("pricing.advancedStats"),
+        t("pricing.multiFormat"),
+      ],
+      cta: t("pricing.choosePremium"),
+      popular: false,
+    },
+  ];
+
   return (
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Tarifs simples et transparents
+            {t("pricingTeaser.title")}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Choisissez le plan qui correspond a vos besoins
+            {t("pricingTeaser.subtitle")}
           </p>
         </div>
 
@@ -59,7 +62,7 @@ const PricingTeaser = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => (
             <Card
-              key={plan.name}
+              key={index}
               className={`relative opacity-0 animate-fade-in-up ${plan.popular
                 ? "border-2 border-blue-500 shadow-lg"
                 : "border border-gray-200"
@@ -70,7 +73,7 @@ const PricingTeaser = () => {
               {/* Popular Badge */}
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 text-white text-sm font-medium">
-                  Recommande
+                  {t("pricing.popular")}
                 </div>
               )}
 
@@ -90,8 +93,8 @@ const PricingTeaser = () => {
 
               {/* Features */}
               <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-gray-600">{feature}</span>
                   </li>
@@ -115,7 +118,7 @@ const PricingTeaser = () => {
             href="/pricing"
             className="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-700 transition-colors group"
           >
-            Voir tous les details
+            {t("pricingTeaser.viewPricing")}
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -125,3 +128,4 @@ const PricingTeaser = () => {
 };
 
 export default PricingTeaser;
+

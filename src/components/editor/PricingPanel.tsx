@@ -3,72 +3,75 @@
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { Check, Sparkles, Zap } from "lucide-react";
-
-const plans = [
-    {
-        name: "Standard",
-        price: "3.99",
-        period: "€/mois",
-        description: "Pour les indépendants et PME",
-        features: [
-            "Factures illimitées",
-            "Tous les templates",
-            "Sans filigrane",
-            "Logo personnalisé",
-            "Support email",
-            "Export PDF haute qualité",
-        ],
-        cta: "Choisir Standard",
-        popular: true,
-        icon: Sparkles,
-        stripeLink: "https://buy.stripe.com/test_xxx", // Replace with actual Stripe link
-    },
-    {
-        name: "Premium",
-        price: "6.99",
-        period: "€/mois",
-        description: "Pour les entreprises exigeantes",
-        features: [
-            "Tout de Standard",
-            "Factures dynamiques",
-            "Support prioritaire",
-            "Accès API",
-            "Multi-utilisateurs",
-            "Statistiques avancées",
-            "Export multi-formats",
-        ],
-        cta: "Choisir Premium",
-        popular: false,
-        icon: Zap,
-        stripeLink: "https://buy.stripe.com/test_yyy", // Replace with actual Stripe link
-    },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 const PricingPanel = () => {
+    const { t } = useLanguage();
+
+    const plans = [
+        {
+            name: t("pricing.standardName"),
+            price: "3.99",
+            period: t("pricing.perMonth"),
+            description: t("pricing.standardDesc"),
+            features: [
+                t("pricing.unlimitedInvoices"),
+                t("pricing.allTemplates"),
+                t("pricing.noWatermark"),
+                t("pricing.customLogo"),
+                t("pricing.emailSupport"),
+                t("pricing.pdfExport"),
+            ],
+            cta: t("pricing.chooseStandard"),
+            popular: true,
+            icon: Sparkles,
+            stripeLink: "https://buy.stripe.com/test_xxx",
+        },
+        {
+            name: t("pricing.premiumName"),
+            price: "6.99",
+            period: t("pricing.perMonth"),
+            description: t("pricing.premiumDesc"),
+            features: [
+                t("pricing.includesStandard"),
+                t("pricing.dynamicInvoices"),
+                t("pricing.prioritySupport"),
+                t("pricing.apiAccess"),
+                t("pricing.multiUsers"),
+                t("pricing.advancedStats"),
+                t("pricing.multiFormat"),
+            ],
+            cta: t("pricing.choosePremium"),
+            popular: false,
+            icon: Zap,
+            stripeLink: "https://buy.stripe.com/test_yyy",
+        },
+    ];
+
     return (
         <div className="p-6 space-y-6 overflow-y-auto h-full">
             {/* Header */}
             <div>
                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
-                    Tarifs
+                    {t("pricingPanel.title")}
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                    Choisissez le plan qui vous convient
+                    {t("pricingPanel.subtitle")}
                 </p>
             </div>
 
             {/* Pricing Cards */}
             <div className="space-y-4">
-                {plans.map((plan) => (
+                {plans.map((plan, index) => (
                     <Card
-                        key={plan.name}
+                        key={index}
                         className={`relative overflow-hidden ${plan.popular ? "ring-2 ring-blue-500" : ""
                             }`}
                         padding="md"
                     >
                         {plan.popular && (
                             <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-medium px-3 py-1 rounded-bl-lg">
-                                Populaire
+                                {t("pricing.popular")}
                             </div>
                         )}
 
@@ -118,7 +121,7 @@ const PricingPanel = () => {
             {/* Free Plan Note */}
             <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <p className="text-sm text-gray-600">
-                    <span className="font-medium">Plan Gratuit :</span> Créez jusqu'à 3 factures par mois avec filigrane.
+                    <span className="font-medium">{t("pricingPanel.freePlan")}</span> {t("pricingPanel.freePlanDesc")}
                 </p>
             </div>
 
@@ -128,7 +131,7 @@ const PricingPanel = () => {
                     href="/pricing#faq"
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                    Questions fréquentes →
+                    {t("pricingPanel.faqLink")}
                 </a>
             </div>
         </div>
@@ -136,3 +139,4 @@ const PricingPanel = () => {
 };
 
 export default PricingPanel;
+

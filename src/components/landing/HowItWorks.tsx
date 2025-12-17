@@ -2,34 +2,33 @@
 
 import { MousePointer, Edit, Send } from "lucide-react";
 import { useEffect, useState } from "react";
-
-const steps = [
-  {
-    number: "01",
-    icon: MousePointer,
-    title: "Choisissez un template",
-    description:
-      "Selectionnez parmi nos modeles professionnels celui qui correspond le mieux a votre activite.",
-  },
-  {
-    number: "02",
-    icon: Edit,
-    title: "Personnalisez votre facture",
-    description:
-      "Ajoutez vos informations, logo, lignes de facturation et personnalisez les couleurs.",
-  },
-  {
-    number: "03",
-    icon: Send,
-    title: "Exportez et envoyez",
-    description:
-      "Telechargez votre facture en PDF et envoyez-la directement a vos clients.",
-  },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 const HowItWorks = () => {
+  const { t } = useLanguage();
   const [activeStep, setActiveStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(true);
+
+  const steps = [
+    {
+      number: "01",
+      icon: MousePointer,
+      title: t("howItWorks.step1Title"),
+      description: t("howItWorks.step1Desc"),
+    },
+    {
+      number: "02",
+      icon: Edit,
+      title: t("howItWorks.step2Title"),
+      description: t("howItWorks.step2Desc"),
+    },
+    {
+      number: "03",
+      icon: Send,
+      title: t("howItWorks.step3Title"),
+      description: t("howItWorks.step3Desc"),
+    },
+  ];
 
   // Auto-cycle through steps
   useEffect(() => {
@@ -52,10 +51,10 @@ const HowItWorks = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Comment ca marche
+            {t("howItWorks.title")}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Creez votre premiere facture en moins de 5 minutes
+            {t("howItWorks.subtitle")}
           </p>
         </div>
 
@@ -99,8 +98,8 @@ const HowItWorks = () => {
                   {/* Outer glow ring - appears when active */}
                   <div
                     className={`absolute inset-0 w-28 h-28 -m-2 rounded-full transition-all duration-700 ${activeStep === index
-                        ? 'bg-emerald-400/20 animate-ping'
-                        : 'bg-transparent'
+                      ? 'bg-emerald-400/20 animate-ping'
+                      : 'bg-transparent'
                       }`}
                     style={{ animationDuration: '2s' }}
                   ></div>
@@ -108,16 +107,16 @@ const HowItWorks = () => {
                   {/* Secondary glow */}
                   <div
                     className={`absolute inset-0 w-28 h-28 -m-2 rounded-full transition-all duration-500 ${activeStep === index
-                        ? 'bg-gradient-to-r from-emerald-400/30 to-green-400/30 blur-xl'
-                        : 'bg-transparent'
+                      ? 'bg-gradient-to-r from-emerald-400/30 to-green-400/30 blur-xl'
+                      : 'bg-transparent'
                       }`}
                   ></div>
 
                   {/* Main icon container */}
                   <div
                     className={`relative w-24 h-24 bg-white border-2 flex items-center justify-center transition-all duration-500 ${activeStep === index
-                        ? 'border-emerald-500 shadow-lg shadow-emerald-200'
-                        : 'border-gray-200 group-hover:border-emerald-300'
+                      ? 'border-emerald-500 shadow-lg shadow-emerald-200'
+                      : 'border-gray-200 group-hover:border-emerald-300'
                       }`}
                   >
                     {/* Inner glow effect */}
@@ -131,8 +130,8 @@ const HowItWorks = () => {
 
                     <step.icon
                       className={`relative w-10 h-10 transition-all duration-500 ${activeStep === index
-                          ? 'text-emerald-600 scale-110'
-                          : 'text-gray-500 group-hover:text-emerald-500'
+                        ? 'text-emerald-600 scale-110'
+                        : 'text-gray-500 group-hover:text-emerald-500'
                         }`}
                     />
 
@@ -148,8 +147,8 @@ const HowItWorks = () => {
                   {/* Step number badge with bounce when active */}
                   <div
                     className={`absolute -top-2 -right-2 w-8 h-8 text-white text-sm font-bold flex items-center justify-center transition-all duration-500 ${activeStep === index
-                        ? 'bg-emerald-500 scale-110 animate-bounce'
-                        : 'bg-blue-600'
+                      ? 'bg-emerald-500 scale-110 animate-bounce'
+                      : 'bg-blue-600'
                       }`}
                     style={{ animationDuration: '1s' }}
                   >
@@ -174,8 +173,8 @@ const HowItWorks = () => {
                 {/* Bottom indicator dot */}
                 <div
                   className={`mt-4 mx-auto w-2 h-2 rounded-full transition-all duration-500 ${activeStep === index
-                      ? 'bg-emerald-500 scale-150'
-                      : 'bg-gray-300'
+                    ? 'bg-emerald-500 scale-150'
+                    : 'bg-gray-300'
                     }`}
                 ></div>
               </div>
@@ -190,8 +189,8 @@ const HowItWorks = () => {
               key={index}
               onClick={() => setActiveStep(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${activeStep === index
-                  ? 'bg-emerald-500 scale-125'
-                  : 'bg-gray-300 hover:bg-gray-400'
+                ? 'bg-emerald-500 scale-125'
+                : 'bg-gray-300 hover:bg-gray-400'
                 }`}
               aria-label={`Étape ${index + 1}`}
             />

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function SignupPage() {
     const [fullName, setFullName] = useState('');
@@ -16,6 +17,7 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false);
 
     const { signUp } = useAuth();
+    const { t } = useLanguage();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -24,13 +26,13 @@ export default function SignupPage() {
 
         // Validate passwords match
         if (password !== confirmPassword) {
-            setError('Les mots de passe ne correspondent pas');
+            setError(t('auth.passwordMismatch'));
             return;
         }
 
         // Validate password length
         if (password.length < 6) {
-            setError('Le mot de passe doit contenir au moins 6 caracteres');
+            setError(t('auth.passwordTooShort'));
             return;
         }
 
@@ -60,9 +62,9 @@ export default function SignupPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Compte cree !</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.accountCreated')}</h2>
                         <p className="text-gray-600 mb-4">
-                            Votre compte a ete cree avec succes. Redirection vers le dashboard...
+                            {t('auth.redirecting')}
                         </p>
                     </div>
                 </div>
@@ -89,10 +91,10 @@ export default function SignupPage() {
                 {/* Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8">
                     <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                        Creer un compte
+                        {t('auth.signup')}
                     </h1>
                     <p className="text-gray-600 text-center mb-8">
-                        Commencez a creer vos factures gratuitement
+                        {t('auth.signupSubtitle2')}
                     </p>
 
                     {error && (
@@ -104,7 +106,7 @@ export default function SignupPage() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Nom complet
+                                {t('auth.fullName')}
                             </label>
                             <input
                                 id="fullName"
@@ -112,13 +114,13 @@ export default function SignupPage() {
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="Jean Dupont"
+                                placeholder={t('auth.fullNamePlaceholder')}
                             />
                         </div>
 
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Email
+                                {t('auth.email')}
                             </label>
                             <input
                                 id="email"
@@ -127,13 +129,13 @@ export default function SignupPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="vous@example.com"
+                                placeholder={t('auth.emailPlaceholder')}
                             />
                         </div>
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Mot de passe
+                                {t('auth.password')}
                             </label>
                             <input
                                 id="password"
@@ -143,13 +145,13 @@ export default function SignupPage() {
                                 required
                                 minLength={6}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="Min. 6 caracteres"
+                                placeholder={t('auth.minChars')}
                             />
                         </div>
 
                         <div>
                             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Confirmer le mot de passe
+                                {t('auth.confirmPassword')}
                             </label>
                             <input
                                 id="confirmPassword"
@@ -159,7 +161,7 @@ export default function SignupPage() {
                                 required
                                 minLength={6}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="••••••••"
+                                placeholder={t('auth.passwordPlaceholder')}
                             />
                         </div>
 
@@ -168,15 +170,15 @@ export default function SignupPage() {
                             disabled={loading}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Creation...' : 'Creer mon compte'}
+                            {loading ? t('auth.signingUp') : t('auth.signupButton')}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center">
                         <p className="text-gray-600">
-                            Deja un compte ?{' '}
+                            {t('auth.hasAccount')}{' '}
                             <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                                Se connecter
+                                {t('auth.loginLink')}
                             </Link>
                         </p>
                     </div>
@@ -185,10 +187,11 @@ export default function SignupPage() {
                 {/* Back to home */}
                 <div className="text-center mt-6">
                     <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
-                        ← Retour a l&apos;accueil
+                        {t('auth.backToHome')}
                     </Link>
                 </div>
             </div>
         </div>
     );
 }
+

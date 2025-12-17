@@ -6,15 +6,18 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Button from "@/components/ui/Button";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import { useLanguage } from "@/context/LanguageContext";
 
 const Header = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   const navLinks = [
-    { href: "/", label: "Accueil" },
-    { href: "/pricing", label: "Tarifs" },
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/", label: t("header.navHome") },
+    { href: "/pricing", label: t("header.navPricing") },
+    { href: "/dashboard", label: t("header.navDashboard") },
   ];
 
   const isActive = (href: string) => {
@@ -54,10 +57,11 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* CTA Button */}
-          <div className="hidden md:block">
+          {/* Language Switcher + CTA Button */}
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageSwitcher />
             <Link href="/dashboard">
-              <Button size="sm">Creer une facture</Button>
+              <Button size="sm">{t("header.ctaButton")}</Button>
             </Link>
           </div>
 
@@ -77,7 +81,7 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ${isMobileMenuOpen ? "max-h-64 pb-4" : "max-h-0"
+          className={`md:hidden overflow-hidden transition-all duration-300 ${isMobileMenuOpen ? "max-h-80 pb-4" : "max-h-0"
             }`}
         >
           <nav className="flex flex-col gap-1 pt-2">
@@ -94,10 +98,13 @@ const Header = () => {
                 {link.label}
               </Link>
             ))}
+            <div className="px-4 pt-2 flex items-center gap-2">
+              <LanguageSwitcher />
+            </div>
             <div className="px-4 pt-2">
               <Link href="/dashboard" className="block">
                 <Button className="w-full" size="sm">
-                  Creer une facture
+                  {t("header.ctaButton")}
                 </Button>
               </Link>
             </div>

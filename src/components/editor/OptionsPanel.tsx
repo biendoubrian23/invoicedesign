@@ -1,24 +1,26 @@
 "use client";
 
 import { useInvoiceStore } from "@/store";
+import { useLanguage } from "@/context/LanguageContext";
 import Input from "@/components/ui/Input";
 import { DOCUMENT_FONTS } from "@/types/invoice";
 
 const OptionsPanel = () => {
   const { invoice, setStyling } = useInvoiceStore();
   const { styling } = invoice;
+  const { t } = useLanguage();
 
   return (
     <div className="p-6 space-y-8 overflow-y-auto h-full">
       {/* Colors */}
       <section className="animate-fade-in">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Couleurs
+          {t("optionsPanel.colors")}
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Couleur principale
+              {t("optionsPanel.primaryColor")}
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -37,7 +39,7 @@ const OptionsPanel = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Couleur du texte
+              {t("optionsPanel.textColor")}
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -56,7 +58,7 @@ const OptionsPanel = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Couleur de fond
+              {t("optionsPanel.backgroundColor")}
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -78,12 +80,12 @@ const OptionsPanel = () => {
       {/* Font */}
       <section className="animate-fade-in stagger-1">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Typographie
+          {t("optionsPanel.typography")}
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Police du document
+              {t("optionsPanel.documentFont")}
             </label>
             <select
               value={styling.fontFamily}
@@ -102,7 +104,7 @@ const OptionsPanel = () => {
               className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg"
               style={{ fontFamily: styling.fontFamily }}
             >
-              <p className="text-sm text-gray-600 mb-1">Apercu :</p>
+              <p className="text-sm text-gray-600 mb-1">{t("optionsPanel.preview")}</p>
               <p className="text-lg">Votre Societe - Facture N° 2025-001</p>
               <p className="text-sm text-gray-500">1 234,56 EUR</p>
             </div>
@@ -113,7 +115,7 @@ const OptionsPanel = () => {
       {/* Preview */}
       <section className="animate-fade-in stagger-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Apercu des couleurs
+          {t("optionsPanel.colorPreview")}
         </h3>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -122,7 +124,7 @@ const OptionsPanel = () => {
               style={{ backgroundColor: styling.primaryColor }}
             ></div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Principale</p>
+              <p className="text-sm font-medium text-gray-900">{t("optionsPanel.primary")}</p>
               <p className="text-xs text-gray-500">{styling.primaryColor}</p>
             </div>
           </div>
@@ -134,7 +136,7 @@ const OptionsPanel = () => {
               <span style={{ color: styling.secondaryColor, fontSize: '20px', fontWeight: 'bold' }}>Aa</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Texte</p>
+              <p className="text-sm font-medium text-gray-900">{t("optionsPanel.text")}</p>
               <p className="text-xs text-gray-500">{styling.secondaryColor}</p>
             </div>
           </div>
@@ -144,7 +146,7 @@ const OptionsPanel = () => {
               style={{ backgroundColor: styling.backgroundColor }}
             ></div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Fond</p>
+              <p className="text-sm font-medium text-gray-900">{t("optionsPanel.background")}</p>
               <p className="text-xs text-gray-500">{styling.backgroundColor}</p>
             </div>
           </div>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useInvoiceStore } from "@/store";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -32,10 +33,13 @@ const DashboardHeader = ({ title = "Dashboard" }: DashboardHeaderProps) => {
         {title} {clientName ? <span className="text-gray-500 font-normal">| {clientName}</span> : null}
       </h1>
 
-      {/* Empty space - actions moved to sidebar */}
-      <div className="w-40"></div>
+      {/* Language Switcher */}
+      <div className="w-40 flex justify-end">
+        <LanguageSwitcher />
+      </div>
     </header>
   );
 };
 
 export default DashboardHeader;
+

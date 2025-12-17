@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface DeleteConfirmModalProps {
     isOpen: boolean;
@@ -19,11 +20,14 @@ const DeleteConfirmModal = ({
     onConfirm,
     clientName,
     isDeleting = false,
-    title = "Supprimer ce client ?",
+    title,
     customWarning
 }: DeleteConfirmModalProps) => {
+    const { t } = useLanguage();
     const [confirmText, setConfirmText] = useState('');
     const [error, setError] = useState('');
+
+    const displayTitle = title || t('deleteModal.deleteClient');
 
     // Reset on open/close
     useEffect(() => {
@@ -35,7 +39,7 @@ const DeleteConfirmModal = ({
 
     const handleConfirm = async () => {
         if (confirmText !== clientName) {
-            setError('Le nom ne correspond pas');
+            setError(t('deleteModal.nameMismatch') || 'Le nom ne correspond pas');
             return;
         }
 
@@ -60,7 +64,7 @@ const DeleteConfirmModal = ({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-red-50">
                     <h2 className="text-lg font-bold text-gray-900">
-                        {title}
+                        {displayTitle}
                     </h2>
                     <button
                         onClick={onClose}
@@ -76,20 +80,18 @@ const DeleteConfirmModal = ({
                     {customWarning ? customWarning : (
                         <div className="bg-amber-50 border border-amber-200 p-4">
                             <p className="text-sm text-amber-800">
-                                <strong>Attention !</strong> Cette action est irréversible et va supprimer :
+                                <strong>{t('deleteModal.warning')}</strong> {t('deleteModal.irreversible')}
                             </p>
                             <ul className="mt-2 text-sm text-amber-700 list-disc list-inside space-y-1">
-                                <li>Le client <strong>{clientName}</strong></li>
-                                <li>Le dossier de stockage associé</li>
-                                <li>Toutes les factures exportées dans ce dossier</li>
-                                <li>Les données de personnalisation sauvegardées</li>
+                                <li>{t('deleteModal.folder')} <strong>{clientName}</strong></li>
+                                <li>{t('deleteModal.allFiles')}</li>
                             </ul>
                         </div>
                     )}
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Pour confirmer, tapez <strong className="text-red-600">{clientName}</strong> ci-dessous :
+                            {t('deleteModal.confirmType') || 'Pour confirmer, tapez'} <strong className="text-red-600">{clientName}</strong> :
                         </label>
                         <input
                             type="text"
@@ -112,7 +114,7 @@ const DeleteConfirmModal = ({
                         disabled={isDeleting}
                         className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
-                        Annuler
+                        {t('common.cancel')}
                     </button>
                     <button
                         onClick={handleConfirm}
@@ -122,7 +124,7 @@ const DeleteConfirmModal = ({
                             : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
-                        {isDeleting ? 'Suppression...' : 'Supprimer définitivement'}
+                        {isDeleting ? t('deleteModal.deleting') : t('common.delete')}
                     </button>
                 </div>
             </div>
@@ -131,3 +133,4 @@ const DeleteConfirmModal = ({
 };
 
 export default DeleteConfirmModal;
+

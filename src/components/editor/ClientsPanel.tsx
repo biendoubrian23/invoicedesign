@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useInvoiceStore } from '@/store';
 import {
     Client,
@@ -17,6 +18,7 @@ import DeleteConfirmModal from '@/components/ui/DeleteConfirmModal';
 
 const ClientsPanel = () => {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const { setActiveSection, loadClientInvoiceState, setCurrentClientId, currentClientId } = useInvoiceStore();
 
     const [clients, setClients] = useState<Client[]>([]);
@@ -139,11 +141,11 @@ const ClientsPanel = () => {
         return (
             <div className="p-6">
                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-                    Clients
+                    {t('clientsPanel.clients')}
                 </h3>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <p className="text-sm text-yellow-800">
-                        Connectez-vous pour gérer vos clients.
+                        {t('clientsPanel.loginRequired')}
                     </p>
                 </div>
             </div>
@@ -155,14 +157,14 @@ const ClientsPanel = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
-                    Clients
+                    {t('clientsPanel.clients')}
                 </h3>
-                <span className="text-xs text-gray-400">{clients.length} client{clients.length > 1 ? 's' : ''}</span>
+                <span className="text-xs text-gray-400">{clients.length} {clients.length > 1 ? t('clientsPanel.clientsCount') : t('clientsPanel.clientCount')}</span>
             </div>
 
             {/* Description */}
             <p className="text-xs text-gray-500">
-                Sélectionnez un client pour charger sa dernière facture ou créez-en un nouveau.
+                {t('clientsPanel.description')}
             </p>
 
             {/* Add Client Button */}
@@ -173,7 +175,7 @@ const ClientsPanel = () => {
                         value={newClientName}
                         onChange={(e) => setNewClientName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleCreateClient()}
-                        placeholder="Nom du client"
+                        placeholder={t('clientsPanel.clientName')}
                         className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         autoFocus
                     />
@@ -197,7 +199,7 @@ const ClientsPanel = () => {
                     className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
-                    Ajouter un client
+                    {t('clientsPanel.addClient')}
                 </button>
             )}
 
@@ -209,7 +211,7 @@ const ClientsPanel = () => {
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Rechercher..."
+                        placeholder={t('common.search')}
                         className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
@@ -231,9 +233,9 @@ const ClientsPanel = () => {
                 /* Empty State */
                 <div className="text-center py-8">
                     <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">Aucun client</p>
+                    <p className="text-sm text-gray-500">{t('clientsPanel.noClients')}</p>
                     <p className="text-xs text-gray-400 mt-1">
-                        Créez votre premier client ci-dessus
+                        {t('clientsPanel.createFirst')}
                     </p>
                 </div>
             ) : (
@@ -263,7 +265,7 @@ const ClientsPanel = () => {
                                     {client.name}
                                 </p>
                                 <p className="text-xs text-gray-400">
-                                    {client.city || 'Aucune adresse'}
+                                    {client.city || t('clientsPanel.noAddress')}
                                 </p>
                             </div>
 
@@ -288,7 +290,7 @@ const ClientsPanel = () => {
             {currentClientId && (
                 <div className="pt-4 border-t border-gray-200">
                     <p className="text-xs text-gray-500 text-center">
-                        Client actif: <span className="font-medium text-gray-900">
+                        {t('clientsPanel.activeClient')} <span className="font-medium text-gray-900">
                             {clients.find(c => c.id === currentClientId)?.name}
                         </span>
                     </p>

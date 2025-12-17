@@ -1,24 +1,28 @@
+"use client";
+
 import Link from "next/link";
 import { FileText } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { t } = useLanguage();
 
   const footerLinks = {
     produit: [
-      { label: "Fonctionnalites", href: "/#features" },
-      { label: "Templates", href: "/#templates" },
-      { label: "Tarifs", href: "/pricing" },
+      { labelKey: "footer.features", href: "/#features" },
+      { labelKey: "footer.templates", href: "/#templates" },
+      { labelKey: "footer.pricing", href: "/pricing" },
     ],
     ressources: [
-      { label: "Documentation", href: "#" },
-      { label: "Guide de demarrage", href: "#" },
-      { label: "FAQ", href: "/pricing#faq" },
+      { labelKey: "footer.documentation", href: "#" },
+      { labelKey: "footer.gettingStarted", href: "#" },
+      { labelKey: "footer.faq", href: "/pricing#faq" },
     ],
     legal: [
-      { label: "Mentions legales", href: "#" },
-      { label: "Politique de confidentialite", href: "#" },
-      { label: "CGV", href: "#" },
+      { labelKey: "footer.legalMentions", href: "#" },
+      { labelKey: "footer.privacyPolicy", href: "#" },
+      { labelKey: "footer.terms", href: "#" },
     ],
   };
 
@@ -37,24 +41,23 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Creez des factures professionnelles en quelques clics. Simple,
-              rapide et elegant.
+              {t("footer.tagline")}
             </p>
           </div>
 
           {/* Produit */}
           <div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-              Produit
+              {t("footer.product")}
             </h3>
             <ul className="space-y-3">
               {footerLinks.produit.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link
                     href={link.href}
                     className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -64,16 +67,16 @@ const Footer = () => {
           {/* Ressources */}
           <div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-              Ressources
+              {t("footer.resources")}
             </h3>
             <ul className="space-y-3">
               {footerLinks.ressources.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link
                     href={link.href}
                     className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -83,16 +86,16 @@ const Footer = () => {
           {/* Legal */}
           <div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-              Legal
+              {t("footer.legal")}
             </h3>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link
                     href={link.href}
                     className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -104,7 +107,7 @@ const Footer = () => {
         <div className="mt-12 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              {currentYear} InvoiceDesign. Tous droits reserves.
+              {currentYear} {t("footer.copyright")}
             </p>
             <div className="flex items-center gap-6">
               <a
@@ -122,3 +125,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

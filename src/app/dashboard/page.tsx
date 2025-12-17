@@ -8,6 +8,7 @@ import { useInvoiceStore } from "@/store";
 import { useExport } from "@/hooks/useExport";
 import { useAutoSaveClientState } from "@/hooks/useAutoSave";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import Button from "@/components/ui/Button";
 import { Download, Image, Loader2, X } from "lucide-react";
 
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const { invoice, calculateTotals, activeSection } = useInvoiceStore();
   const { total } = calculateTotals();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   // Hydrate store on mount to prevent hydration mismatch
@@ -161,7 +163,7 @@ export default function DashboardPage() {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <DashboardHeader title="Editeur de facture" />
+      <DashboardHeader title={t("common.invoiceEditor")} />
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
@@ -182,10 +184,10 @@ export default function DashboardPage() {
           <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
-                Facture : <span className="font-medium text-gray-900">{invoice.invoiceNumber}</span>
+                {t("common.invoice")} : <span className="font-medium text-gray-900">{invoice.invoiceNumber}</span>
               </span>
               <span className="text-sm text-gray-600">
-                Total : <span className="font-semibold text-blue-600">{total.toFixed(2)} {invoice.currency}</span>
+                {t("common.total")} : <span className="font-semibold text-blue-600">{total.toFixed(2)} {invoice.currency}</span>
               </span>
               {error && (
                 <span className="text-sm text-red-600">{error}</span>
@@ -199,7 +201,7 @@ export default function DashboardPage() {
                 disabled={isExporting}
               >
                 <Image className="w-4 h-4 mr-2" />
-                Exporter PNG
+                {t("common.exportPNG")}
               </Button>
               <Button
                 size="sm"
@@ -211,7 +213,7 @@ export default function DashboardPage() {
                 ) : (
                   <Download className="w-4 h-4 mr-2" />
                 )}
-                {isExporting ? 'Export en cours...' : 'Telecharger PDF'}
+                {isExporting ? t("common.exporting") : t("common.downloadPDF")}
               </Button>
             </div>
           </div>
@@ -242,7 +244,7 @@ export default function DashboardPage() {
                     <button
                       onClick={() => setPreviewFile(null)}
                       className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Fermer l'aperçu"
+                      title={t("common.closePreview")}
                     >
                       <X className="w-4 h-4" />
                     </button>

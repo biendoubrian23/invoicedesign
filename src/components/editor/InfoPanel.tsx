@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { useInvoiceStore } from "@/store";
+import { useLanguage } from "@/context/LanguageContext";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import InvoiceItemEditor from "./InvoiceItemEditor";
@@ -13,6 +14,7 @@ import { InvoiceItemsBlock, CustomField } from "@/types/invoice";
 const InfoPanel = () => {
   const { invoice, setInvoice, setIssuer, setClient, addItem, blocks, focusTarget, clearFocusTarget } =
     useInvoiceStore();
+  const { t } = useLanguage();
 
   // Refs pour le scroll
   const invoiceInfoRef = useRef<HTMLElement>(null);
@@ -77,23 +79,23 @@ const InfoPanel = () => {
       {/* Invoice Info */}
       <section ref={invoiceInfoRef} className="animate-fade-in transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Informations de base
+          {t("infoPanel.basicInfo")}
         </h3>
         <div className="space-y-4">
           <Input
-            label="Numero de facture"
+            label={t("infoPanel.invoiceNumber")}
             value={invoice.invoiceNumber}
             onChange={(e) => setInvoice({ invoiceNumber: e.target.value })}
           />
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Date"
+              label={t("infoPanel.date")}
               type="date"
               value={invoice.date}
               onChange={(e) => setInvoice({ date: e.target.value })}
             />
             <Input
-              label="Date d'echeance"
+              label={t("infoPanel.dueDate")}
               type="date"
               value={invoice.dueDate}
               onChange={(e) => setInvoice({ dueDate: e.target.value })}
@@ -101,27 +103,27 @@ const InfoPanel = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Taux de TVA (%)"
+              label={t("infoPanel.taxRate")}
               type="number"
               value={invoice.taxRate}
               onChange={(e) => setInvoice({ taxRate: Number(e.target.value) })}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Devise
+                {t("infoPanel.currency")}
               </label>
               <select
                 className="w-full px-4 py-2.5 text-sm border border-gray-300 bg-white transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 value={invoice.currency}
                 onChange={(e) => setInvoice({ currency: e.target.value })}
               >
-                <option value="€">Euro (€)</option>
-                <option value="$">Dollar ($)</option>
-                <option value="£">Livre (£)</option>
-                <option value="CHF">Franc Suisse (CHF)</option>
-                <option value="XOF">Franc CFA (XOF)</option>
-                <option value="MAD">Dirham (MAD)</option>
-                <option value="CAD">Dollar Canadien (CAD)</option>
+                <option value="€">{t("currencies.euro")}</option>
+                <option value="$">{t("currencies.dollar")}</option>
+                <option value="£">{t("currencies.pound")}</option>
+                <option value="CHF">{t("currencies.chf")}</option>
+                <option value="XOF">{t("currencies.xof")}</option>
+                <option value="MAD">{t("currencies.mad")}</option>
+                <option value="CAD">{t("currencies.cad")}</option>
               </select>
             </div>
           </div>
@@ -131,16 +133,16 @@ const InfoPanel = () => {
       {/* Issuer Info */}
       <section ref={issuerRef} className="animate-fade-in stagger-1 transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Emetteur (Votre entreprise)
+          {t("infoPanel.issuer")}
         </h3>
         <div className="space-y-4">
           <Input
-            label="Nom de la societe"
+            label={t("infoPanel.companyName")}
             value={invoice.issuer.name}
             onChange={(e) => setIssuer({ name: e.target.value })}
           />
           <FieldWithVisibility
-            label="Adresse"
+            label={t("infoPanel.address")}
             value={invoice.issuer.address}
             onChange={(value) => setIssuer({ address: value })}
             visible={invoice.issuer.visibility?.address ?? true}
@@ -154,7 +156,7 @@ const InfoPanel = () => {
             rows={2}
           />
           <FieldWithVisibility
-            label="SIRET"
+            label={t("infoPanel.siret")}
             value={invoice.issuer.siret}
             onChange={(value) => setIssuer({ siret: value })}
             visible={invoice.issuer.visibility?.siret ?? true}
@@ -180,7 +182,7 @@ const InfoPanel = () => {
               type="email"
             />
             <FieldWithVisibility
-              label="Telephone"
+              label={t("infoPanel.phone")}
               value={invoice.issuer.phone}
               onChange={(value) => setIssuer({ phone: value })}
               visible={invoice.issuer.visibility?.phone ?? true}
@@ -215,11 +217,11 @@ const InfoPanel = () => {
       {/* Client Info */}
       <section ref={clientRef} className="animate-fade-in stagger-2 transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Destinataire (Client)
+          {t("infoPanel.recipient")}
         </h3>
         <div className="space-y-4">
           <Input
-            label="Nom du contact"
+            label={t("infoPanel.contactName")}
             value={invoice.client.name}
             onChange={(e) => setClient({ name: e.target.value })}
           />
@@ -228,7 +230,7 @@ const InfoPanel = () => {
             onChange={(value) => setClient({ company: value })}
           />
           <FieldWithVisibility
-            label="Adresse"
+            label={t("infoPanel.address")}
             value={invoice.client.address}
             onChange={(value) => setClient({ address: value })}
             visible={invoice.client.visibility?.address ?? true}
@@ -277,7 +279,7 @@ const InfoPanel = () => {
       {/* Line Items */}
       <section ref={itemsRef} className="animate-fade-in stagger-3 transition-all duration-300 rounded-lg p-2 -m-2">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Lignes de facturation
+          {t("infoPanel.invoiceLines")}
         </h3>
         <div className="space-y-4">
           {invoice.items.map((item, index) => (
@@ -295,7 +297,7 @@ const InfoPanel = () => {
             onClick={addItem}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Ajouter une ligne
+            {t("infoPanel.addLine")}
           </Button>
         </div>
       </section>
@@ -303,12 +305,12 @@ const InfoPanel = () => {
       {/* Notes & Payment Terms */}
       <section className="animate-fade-in stagger-4">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-          Conditions de paiement
+          {t("infoPanel.paymentTerms")}
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Conditions
+              {t("infoPanel.conditions")}
             </label>
             <textarea
               className="w-full px-4 py-2.5 text-sm border border-gray-300 bg-white transition-all duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
@@ -324,3 +326,4 @@ const InfoPanel = () => {
 };
 
 export default InfoPanel;
+
