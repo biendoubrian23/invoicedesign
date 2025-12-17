@@ -9,8 +9,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 
 const STRIPE_PRICES = {
-    standard: process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD || "price_1SfHFeF1KbAA4r3RD2jREmmL",
-    premium: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM || "price_1SfHGQF1KbAA4r3RUgSIvI10",
+    standard: process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD || "price_1SfH9SFFkQ3ldtDToy3sdoLw",
+    premium: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM || "price_1SfH9tFFkQ3ldtDTCd41zSyu",
 };
 
 const PricingPanel = () => {
