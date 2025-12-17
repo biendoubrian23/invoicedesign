@@ -6,6 +6,7 @@ import { DashboardHeader, Sidebar } from "@/components/dashboard";
 import { EditPanel, InvoicePreview, MobileDashboard } from "@/components/editor";
 import { useInvoiceStore } from "@/store";
 import { useExport } from "@/hooks/useExport";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useAutoSaveClientState } from "@/hooks/useAutoSave";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -19,11 +20,12 @@ interface PreviewFile {
 }
 
 export default function DashboardPage() {
-  const { invoice, calculateTotals, activeSection } = useInvoiceStore();
+  const { invoice, calculateTotals, activeSection, setActiveSection } = useInvoiceStore();
   const { total } = calculateTotals();
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
+  const { isFreeUser, exportsRemaining, canExport, refresh: refreshSubscription } = useSubscription();
 
   // Hydrate store on mount to prevent hydration mismatch
   useEffect(() => {
@@ -48,16 +50,24 @@ export default function DashboardPage() {
       router.push('/auth/login?redirect=/dashboard');
       return;
     }
-    exportPDF();
-  }, [user, router, exportPDF]);
+    if (!canExport) {
+      setActiveSection('pricing');
+      return;
+    }
+    exportPDF().then(() => refreshSubscription());
+  }, [user, router, exportPDF, canExport, setActiveSection, refreshSubscription]);
 
   const handleExportImage = useCallback(() => {
     if (!user) {
       router.push('/auth/login?redirect=/dashboard');
       return;
     }
-    exportImage();
-  }, [user, router, exportImage]);
+    if (!canExport) {
+      setActiveSection('pricing');
+      return;
+    }
+    exportImage().then(() => refreshSubscription());
+  }, [user, router, exportImage, canExport, setActiveSection, refreshSubscription]);
 
   // Handle file preview from Stockage
   const handlePreviewFile = useCallback((file: PreviewFile | null) => {
@@ -148,9 +158,13 @@ export default function DashboardPage() {
           ref={previewRef}
           showPreview={showMobilePreview}
           onTogglePreview={() => setShowMobilePreview(!showMobilePreview)}
-          onExportPDF={exportPDF}
-          onExportImage={exportImage}
+          onExportPDF={handleExportPDF}
+          onExportImage={handleExportImage}
           isExporting={isExporting}
+          exportsRemaining={exportsRemaining}
+          isFreeUser={isFreeUser}
+          canExport={canExport}
+          isLoggedIn={!!user}
         />
       </div>
     );
@@ -194,6 +208,12 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {/* Export counter for logged-in free users only */}
+              {user && isFreeUser && exportsRemaining >= 0 && (
+                <span className={`text-xs px-2 py-1 rounded-full ${exportsRemaining > 0 ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                  {exportsRemaining > 0 ? `${exportsRemaining}/3 ${t("common.exportsLeft")}` : t("common.noExportsLeft")}
+                </span>
+              )}
               <Button
                 variant="outline"
                 size="sm"

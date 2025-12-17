@@ -3,6 +3,9 @@
 import { forwardRef, useState, useCallback, useEffect, useRef, memo } from "react";
 import dynamic from "next/dynamic";
 import { useInvoiceStore } from "@/store";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   InvoiceBlock,
   FreeTextBlock,
@@ -40,9 +43,12 @@ interface InvoicePreviewProps {
 }
 
 const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ isMobile = false }, ref) => {
-  const { invoice, calculateTotals, blocks, reorderBlocks, selectBlock, selectedBlockId, navigateFromPreview, selectedTemplate } = useInvoiceStore();
+  const { invoice, calculateTotals, blocks, reorderBlocks, selectBlock, selectedBlockId, navigateFromPreview, selectedTemplate, setActiveSection } = useInvoiceStore();
   const { subtotal, tax, total } = calculateTotals();
   const { styling } = invoice;
+  const { isFreeUser } = useSubscription();
+  const { t } = useLanguage();
+  const { user } = useAuth();
 
   // Container ref pour mesurer l'espace disponible
   const containerRef = useRef<HTMLDivElement>(null);
@@ -260,12 +266,41 @@ const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ isMobi
         className="flex-1 p-6 overflow-auto flex items-start justify-center"
       >
         <div
-          className="origin-top"
+          className="origin-top relative"
           style={{
             transform: `scale(${finalScale})`,
             transformOrigin: 'top center',
           }}
         >
+          {/* Watermark overlay for logged-in free users only */}
+          {user && isFreeUser && (
+            <div
+              data-export-hidden
+              className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
+            >
+              <div
+                className="text-6xl font-bold text-gray-300 opacity-30 transform -rotate-45 whitespace-nowrap select-none"
+                style={{ letterSpacing: '8px' }}
+              >
+                InvoiceDesign
+              </div>
+            </div>
+          )}
+
+          {/* Remove watermark button for logged-in free users only */}
+          {user && isFreeUser && (
+            <button
+              data-export-hidden
+              onClick={() => setActiveSection('pricing')}
+              className="absolute -top-3 right-0 z-20 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-full shadow-lg transition-colors flex items-center gap-1"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              {t("common.removeWatermark")}
+            </button>
+          )}
+
           {/* Template switching based on selected template */}
           {selectedTemplate === "elegant" ? (
             <ElegantTemplate ref={ref} isMobile={isMobile} />

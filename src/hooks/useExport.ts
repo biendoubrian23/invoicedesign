@@ -83,8 +83,13 @@ export function useExport(
   }, [setActiveSection]);
 
   const exportPDF = useCallback(async () => {
+    // Clear any previous error first
+    setError(null);
+
     if (!elementRef.current) {
-      setError('Element de prévisualisation non trouvé');
+      setError('Chargement en cours, veuillez réessayer dans quelques secondes.');
+      // Auto-clear after 3 seconds
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
@@ -96,7 +101,6 @@ export function useExport(
     }
 
     setIsExporting(true);
-    setError(null);
 
     try {
       // Export the PDF (pass userId for watermark check)
@@ -129,8 +133,13 @@ export function useExport(
   }, [elementRef, filename, format, user, clientFolder, exportsRemaining, redirectToPricing]);
 
   const exportImage = useCallback(async () => {
+    // Clear any previous error first
+    setError(null);
+
     if (!elementRef.current) {
-      setError('Element de prévisualisation non trouvé');
+      setError('Chargement en cours, veuillez réessayer dans quelques secondes.');
+      // Auto-clear after 3 seconds
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
@@ -142,7 +151,6 @@ export function useExport(
     }
 
     setIsExporting(true);
-    setError(null);
 
     try {
       // Export the image

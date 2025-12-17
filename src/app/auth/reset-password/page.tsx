@@ -1,49 +1,50 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { getSupabase } from '@/lib/supabase/client';
 
-export default function SignupPage() {
-    const [fullName, setFullName] = useState('');
-    const [email, setEmail] = useState('');
+function ResetPasswordForm() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const { signUp } = useAuth();
     const { t } = useLanguage();
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Check if we have a valid session from the reset link
+    useEffect(() => {
+        const checkSession = async () => {
+            const { data: { session } } = await getSupabase().auth.getSession();
+            if (!session) {
+                // No session means the link might be invalid or expired
+                // The user will see an error when they try to submit
+            }
+        };
+        checkSession();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            setError(t('auth.invalidEmail'));
-            return;
-        }
-
-        // Validate passwords match
         if (password !== confirmPassword) {
             setError(t('auth.passwordMismatch'));
             return;
         }
 
-        // Validate password length
         if (password.length < 6) {
             setError(t('auth.passwordTooShort'));
             return;
         }
 
-        // Validate password contains letters and numbers
+        // Check password contains letters and numbers
         const hasLetter = /[a-zA-Z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
         if (!hasLetter || !hasNumber) {
@@ -53,16 +54,19 @@ export default function SignupPage() {
 
         setLoading(true);
 
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await getSupabase().auth.updateUser({
+            password: password
+        });
 
         if (error) {
             setError(error.message);
             setLoading(false);
         } else {
             setSuccess(true);
-            // Redirect to login after a short delay
+            setLoading(false);
+            // Redirect to login after 3 seconds
             setTimeout(() => {
-                router.push('/auth/login?confirmEmail=true');
+                router.push('/auth/login');
             }, 3000);
         }
     };
@@ -71,18 +75,27 @@ export default function SignupPage() {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
                 <div className="max-w-md w-full">
+                    <div className="text-center mb-8">
+                        <Link href="/" className="inline-block">
+                            <Image
+                                src="/logoheader.png"
+                                alt="InvoiceDesign"
+                                width={180}
+                                height={40}
+                                className="h-10 w-auto mx-auto"
+                            />
+                        </Link>
+                    </div>
+
                     <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.confirmEmailTitle')}</h2>
-                        <p className="text-gray-600 mb-4">
-                            {t('auth.confirmEmailMessage')}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                            {t('auth.redirectingToLoginSoon')}
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.passwordChanged')}</h2>
+                        <p className="text-gray-600 mb-6">
+                            {t('auth.redirectingToLogin')}
                         </p>
                     </div>
                 </div>
@@ -109,10 +122,10 @@ export default function SignupPage() {
                 {/* Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8">
                     <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                        {t('auth.signup')}
+                        {t('auth.newPassword')}
                     </h1>
                     <p className="text-gray-600 text-center mb-8">
-                        {t('auth.signupSubtitle2')}
+                        {t('auth.newPasswordSubtitle')}
                     </p>
 
                     {error && (
@@ -123,37 +136,8 @@ export default function SignupPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
-                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                {t('auth.fullName')}
-                            </label>
-                            <input
-                                id="fullName"
-                                type="text"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder={t('auth.fullNamePlaceholder')}
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                {t('auth.email')}
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder={t('auth.emailPlaceholder')}
-                            />
-                        </div>
-
-                        <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                {t('auth.password')}
+                                {t('auth.newPasswordLabel')}
                             </label>
                             <input
                                 id="password"
@@ -163,8 +147,9 @@ export default function SignupPage() {
                                 required
                                 minLength={6}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder={t('auth.minChars')}
+                                placeholder="••••••••"
                             />
+                            <p className="text-xs text-gray-500 mt-1">{t('auth.passwordHint')}</p>
                         </div>
 
                         <div>
@@ -179,7 +164,7 @@ export default function SignupPage() {
                                 required
                                 minLength={6}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder={t('auth.passwordPlaceholder')}
+                                placeholder="••••••••"
                             />
                         </div>
 
@@ -188,18 +173,9 @@ export default function SignupPage() {
                             disabled={loading}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? t('auth.signingUp') : t('auth.signupButton')}
+                            {loading ? t('auth.saving') : t('auth.changePassword')}
                         </button>
                     </form>
-
-                    <div className="mt-6 text-center">
-                        <p className="text-gray-600">
-                            {t('auth.hasAccount')}{' '}
-                            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                                {t('auth.loginLink')}
-                            </Link>
-                        </p>
-                    </div>
                 </div>
 
                 {/* Back to home */}
@@ -213,3 +189,14 @@ export default function SignupPage() {
     );
 }
 
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+        }>
+            <ResetPasswordForm />
+        </Suspense>
+    );
+}

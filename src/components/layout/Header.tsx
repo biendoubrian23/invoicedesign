@@ -57,11 +57,11 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Language Switcher + CTA Button */}
+          {/* Language Switcher + Login */}
           <div className="hidden md:flex items-center gap-2">
             <LanguageSwitcher />
-            <Link href="/dashboard">
-              <Button size="sm">{t("header.ctaButton")}</Button>
+            <Link href="/auth/login">
+              <Button size="sm">{t("header.login")}</Button>
             </Link>
           </div>
 
@@ -102,9 +102,9 @@ const Header = () => {
               <LanguageSwitcher />
             </div>
             <div className="px-4 pt-2">
-              <Link href="/dashboard" className="block">
+              <Link href="/auth/login" className="block">
                 <Button className="w-full" size="sm">
-                  {t("header.ctaButton")}
+                  {t("header.login")}
                 </Button>
               </Link>
             </div>
