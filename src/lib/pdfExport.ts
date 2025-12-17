@@ -6,6 +6,7 @@
 interface ExportOptions {
   filename?: string;
   format?: 'A4' | 'Letter';
+  userId?: string;
 }
 
 interface ImageExportOptions {
@@ -131,6 +132,7 @@ export async function exportToPDF(
   const {
     filename = 'facture',
     format = 'A4',
+    userId,
   } = options;
 
   try {
@@ -145,6 +147,7 @@ export async function exportToPDF(
       },
       body: JSON.stringify({
         html,
+        userId, // Pass userId for subscription check
         options: {
           filename,
           format,

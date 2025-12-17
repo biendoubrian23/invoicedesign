@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, RefObject } from 'react';
+import { useRouter } from 'next/navigation';
 import { exportToPDF, exportToImage } from '@/lib/pdfExport';
 import { uploadExportedFile } from '@/services/invoiceService';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +17,14 @@ interface UseExportReturn {
   exportPDF: () => Promise<void>;
   exportImage: () => Promise<void>;
   error: string | null;
+  exportsRemaining: number | null;
+}
+
+interface ExportCheckResponse {
+  canExport: boolean;
+  reason: string;
+  exportsRemaining: number;
+  subscriptionPlan?: string;
 }
 
 export function useExport(
@@ -24,8 +33,10 @@ export function useExport(
 ): UseExportReturn {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportsRemaining, setExportsRemaining] = useState<number | null>(null);
   const { user } = useAuth();
-  const { invoice, currentClientId } = useInvoiceStore();
+  const { invoice, currentClientId, setActiveSection } = useInvoiceStore();
+  const router = useRouter();
 
   const { filename = 'facture', format = 'A4' } = options;
 
@@ -34,9 +45,53 @@ export function useExport(
     ? invoice.client.company
     : undefined;
 
+  // Check if user can export
+  const checkExportLimit = async (): Promise<ExportCheckResponse | null> => {
+    try {
+      const response = await fetch('/api/check-export-limit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id }),
+      });
+      const data = await response.json();
+      setExportsRemaining(data.exportsRemaining);
+      return data;
+    } catch (error) {
+      console.error('Error checking export limit:', error);
+      return null;
+    }
+  };
+
+  // Increment export count after successful export
+  const incrementExportCount = async () => {
+    if (!user) return;
+    try {
+      await fetch('/api/check-export-limit', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+    } catch (error) {
+      console.error('Error incrementing export count:', error);
+    }
+  };
+
+  // Redirect to pricing section
+  const redirectToPricing = useCallback(() => {
+    setActiveSection('pricing');
+    setError('Vous avez atteint la limite de 3 exports gratuits. Passez à un plan payant pour des exports illimités.');
+  }, [setActiveSection]);
+
   const exportPDF = useCallback(async () => {
     if (!elementRef.current) {
       setError('Element de prévisualisation non trouvé');
+      return;
+    }
+
+    // Check export limit first
+    const limitCheck = await checkExportLimit();
+    if (!limitCheck?.canExport) {
+      redirectToPricing();
       return;
     }
 
@@ -44,11 +99,20 @@ export function useExport(
     setError(null);
 
     try {
-      // Export the PDF
+      // Export the PDF (pass userId for watermark check)
       const blob = await exportToPDF(elementRef.current, {
         filename,
         format,
+        userId: user?.id,
       });
+
+      // Increment export count for free users
+      await incrementExportCount();
+
+      // Update remaining count
+      if (exportsRemaining !== null && exportsRemaining > 0) {
+        setExportsRemaining(exportsRemaining - 1);
+      }
 
       // If user is logged in, also upload to storage
       if (user && blob) {
@@ -62,11 +126,18 @@ export function useExport(
     } finally {
       setIsExporting(false);
     }
-  }, [elementRef, filename, format, user, clientFolder]);
+  }, [elementRef, filename, format, user, clientFolder, exportsRemaining, redirectToPricing]);
 
   const exportImage = useCallback(async () => {
     if (!elementRef.current) {
       setError('Element de prévisualisation non trouvé');
+      return;
+    }
+
+    // Check export limit first
+    const limitCheck = await checkExportLimit();
+    if (!limitCheck?.canExport) {
+      redirectToPricing();
       return;
     }
 
@@ -76,6 +147,14 @@ export function useExport(
     try {
       // Export the image
       const blob = await exportToImage(elementRef.current, filename);
+
+      // Increment export count for free users
+      await incrementExportCount();
+
+      // Update remaining count
+      if (exportsRemaining !== null && exportsRemaining > 0) {
+        setExportsRemaining(exportsRemaining - 1);
+      }
 
       // If user is logged in, also upload to storage
       if (user && blob) {
@@ -89,13 +168,15 @@ export function useExport(
     } finally {
       setIsExporting(false);
     }
-  }, [elementRef, filename, user, clientFolder]);
+  }, [elementRef, filename, user, clientFolder, exportsRemaining, redirectToPricing]);
 
   return {
     isExporting,
     exportPDF,
     exportImage,
     error,
+    exportsRemaining,
   };
 }
+
 
