@@ -244,7 +244,9 @@
         "confirmPassword": "Confirmer le mot de passe",
         "minChars": "Min. 6 caractères",
         "accountCreated": "Compte créé !",
-        "redirecting": "Votre compte a été créé avec succès. Redirection vers le dashboard..."
+        "redirecting": "Votre compte a été créé avec succès. Redirection vers le dashboard...",
+        "invalidEmail": "Veuillez entrer une adresse email valide",
+        "passwordRequirements": "Le mot de passe doit contenir des lettres et des chiffres"
     },
     "infoPanel": {
         "basicInfo": "Informations de base",

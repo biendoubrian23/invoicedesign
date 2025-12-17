@@ -1,21 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Minus } from "lucide-react";
 import { Header, Footer } from "@/components/layout";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const router = useRouter();
 
   const plans = [
     {
       id: "standard",
       name: t("pricing.standardName"),
-      price: "5.99",
+      price: "3.99",
       period: t("pricing.perMonth"),
       description: t("pricing.standardDesc"),
       features: [
@@ -34,7 +38,7 @@ export default function PricingPage() {
     {
       id: "premium",
       name: t("pricing.premiumName"),
-      price: "9.99",
+      price: "6.99",
       period: t("pricing.perMonth"),
       description: t("pricing.premiumDesc"),
       features: [
@@ -78,6 +82,16 @@ export default function PricingPage() {
       answer: t("pricing.faq6A"),
     },
   ];
+
+  const handlePlanClick = () => {
+    if (user) {
+      // User is logged in - redirect to dashboard pricing section
+      router.push("/dashboard?section=pricing");
+    } else {
+      // User is not logged in - redirect to signup
+      router.push("/auth/signup?redirect=/dashboard");
+    }
+  };
 
   return (
     <>
@@ -162,6 +176,7 @@ export default function PricingPage() {
                       variant={plan.popular ? "primary" : "outline"}
                       className="w-full"
                       size="lg"
+                      onClick={handlePlanClick}
                     >
                       {plan.cta}
                     </Button>
@@ -222,5 +237,6 @@ export default function PricingPage() {
     </>
   );
 }
+
 
 

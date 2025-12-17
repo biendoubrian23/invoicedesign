@@ -24,6 +24,13 @@ export default function SignupPage() {
         e.preventDefault();
         setError(null);
 
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError(t('auth.invalidEmail'));
+            return;
+        }
+
         // Validate passwords match
         if (password !== confirmPassword) {
             setError(t('auth.passwordMismatch'));
@@ -33,6 +40,14 @@ export default function SignupPage() {
         // Validate password length
         if (password.length < 6) {
             setError(t('auth.passwordTooShort'));
+            return;
+        }
+
+        // Validate password contains letters and numbers
+        const hasLetter = /[a-zA-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        if (!hasLetter || !hasNumber) {
+            setError(t('auth.passwordRequirements'));
             return;
         }
 
