@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chromium } from 'playwright';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import { createClient } from '@supabase/supabase-js';
 
 // Function to get user subscription plan
@@ -18,6 +19,28 @@ async function getUserSubscriptionPlan(userId: string | null): Promise<string> {
     .single();
 
   return data?.subscription_plan || 'free';
+}
+
+// Get browser executable path based on environment
+async function getBrowser() {
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (isDev) {
+    // En local, utiliser Chrome/Chromium installé sur le système
+    const puppeteerFull = await import('puppeteer');
+    return puppeteerFull.default.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+  } else {
+    // En production (Vercel), utiliser @sparticuz/chromium
+    return puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: { width: 794, height: 1123 },
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  }
 }
 
 // Generate watermark HTML overlay
@@ -80,27 +103,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Lancer le navigateur Chromium
-    browser = await chromium.launch({
-      headless: true,
+    // Lancer le navigateur avec Puppeteer
+    browser = await getBrowser();
+
+    const page = await browser.newPage();
+    
+    // Définir le viewport pour A4 à 96 DPI
+    await page.setViewport({ 
+      width: 794, 
+      height: 1123, 
+      deviceScaleFactor: 2 
     });
 
-    const context = await browser.newContext({
-      viewport: { width: 794, height: 1123 }, // A4 à 96 DPI
-      deviceScaleFactor: 2, // Haute résolution pour un meilleur rendu
-    });
-
-    const page = await context.newPage();
-
-    // Définir le contenu HTML avec les styles inline
+    // Définir le contenu HTML
     await page.setContent(finalHtml, {
-      waitUntil: 'networkidle',
+      waitUntil: 'networkidle0',
     });
 
     // Attendre que les polices soient chargées
-    await page.waitForTimeout(500);
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Générer le PDF avec Playwright
+    // Générer le PDF avec Puppeteer
     const pdfBuffer = await page.pdf({
       format,
       printBackground,

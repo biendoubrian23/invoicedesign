@@ -4,6 +4,7 @@ import { useState, useCallback, RefObject } from 'react';
 import { useRouter } from 'next/navigation';
 import { exportToPDF, exportToImage } from '@/lib/pdfExport';
 import { uploadExportedFile } from '@/services/invoiceService';
+import { saveClientState } from '@/services/clientService';
 import { useAuth } from '@/context/AuthContext';
 import { useInvoiceStore } from '@/store';
 
@@ -35,7 +36,7 @@ export function useExport(
   const [error, setError] = useState<string | null>(null);
   const [exportsRemaining, setExportsRemaining] = useState<number | null>(null);
   const { user } = useAuth();
-  const { invoice, currentClientId, setActiveSection } = useInvoiceStore();
+  const { invoice, blocks, selectedTemplate, currentClientId, setActiveSection } = useInvoiceStore();
   const router = useRouter();
 
   const { filename = 'facture', format = 'A4' } = options;
@@ -103,6 +104,19 @@ export function useExport(
     setIsExporting(true);
 
     try {
+      // ✅ SAVE CLIENT STATE TO DATABASE BEFORE EXPORTING
+      // This ensures all modifications are saved for this client
+      if (user && currentClientId) {
+        console.log('[Export] Saving client state before PDF export...');
+        await saveClientState(
+          currentClientId,
+          invoice,
+          blocks,
+          selectedTemplate || 'classic'
+        );
+        console.log('[Export] Client state saved successfully');
+      }
+
       // Export the PDF (pass userId for watermark check)
       const blob = await exportToPDF(elementRef.current, {
         filename,
@@ -153,6 +167,19 @@ export function useExport(
     setIsExporting(true);
 
     try {
+      // ✅ SAVE CLIENT STATE TO DATABASE BEFORE EXPORTING
+      // This ensures all modifications are saved for this client
+      if (user && currentClientId) {
+        console.log('[Export] Saving client state before Image export...');
+        await saveClientState(
+          currentClientId,
+          invoice,
+          blocks,
+          selectedTemplate || 'classic'
+        );
+        console.log('[Export] Client state saved successfully');
+      }
+
       // Export the image
       const blob = await exportToImage(elementRef.current, filename);
 

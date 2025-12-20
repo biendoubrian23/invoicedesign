@@ -10,16 +10,29 @@ import {
     createClient,
     deleteClient,
     loadClientState,
-    saveClientState
+    saveClientState,
+    ClientInvoiceState
 } from '@/services/clientService';
-import { Users, Plus, Trash2, Search, User, Loader2, ArrowRight } from 'lucide-react';
+import { Users, Plus, Trash2, Search, User, Loader2, ArrowRight, ChevronDown, ChevronUp, FileText, MapPin, Mail, Phone, Euro, Calendar } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import DeleteConfirmModal from '@/components/ui/DeleteConfirmModal';
+
+// Type for client info display
+interface ClientInfo {
+    clientName: string;
+    clientCompany: string;
+    clientAddress: string;
+    clientEmail: string;
+    lastInvoiceNumber: string;
+    lastInvoiceDate: string;
+    lastInvoiceTotal: number;
+    currency: string;
+}
 
 const ClientsPanel = () => {
     const { user } = useAuth();
     const { t } = useLanguage();
-    const { setActiveSection, loadClientInvoiceState, setCurrentClientId, currentClientId } = useInvoiceStore();
+    const { setActiveSection, loadClientInvoiceState, setCurrentClientId, currentClientId, invoice } = useInvoiceStore();
 
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,6 +46,11 @@ const ClientsPanel = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Client info panel state
+    const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
+    const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
+    const [loadingInfo, setLoadingInfo] = useState(false);
 
     const loadClients = async () => {
         if (!user) {
@@ -54,6 +72,45 @@ const ClientsPanel = () => {
     useEffect(() => {
         loadClients();
     }, [user]);
+
+    // Load client info when expanded
+    const loadClientInfo = async (clientId: string) => {
+        setLoadingInfo(true);
+        const { data: state } = await loadClientState(clientId);
+        
+        if (state && state.invoice_data) {
+            const invoiceData = state.invoice_data;
+            const items = invoiceData.items || [];
+            const total = items.reduce((sum: number, item: { total?: number }) => sum + (item.total || 0), 0);
+            const taxRate = invoiceData.taxRate || 0;
+            const totalTTC = total + (total * taxRate / 100);
+
+            setClientInfo({
+                clientName: invoiceData.client?.name || '',
+                clientCompany: invoiceData.client?.company || '',
+                clientAddress: invoiceData.client?.address || '',
+                clientEmail: invoiceData.client?.email || '',
+                lastInvoiceNumber: invoiceData.invoiceNumber || '',
+                lastInvoiceDate: invoiceData.date || '',
+                lastInvoiceTotal: totalTTC,
+                currency: invoiceData.currency || '€',
+            });
+        } else {
+            setClientInfo(null);
+        }
+        setLoadingInfo(false);
+    };
+
+    // Toggle client info panel
+    const toggleClientInfo = async (clientId: string) => {
+        if (expandedClientId === clientId) {
+            setExpandedClientId(null);
+            setClientInfo(null);
+        } else {
+            setExpandedClientId(clientId);
+            await loadClientInfo(clientId);
+        }
+    };
 
     const handleCreateClient = async () => {
         if (!newClientName.trim()) return;
@@ -242,45 +299,127 @@ const ClientsPanel = () => {
                 /* Client List */
                 <div className="space-y-2">
                     {filteredClients.map((client) => (
-                        <div
-                            key={client.id}
-                            className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer group ${currentClientId === client.id
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
-                            onClick={() => handleSelectClient(client)}
-                        >
-                            {/* Avatar */}
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${currentClientId === client.id ? 'bg-blue-500' : 'bg-gray-200'
-                                }`}>
-                                <span className={`text-sm font-semibold ${currentClientId === client.id ? 'text-white' : 'text-gray-600'
+                        <div key={client.id} className="space-y-0">
+                            <div
+                                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer group ${currentClientId === client.id
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                    }`}
+                                onClick={() => handleSelectClient(client)}
+                            >
+                                {/* Avatar */}
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${currentClientId === client.id ? 'bg-blue-500' : 'bg-gray-200'
                                     }`}>
-                                    {client.name.charAt(0).toUpperCase()}
-                                </span>
+                                    <span className={`text-sm font-semibold ${currentClientId === client.id ? 'text-white' : 'text-gray-600'
+                                        }`}>
+                                        {client.name.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                        {client.name}
+                                    </p>
+                                    <p className="text-xs text-gray-400">
+                                        {client.city || t('clientsPanel.noAddress')}
+                                    </p>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex items-center gap-1">
+                                    {/* Toggle Info Button */}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); toggleClientInfo(client.id); }}
+                                        className={`p-2 rounded-lg transition-all ${expandedClientId === client.id 
+                                            ? 'text-blue-600 bg-blue-100' 
+                                            : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                        title="Voir les infos"
+                                    >
+                                        {expandedClientId === client.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); openDeleteModal(client); }}
+                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                        title="Supprimer"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    <ArrowRight className={`w-4 h-4 ${currentClientId === client.id ? 'text-blue-500' : 'text-gray-300'
+                                        }`} />
+                                </div>
                             </div>
 
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                    {client.name}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                    {client.city || t('clientsPanel.noAddress')}
-                                </p>
-                            </div>
+                            {/* Client Info Panel (Expanded) */}
+                            {expandedClientId === client.id && (
+                                <div className="ml-4 mr-2 mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200 text-xs space-y-2">
+                                    {loadingInfo ? (
+                                        <div className="flex items-center justify-center py-4">
+                                            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                                        </div>
+                                    ) : clientInfo ? (
+                                        <>
+                                            <h4 className="font-semibold text-gray-700 uppercase text-[10px] tracking-wider mb-2">
+                                                Dernière facture sauvegardée
+                                            </h4>
+                                            
+                                            {/* Invoice Info */}
+                                            <div className="flex items-center gap-2 text-gray-600">
+                                                <FileText className="w-3 h-3 text-blue-500" />
+                                                <span className="font-medium">{clientInfo.lastInvoiceNumber || 'N/A'}</span>
+                                            </div>
+                                            
+                                            {clientInfo.lastInvoiceDate && (
+                                                <div className="flex items-center gap-2 text-gray-600">
+                                                    <Calendar className="w-3 h-3 text-gray-400" />
+                                                    <span>{new Date(clientInfo.lastInvoiceDate).toLocaleDateString('fr-FR')}</span>
+                                                </div>
+                                            )}
 
-                            {/* Actions */}
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); openDeleteModal(client); }}
-                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                    title="Supprimer"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                                <ArrowRight className={`w-4 h-4 ${currentClientId === client.id ? 'text-blue-500' : 'text-gray-300'
-                                    }`} />
-                            </div>
+                                            {/* Total */}
+                                            <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                                                <Euro className="w-3 h-3 text-green-500" />
+                                                <span>{clientInfo.lastInvoiceTotal.toFixed(2)} {clientInfo.currency}</span>
+                                                <span className="text-gray-400 font-normal">TTC</span>
+                                            </div>
+
+                                            <hr className="border-gray-200 my-2" />
+
+                                            {/* Client Details */}
+                                            <h4 className="font-semibold text-gray-700 uppercase text-[10px] tracking-wider">
+                                                Client
+                                            </h4>
+                                            
+                                            {clientInfo.clientCompany && (
+                                                <div className="flex items-center gap-2 text-gray-600">
+                                                    <User className="w-3 h-3 text-gray-400" />
+                                                    <span>{clientInfo.clientCompany}</span>
+                                                </div>
+                                            )}
+                                            
+                                            {clientInfo.clientAddress && (
+                                                <div className="flex items-start gap-2 text-gray-600">
+                                                    <MapPin className="w-3 h-3 text-gray-400 mt-0.5" />
+                                                    <span className="whitespace-pre-line">{clientInfo.clientAddress}</span>
+                                                </div>
+                                            )}
+                                            
+                                            {clientInfo.clientEmail && (
+                                                <div className="flex items-center gap-2 text-gray-600">
+                                                    <Mail className="w-3 h-3 text-gray-400" />
+                                                    <span>{clientInfo.clientEmail}</span>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="text-center py-3 text-gray-400">
+                                            <FileText className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                                            <p>Aucune facture sauvegardée</p>
+                                            <p className="text-[10px] mt-1">Téléchargez une facture pour ce client</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

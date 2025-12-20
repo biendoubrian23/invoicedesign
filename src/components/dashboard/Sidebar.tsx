@@ -4,7 +4,7 @@ import { useInvoiceStore } from "@/store";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { EditorSection } from "@/types/invoice";
-import { LayoutGrid, FileText, Palette, Image, PlusSquare, FolderOpen, Settings, LogOut, CreditCard, Users } from "lucide-react";
+import { LayoutGrid, FileText, Palette, Image, PlusSquare, FolderOpen, Settings, LogOut, CreditCard, Users, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const Sidebar = () => {
@@ -21,6 +21,7 @@ const Sidebar = () => {
     { id: "blocks", labelKey: "sidebar.addBlock", icon: PlusSquare },
     { id: "clients", labelKey: "sidebar.clients", icon: Users },
     { id: "stockage", labelKey: "sidebar.storage", icon: FolderOpen },
+    { id: "my-business", labelKey: "sidebar.myBusiness", icon: Building2 },
   ];
 
   // Get user's initial from name or email

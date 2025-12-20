@@ -311,26 +311,32 @@ export async function deleteClientFolder(folderName: string): Promise<{ error: E
 
     const folderPath = `${user.id}/${folderName}`;
 
-    // List all files in the folder
+    // List all files in the folder (including hidden files like .folder)
     const { data: files, error: listError } = await supabase.storage
         .from('Facture')
         .list(folderPath);
 
-    if (listError) {
+    if (listError && listError.message !== 'not found') {
         return { error: listError };
     }
 
+    // Delete all files in the folder
     if (files && files.length > 0) {
-        // Delete all files in the folder
         const filePaths = files.map((f: { name: string }) => `${folderPath}/${f.name}`);
         const { error: removeError } = await supabase.storage
             .from('Facture')
             .remove(filePaths);
 
         if (removeError) {
+            console.error('Error deleting files from folder:', removeError);
             return { error: removeError };
         }
     }
 
+    // Note: Supabase Storage doesn't provide a direct "delete folder" operation
+    // The folder is automatically deleted when it becomes empty after removing all files
+    // If a .folder placeholder file was used to create the folder, it's deleted above
+    
+    console.log(`[Storage] Client folder deleted: ${folderPath}`);
     return { error: null };
 }

@@ -135,6 +135,7 @@ export async function updateClient(
 
 /**
  * Delete a client with cascade: delete folder, files, and database entry
+ * This will also cascade delete all client_invoice_states in the database
  */
 export async function deleteClient(clientId: string): Promise<{ error: string | null }> {
     const supabase = getSupabase();
@@ -155,21 +156,39 @@ export async function deleteClient(clientId: string): Promise<{ error: string | 
         return { error: 'Client non trouvé' };
     }
 
-    // Delete all files in the client's folder
-    const folderName = sanitizeFolderName(client.name);
-    await deleteClientFolder(folderName);
+    try {
+        // Step 1: Delete all files in the client's folder from storage
+        const folderName = sanitizeFolderName(client.name);
+        const storageResult = await deleteClientFolder(folderName);
+        
+        if (storageResult.error) {
+            console.warn(`[ClientService] Warning deleting storage folder: ${storageResult.error}`);
+            // Don't return error - continue with DB deletion
+        } else {
+            console.log(`[ClientService] Client folder deleted from storage: ${folderName}`);
+        }
 
-    // Delete the client from database (this will cascade delete client_invoice_states)
-    const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', clientId);
+        // Step 2: Delete client from database
+        // This triggers CASCADE DELETE for:
+        // - client_invoice_states (due to ON DELETE CASCADE on client_id)
+        const { error: dbError } = await supabase
+            .from('clients')
+            .delete()
+            .eq('id', clientId)
+            .eq('user_id', user.id); // Safety check: ensure user owns this client
 
-    if (error) {
-        return { error: error.message };
+        if (dbError) {
+            console.error('[ClientService] Error deleting client from database:', dbError);
+            return { error: `Erreur lors de la suppression: ${dbError.message}` };
+        }
+
+        console.log(`[ClientService] Client successfully deleted: ${client.name} (ID: ${clientId})`);
+        return { error: null };
+    } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Erreur inconnue';
+        console.error('[ClientService] Unexpected error deleting client:', err);
+        return { error: `Erreur lors de la suppression du client: ${errorMsg}` };
     }
-
-    return { error: null };
 }
 
 // =============================================

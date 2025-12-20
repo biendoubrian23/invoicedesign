@@ -9,6 +9,7 @@ import StockagePanel from "./StockagePanel";
 import SettingsPanel from "./SettingsPanel";
 import PricingPanel from "./PricingPanel";
 import ClientsPanel from "./ClientsPanel";
+import MyBusinessPanel from "./MyBusinessPanel";
 import { TemplateGrid } from "@/components/dashboard";
 
 interface PreviewFile {
@@ -44,6 +45,8 @@ const EditPanel = ({ onPreviewFile }: EditPanelProps) => {
         return <PricingPanel />;
       case "clients":
         return <ClientsPanel />;
+      case "my-business":
+        return <MyBusinessPanel />;
       default:
         return <InfoPanel />;
     }

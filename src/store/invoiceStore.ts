@@ -860,43 +860,36 @@ export const useInvoiceStore = create<InvoiceStore>()(
       }),
 
       loadClientInvoiceState: (invoiceData, blocksData, selectedTemplate) => {
-        // Logic to increment invoice number
-        let nextInvoiceNumber = invoiceData.invoiceNumber || defaultInvoice.invoiceNumber;
-
-        // Try to find a trailing number pattern (e.g. FAC-001 -> FAC-002)
-        const match = nextInvoiceNumber.match(/^(.*?)(\d+)$/);
-        if (match) {
-          const prefix = match[1];
-          const numberPart = match[2];
-          try {
-            const nextNumber = parseInt(numberPart, 10) + 1;
-            // Keep the same padding length (e.g. 001 -> 002)
-            const paddedNumber = nextNumber.toString().padStart(numberPart.length, '0');
-            nextInvoiceNumber = `${prefix}${paddedNumber}`;
-          } catch (e) {
-            // Keep original if parsing fails
-          }
+        // Check if this is an existing client with saved data or a new/empty client
+        const hasExistingData = invoiceData && Object.keys(invoiceData).length > 0;
+        
+        if (hasExistingData) {
+          // ✅ EXISTING CLIENT: Load their exact saved state (no modifications!)
+          // The user wants to see their last invoice exactly as it was saved
+          set({
+            invoice: {
+              ...defaultInvoice,
+              ...invoiceData,
+            } as Invoice,
+            blocks: blocksData.length > 0 ? blocksData : defaultBlocks,
+            selectedTemplate: selectedTemplate || "classic",
+            isLoadingClient: false,
+          });
         } else {
-          // Try strict number parsing
-          const num = parseInt(nextInvoiceNumber, 10);
-          if (!isNaN(num)) {
-            nextInvoiceNumber = (num + 1).toString();
-          }
+          // ✅ NEW CLIENT: Start with fresh default invoice
+          set({
+            invoice: {
+              ...defaultInvoice,
+              id: crypto.randomUUID(),
+              invoiceNumber: `FAC-${new Date().getFullYear()}-001`,
+              date: new Date().toISOString().split("T")[0],
+              dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+            },
+            blocks: defaultBlocks,
+            selectedTemplate: "classic",
+            isLoadingClient: false,
+          });
         }
-
-        set({
-          invoice: {
-            ...defaultInvoice,
-            ...invoiceData,
-            // Force reset specific fields for a NEW invoice based on this client
-            date: new Date().toISOString(),
-            dueDate: "", // Clear due date to force user choice or recalculation
-            invoiceNumber: nextInvoiceNumber,
-          } as Invoice,
-          blocks: blocksData.length > 0 ? blocksData : defaultBlocks,
-          selectedTemplate: selectedTemplate || "classic",
-          isLoadingClient: false, // Done loading, allow auto-save
-        });
       },
     }),
     {

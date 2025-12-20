@@ -115,7 +115,8 @@ export type EditorSection =
   | "stockage"
   | "settings"
   | "pricing"
-  | "clients";
+  | "clients"
+  | "my-business";
 
 // ============================================
 // BLOCS MODULAIRES
