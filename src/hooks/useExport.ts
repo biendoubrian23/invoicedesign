@@ -2,7 +2,7 @@
 
 import { useState, useCallback, RefObject } from 'react';
 import { useRouter } from 'next/navigation';
-import { exportToPDF, exportToImage } from '@/lib/pdfExport';
+import { exportToPDF, exportToImage, generateExportHTML } from '@/lib/pdfExport';
 import { uploadExportedFile } from '@/services/invoiceService';
 import { saveClientState } from '@/services/clientService';
 import { useAuth } from '@/context/AuthContext';
@@ -15,8 +15,10 @@ interface UseExportOptions {
 
 interface UseExportReturn {
   isExporting: boolean;
+  isSendingEmail: boolean;
   exportPDF: () => Promise<void>;
   exportImage: () => Promise<void>;
+  sendByEmail: () => Promise<void>;
   error: string | null;
   exportsRemaining: number | null;
 }
@@ -33,10 +35,11 @@ export function useExport(
   options: UseExportOptions = {}
 ): UseExportReturn {
   const [isExporting, setIsExporting] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exportsRemaining, setExportsRemaining] = useState<number | null>(null);
   const { user } = useAuth();
-  const { invoice, blocks, selectedTemplate, currentClientId, setActiveSection } = useInvoiceStore();
+  const { invoice, blocks, selectedTemplate, currentClientId, setActiveSection, calculateTotals } = useInvoiceStore();
   const router = useRouter();
 
   const { filename = 'facture', format = 'A4' } = options;
@@ -205,13 +208,117 @@ export function useExport(
     }
   }, [elementRef, filename, user, clientFolder, exportsRemaining, redirectToPricing]);
 
+  // Send invoice by email - generates PDF, uploads it, and opens email client
+  const sendByEmail = useCallback(async () => {
+    // Clear any previous error first
+    setError(null);
+
+    if (!elementRef.current) {
+      setError('Chargement en cours, veuillez réessayer dans quelques secondes.');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    // Check export limit first
+    const limitCheck = await checkExportLimit();
+    if (!limitCheck?.canExport) {
+      redirectToPricing();
+      return;
+    }
+
+    setIsSendingEmail(true);
+
+    try {
+      // Save client state before sending
+      if (user && currentClientId) {
+        console.log('[SendEmail] Saving client state before sending...');
+        await saveClientState(
+          currentClientId,
+          invoice,
+          blocks,
+          selectedTemplate || 'classic'
+        );
+        console.log('[SendEmail] Client state saved successfully');
+      }
+
+      // Generate the PDF (without downloading it)
+      const html = generateExportHTML(elementRef.current);
+      
+      const response = await fetch('/api/export/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          html,
+          userId: user?.id,
+          options: { filename, format, printBackground: true, margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' } },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération du PDF');
+      }
+
+      const blob = await response.blob();
+
+      // Upload to storage and get file path for clean URL
+      let pdfUrl = '';
+      if (user) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+        const storageFilename = `${filename}_${timestamp}`;
+        const { filePath } = await uploadExportedFile(blob, storageFilename, 'pdf', clientFolder);
+        
+        // Construire l'URL propre avec le nom de la facture
+        if (filePath) {
+          const baseUrl = window.location.origin;
+          const invoiceId = invoice.invoiceNumber || filename;
+          pdfUrl = `${baseUrl}/invoice/${encodeURIComponent(invoiceId)}?path=${encodeURIComponent(filePath)}`;
+        }
+      }
+
+      // Increment export count for free users
+      await incrementExportCount();
+
+      // Update remaining count
+      if (exportsRemaining !== null && exportsRemaining > 0) {
+        setExportsRemaining(exportsRemaining - 1);
+      }
+
+      // Prepare email content
+      const clientEmail = invoice.client?.email || '';
+      const clientName = invoice.client?.name || 'Client';
+      const issuerName = invoice.issuer?.name || 'Votre entreprise';
+      const invoiceNumber = invoice.invoiceNumber || '';
+      const { total } = calculateTotals();
+      const totalAmount = `${total.toFixed(2)} ${invoice.currency}`;
+
+      const subject = encodeURIComponent(`Facture ${invoiceNumber} - ${issuerName}`);
+      const body = encodeURIComponent(
+        `Bonjour ${clientName},\n\n` +
+        `Veuillez trouver ci-joint votre facture n°${invoiceNumber} d'un montant de ${totalAmount}.\n\n` +
+        (pdfUrl ? `📄 Télécharger la facture : ${pdfUrl}\n\n` : '') +
+        `Merci pour votre confiance !\n\n` +
+        `Cordialement,\n${issuerName}`
+      );
+
+      // Open email client with mailto:
+      const mailtoLink = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
+      window.open(mailtoLink, '_blank');
+
+    } catch (err) {
+      setError('Erreur lors de l\'envoi');
+      console.error('Send email error:', err);
+    } finally {
+      setIsSendingEmail(false);
+    }
+  }, [elementRef, filename, format, user, clientFolder, invoice, blocks, selectedTemplate, currentClientId, exportsRemaining, redirectToPricing]);
+
   return {
     isExporting,
+    isSendingEmail,
     exportPDF,
     exportImage,
+    sendByEmail,
     error,
     exportsRemaining,
   };
 }
-
-

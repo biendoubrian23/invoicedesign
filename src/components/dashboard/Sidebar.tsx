@@ -21,7 +21,7 @@ const Sidebar = () => {
     { id: "blocks", labelKey: "sidebar.addBlock", icon: PlusSquare },
     { id: "clients", labelKey: "sidebar.clients", icon: Users },
     { id: "stockage", labelKey: "sidebar.storage", icon: FolderOpen },
-    { id: "my-business", labelKey: "sidebar.myBusiness", icon: Building2 },
+    // { id: "my-business", labelKey: "sidebar.myBusiness", icon: Building2 }, // Désactivé temporairement
   ];
 
   // Get user's initial from name or email

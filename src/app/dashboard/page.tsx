@@ -11,7 +11,7 @@ import { useAutoSaveClientState } from "@/hooks/useAutoSave";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "@/components/ui/Button";
-import { Download, Image, Loader2, X } from "lucide-react";
+import { Download, Image, Loader2, X, Send } from "lucide-react";
 
 interface PreviewFile {
   url: string;
@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
 
   const previewRef = useRef<HTMLDivElement>(null);
-  const { isExporting, exportPDF, exportImage, error } = useExport(previewRef, {
+  const { isExporting, isSendingEmail, exportPDF, exportImage, sendByEmail, error } = useExport(previewRef, {
     filename: `facture-${invoice.invoiceNumber}`,
     format: 'A4',
   });
@@ -68,6 +68,19 @@ export default function DashboardPage() {
     }
     exportImage().then(() => refreshSubscription());
   }, [user, router, exportImage, canExport, setActiveSection, refreshSubscription]);
+
+  // Auth-protected send by email handler
+  const handleSendEmail = useCallback(() => {
+    if (!user) {
+      router.push('/auth/login?redirect=/dashboard');
+      return;
+    }
+    if (!canExport) {
+      setActiveSection('pricing');
+      return;
+    }
+    sendByEmail().then(() => refreshSubscription());
+  }, [user, router, sendByEmail, canExport, setActiveSection, refreshSubscription]);
 
   // Handle file preview from Stockage
   const handlePreviewFile = useCallback((file: PreviewFile | null) => {
@@ -160,7 +173,9 @@ export default function DashboardPage() {
           onTogglePreview={() => setShowMobilePreview(!showMobilePreview)}
           onExportPDF={handleExportPDF}
           onExportImage={handleExportImage}
+          onSendEmail={handleSendEmail}
           isExporting={isExporting}
+          isSendingEmail={isSendingEmail}
           exportsRemaining={exportsRemaining}
           isFreeUser={isFreeUser}
           canExport={canExport}
@@ -224,9 +239,22 @@ export default function DashboardPage() {
                 {t("common.exportPNG")}
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSendEmail}
+                disabled={isExporting || isSendingEmail}
+              >
+                {isSendingEmail ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                {isSendingEmail ? t("common.sendingEmail") : t("common.sendEmail")}
+              </Button>
+              <Button
                 size="sm"
                 onClick={handleExportPDF}
-                disabled={isExporting}
+                disabled={isExporting || isSendingEmail}
               >
                 {isExporting ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

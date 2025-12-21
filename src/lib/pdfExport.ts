@@ -17,8 +17,9 @@ interface ImageExportOptions {
 
 /**
  * Génère le HTML complet avec tous les styles inline pour l'export
+ * Exportée pour être utilisée par d'autres fonctions comme sendByEmail
  */
-function generateExportHTML(element: HTMLElement): string {
+export function generateExportHTML(element: HTMLElement): string {
   // Cloner l'élément pour ne pas modifier l'original
   const clone = element.cloneNode(true) as HTMLElement;
 

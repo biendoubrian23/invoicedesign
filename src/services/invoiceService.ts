@@ -107,11 +107,11 @@ export async function uploadExportedFile(
     filename: string,
     type: 'pdf' | 'png',
     clientFolder?: string
-): Promise<{ url: string | null; error: Error | null }> {
+): Promise<{ url: string | null; filePath: string | null; error: Error | null }> {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        return { url: null, error: new Error('User not authenticated') };
+        return { url: null, filePath: null, error: new Error('User not authenticated') };
     }
 
     const extension = type === 'pdf' ? 'pdf' : 'png';
@@ -131,14 +131,14 @@ export async function uploadExportedFile(
         });
 
     if (error) {
-        return { url: null, error: error as Error };
+        return { url: null, filePath: null, error: error as Error };
     }
 
     const { data: { publicUrl } } = supabase.storage
         .from('Facture')
         .getPublicUrl(filePath);
 
-    return { url: publicUrl, error: null };
+    return { url: publicUrl, filePath, error: null };
 }
 
 // Helper function to sanitize folder names

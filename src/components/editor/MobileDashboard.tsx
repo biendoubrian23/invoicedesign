@@ -5,14 +5,16 @@ import MobileEditPanel from "./MobileEditPanel";
 import { InvoicePreview } from "@/components/editor";
 import { useInvoiceStore } from "@/store";
 import { useLanguage } from "@/context/LanguageContext";
-import { ArrowLeft, Eye, Download, Image as ImageIcon, Loader2 } from "lucide-react";
+import { ArrowLeft, Eye, Download, Image as ImageIcon, Loader2, Send } from "lucide-react";
 
 interface MobileDashboardProps {
   showPreview: boolean;
   onTogglePreview: () => void;
   onExportPDF: () => void;
   onExportImage: () => void;
+  onSendEmail: () => void;
   isExporting: boolean;
+  isSendingEmail: boolean;
   exportsRemaining?: number;
   isFreeUser?: boolean;
   canExport?: boolean;
@@ -20,7 +22,7 @@ interface MobileDashboardProps {
 }
 
 const MobileDashboard = forwardRef<HTMLDivElement, MobileDashboardProps>(
-  ({ showPreview, onTogglePreview, onExportPDF, onExportImage, isExporting, exportsRemaining = 3, isFreeUser = false, canExport = true, isLoggedIn = false }, ref) => {
+  ({ showPreview, onTogglePreview, onExportPDF, onExportImage, onSendEmail, isExporting, isSendingEmail, exportsRemaining = 3, isFreeUser = false, canExport = true, isLoggedIn = false }, ref) => {
     const { invoice, calculateTotals } = useInvoiceStore();
     const { total } = calculateTotals();
     const { t } = useLanguage();
@@ -46,14 +48,25 @@ const MobileDashboard = forwardRef<HTMLDivElement, MobileDashboardProps>(
               )}
               <button
                 onClick={onExportImage}
-                disabled={isExporting}
+                disabled={isExporting || isSendingEmail}
                 className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50"
               >
                 <ImageIcon className="w-5 h-5" />
               </button>
               <button
+                onClick={onSendEmail}
+                disabled={isExporting || isSendingEmail}
+                className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors disabled:opacity-50"
+              >
+                {isSendingEmail ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </button>
+              <button
                 onClick={onExportPDF}
-                disabled={isExporting}
+                disabled={isExporting || isSendingEmail}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 {isExporting ? (

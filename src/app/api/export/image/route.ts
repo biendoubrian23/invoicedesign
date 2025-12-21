@@ -1,5 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chromium } from 'playwright';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
+
+// Get browser executable path based on environment
+async function getBrowser() {
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (isDev) {
+    // En local, utiliser Chrome/Chromium installé sur le système
+    const puppeteerFull = await import('puppeteer');
+    return puppeteerFull.default.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+  } else {
+    // En production (Vercel), utiliser @sparticuz/chromium
+    return puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: { width: 794, height: 1123 },
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  }
+}
 
 export async function POST(request: NextRequest) {
   let browser = null;
@@ -14,25 +37,25 @@ export async function POST(request: NextRequest) {
       fullPage = true,
     } = options;
 
-    // Lancer le navigateur Chromium
-    browser = await chromium.launch({
-      headless: true,
-    });
+    // Lancer le navigateur avec Puppeteer
+    browser = await getBrowser();
 
-    const context = await browser.newContext({
-      viewport: { width: 794, height: 1123 }, // A4 à 96 DPI
+    const page = await browser.newPage();
+
+    // Définir le viewport pour A4 à 96 DPI avec haute résolution
+    await page.setViewport({
+      width: 794,
+      height: 1123,
       deviceScaleFactor: 3, // Très haute résolution pour les images
     });
 
-    const page = await context.newPage();
-
     // Définir le contenu HTML
     await page.setContent(html, {
-      waitUntil: 'networkidle',
+      waitUntil: 'networkidle0',
     });
 
     // Attendre que les polices soient chargées
-    await page.waitForTimeout(500);
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Capturer la screenshot
     const screenshotOptions: {
@@ -66,7 +89,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="${filename}.${extension}"`,
-        'Content-Length': imageBuffer.length.toString(),
+        'Content-Length': uint8Array.length.toString(),
       },
     });
   } catch (error) {

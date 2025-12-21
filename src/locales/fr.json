@@ -27,6 +27,8 @@
         "invoice": "Facture",
         "total": "Total",
         "exportPNG": "Exporter PNG",
+        "sendEmail": "Envoyer",
+        "sendingEmail": "Envoi...",
         "removeWatermark": "Retirer filigrane",
         "exportsLeft": "exports restants",
         "noExportsLeft": "Limite atteinte",
