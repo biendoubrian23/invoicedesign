@@ -1,7 +1,10 @@
 /**
- * Module d'export PDF et Image utilisant Playwright côté serveur
- * Offre un rendu haute qualité avec support CSS complet
+ * Module d'export PDF et Image
+ * Utilise html2canvas + jsPDF pour génération côté client (compatible Vercel)
  */
+
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface ExportOptions {
   filename?: string;
@@ -124,7 +127,8 @@ export function generateExportHTML(element: HTMLElement): string {
 }
 
 /**
- * Exporte l'élément en PDF via l'API Playwright
+ * Exporte l'élément en PDF - 100% côté client avec html2canvas + jsPDF
+ * Compatible Vercel, pas de Chromium serverless nécessaire
  */
 export async function exportToPDF(
   element: HTMLElement,
@@ -133,39 +137,58 @@ export async function exportToPDF(
   const {
     filename = 'facture',
     format = 'A4',
-    userId,
   } = options;
 
   try {
-    // Générer le HTML avec tous les styles
-    const html = generateExportHTML(element);
-
-    // Appeler l'API d'export
-    const response = await fetch('/api/export/pdf', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        html,
-        userId, // Pass userId for subscription check
-        options: {
-          filename,
-          format,
-          printBackground: true,
-          margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
-        },
-      }),
+    // Dimensions A4 en mm
+    const a4Width = 210;
+    const a4Height = 297;
+    
+    // Capturer l'élément en canvas haute résolution
+    const canvas = await html2canvas(element, {
+      scale: 2, // Haute résolution
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      // Dimensions pour A4
+      windowWidth: 794, // A4 à 96 DPI
+      windowHeight: 1123,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.details || 'Erreur lors de la génération du PDF');
+    // Créer le PDF
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: format.toLowerCase() as 'a4' | 'letter',
+    });
+
+    // Calculer les dimensions pour remplir la page
+    const imgWidth = a4Width;
+    const imgHeight = (canvas.height * a4Width) / canvas.width;
+    
+    // Si l'image est plus haute que la page, on la redimensionne
+    let finalWidth = imgWidth;
+    let finalHeight = imgHeight;
+    
+    if (imgHeight > a4Height) {
+      finalHeight = a4Height;
+      finalWidth = (canvas.width * a4Height) / canvas.height;
     }
 
+    // Centrer l'image sur la page
+    const xOffset = (a4Width - finalWidth) / 2;
+    const yOffset = 0;
+
+    // Ajouter l'image au PDF
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+
+    // Générer le blob
+    const pdfBlob = pdf.output('blob');
+    
     // Télécharger le PDF
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(pdfBlob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `${filename}.pdf`;
@@ -174,8 +197,7 @@ export async function exportToPDF(
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    // Return blob for storage upload
-    return blob;
+    return pdfBlob;
   } catch (error) {
     console.error('Erreur export PDF:', error);
     throw error;
@@ -183,7 +205,7 @@ export async function exportToPDF(
 }
 
 /**
- * Exporte l'élément en image (PNG ou JPEG) via l'API Playwright
+ * Exporte l'élément en image (PNG) - 100% côté client avec html2canvas
  */
 export async function exportToImage(
   element: HTMLElement,
@@ -192,48 +214,44 @@ export async function exportToImage(
 ): Promise<Blob> {
   const {
     type = 'png',
-    quality = 100,
+    quality = 1.0,
   } = options;
 
   try {
-    // Générer le HTML avec tous les styles
-    const html = generateExportHTML(element);
-
-    // Appeler l'API d'export
-    const response = await fetch('/api/export/image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        html,
-        options: {
-          filename,
-          type,
-          quality,
-          fullPage: true,
-        },
-      }),
+    // Capturer l'élément en canvas haute résolution
+    const canvas = await html2canvas(element, {
+      scale: 3, // Très haute résolution pour les images
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.details || 'Erreur lors de la génération de l\'image');
-    }
+    // Convertir en blob
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Erreur lors de la génération de l\'image'));
+            return;
+          }
+          
+          // Télécharger l'image
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${filename}.${type === 'png' ? 'png' : 'jpg'}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
 
-    // Télécharger l'image
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.${type === 'png' ? 'png' : 'jpg'}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    // Return blob for storage upload
-    return blob;
+          resolve(blob);
+        },
+        type === 'png' ? 'image/png' : 'image/jpeg',
+        quality
+      );
+    });
   } catch (error) {
     console.error('Erreur export image:', error);
     throw error;
