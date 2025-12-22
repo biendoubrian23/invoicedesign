@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium-min';
+import chromium from '@sparticuz/chromium';
 import { createClient } from '@supabase/supabase-js';
-
-// Configure chromium for serverless
-chromium.setHeadlessMode = true;
-chromium.setGraphicsMode = false;
-
-// Remote chromium URL for serverless environments (Vercel)
-const CHROMIUM_URL = 'https://github.com/AminKarim/chromium-v127.0.0-pack/raw/main/chromium-v127.0.0-pack.tar';
 
 // Function to get user subscription plan
 async function getUserSubscriptionPlan(userId: string | null): Promise<string> {
@@ -40,13 +33,15 @@ async function getBrowser() {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
   } else {
-    // En production (Vercel), utiliser chromium-min avec remote executable
-    const executablePath = await chromium.executablePath(CHROMIUM_URL);
-    
+    // En production (Vercel), utiliser @sparticuz/chromium
     return puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--hide-scrollbars',
+        '--disable-web-security',
+      ],
       defaultViewport: { width: 794, height: 1123 },
-      executablePath,
+      executablePath: await chromium.executablePath(),
       headless: chromium.headless,
     });
   }

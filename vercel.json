@@ -2,11 +2,14 @@
   "functions": {
     "src/app/api/export/pdf/route.ts": {
       "memory": 1024,
-      "maxDuration": 60
+      "maxDuration": 30
     },
     "src/app/api/export/image/route.ts": {
       "memory": 1024,
-      "maxDuration": 60
+      "maxDuration": 30
     }
+  },
+  "env": {
+    "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
   }
 }
