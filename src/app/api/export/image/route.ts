@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import chromium from '@sparticuz/chromium-min';
+
+// Configure chromium for serverless
+chromium.setHeadlessMode = true;
+chromium.setGraphicsMode = false;
+
+// Remote chromium URL for serverless environments (Vercel)
+const CHROMIUM_URL = 'https://github.com/AminKarim/chromium-v127.0.0-pack/raw/main/chromium-v127.0.0-pack.tar';
 
 // Get browser executable path based on environment
 async function getBrowser() {
@@ -14,12 +21,14 @@ async function getBrowser() {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
   } else {
-    // En production (Vercel), utiliser @sparticuz/chromium
+    // En production (Vercel), utiliser chromium-min avec remote executable
+    const executablePath = await chromium.executablePath(CHROMIUM_URL);
+    
     return puppeteer.launch({
       args: chromium.args,
       defaultViewport: { width: 794, height: 1123 },
-      executablePath: await chromium.executablePath(),
-      headless: true,
+      executablePath,
+      headless: chromium.headless,
     });
   }
 }
