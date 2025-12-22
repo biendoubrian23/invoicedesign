@@ -146,40 +146,66 @@ export async function exportToPDF(
     const a4Width = 210;
     const a4Height = 297;
     
-    // Convertir les couleurs CSS modernes (oklab, oklch, etc.) en RGB
-    // html2canvas ne supporte pas ces couleurs modernes
-    const convertModernColors = (el: HTMLElement) => {
-      const allElements = [el, ...Array.from(el.querySelectorAll('*'))] as HTMLElement[];
-      allElements.forEach(elem => {
-        const computed = getComputedStyle(elem);
-        // Récupérer les couleurs computées (le navigateur les convertit en RGB)
-        const bgColor = computed.backgroundColor;
-        const color = computed.color;
-        const borderColor = computed.borderColor;
+    // Créer une copie avec TOUS les styles inline pour éviter les problèmes oklab
+    const createInlineStyledClone = (sourceElement: HTMLElement): HTMLElement => {
+      const clone = sourceElement.cloneNode(true) as HTMLElement;
+      
+      // Fonction pour appliquer tous les styles computés en inline
+      const applyAllInlineStyles = (source: Element, target: HTMLElement) => {
+        const computed = getComputedStyle(source);
         
-        if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
-          elem.style.backgroundColor = bgColor;
-        }
-        if (color) {
-          elem.style.color = color;
-        }
-        if (borderColor) {
-          elem.style.borderColor = borderColor;
-        }
+        // Copier TOUTES les propriétés CSS importantes
+        const props = [
+          'font-family', 'font-size', 'font-weight', 'font-style', 'line-height',
+          'color', 'background-color', 'background',
+          'margin', 'padding', 'border', 'border-radius',
+          'width', 'height', 'min-width', 'min-height', 'max-width', 'max-height',
+          'display', 'flex-direction', 'justify-content', 'align-items', 'gap', 'flex-wrap',
+          'grid-template-columns', 'grid-column', 'grid-row',
+          'text-align', 'vertical-align', 'white-space', 'overflow', 'text-overflow',
+          'position', 'top', 'right', 'bottom', 'left',
+          'box-sizing', 'opacity', 'visibility',
+          'border-collapse', 'border-spacing',
+          'table-layout',
+        ];
+        
+        props.forEach(prop => {
+          try {
+            const value = computed.getPropertyValue(prop);
+            if (value && value !== 'none' && value !== 'initial' && value !== 'auto') {
+              target.style.setProperty(prop, value, 'important');
+            }
+          } catch {
+            // Ignorer les erreurs
+          }
+        });
+      };
+      
+      // Appliquer au root
+      applyAllInlineStyles(sourceElement, clone);
+      
+      // Appliquer à tous les enfants
+      const sourceChildren = sourceElement.querySelectorAll('*');
+      const cloneChildren = clone.querySelectorAll('*');
+      sourceChildren.forEach((src, i) => {
+        const tgt = cloneChildren[i] as HTMLElement;
+        if (tgt) applyAllInlineStyles(src, tgt);
       });
+      
+      return clone;
     };
     
-    // Cloner l'élément pour ne pas modifier l'original
-    const clone = element.cloneNode(true) as HTMLElement;
+    // Créer le clone avec styles inline
+    const clone = createInlineStyledClone(element);
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0';
+    clone.style.width = '794px';
+    clone.style.backgroundColor = '#ffffff';
     document.body.appendChild(clone);
     
-    // Convertir les couleurs modernes en RGB
-    convertModernColors(clone);
-    
     // Capturer l'élément en canvas haute résolution
+    // On passe le clone qui a tous les styles inline, donc pas de parsing CSS
     const canvas = await html2canvas(clone, {
       scale: 2, // Haute résolution
       useCORS: true,
@@ -189,10 +215,10 @@ export async function exportToPDF(
       // Dimensions pour A4
       windowWidth: 794, // A4 à 96 DPI
       windowHeight: 1123,
-      onclone: (clonedDoc) => {
-        // Convertir aussi dans le document cloné par html2canvas
-        const root = clonedDoc.body;
-        convertModernColors(root);
+      // Ignorer les feuilles de style externes - on utilise les styles inline
+      ignoreElements: (el) => {
+        // Ignorer les éléments de style/link pour éviter le parsing oklab
+        return el.tagName === 'STYLE' || el.tagName === 'LINK';
       },
     });
     
@@ -263,36 +289,61 @@ export async function exportToImage(
   } = options;
 
   try {
-    // Convertir les couleurs CSS modernes (oklab, oklch, etc.) en RGB
-    const convertModernColors = (el: HTMLElement) => {
-      const allElements = [el, ...Array.from(el.querySelectorAll('*'))] as HTMLElement[];
-      allElements.forEach(elem => {
-        const computed = getComputedStyle(elem);
-        const bgColor = computed.backgroundColor;
-        const color = computed.color;
-        const borderColor = computed.borderColor;
+    // Créer une copie avec TOUS les styles inline pour éviter les problèmes oklab
+    const createInlineStyledClone = (sourceElement: HTMLElement): HTMLElement => {
+      const clone = sourceElement.cloneNode(true) as HTMLElement;
+      
+      // Fonction pour appliquer tous les styles computés en inline
+      const applyAllInlineStyles = (source: Element, target: HTMLElement) => {
+        const computed = getComputedStyle(source);
         
-        if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
-          elem.style.backgroundColor = bgColor;
-        }
-        if (color) {
-          elem.style.color = color;
-        }
-        if (borderColor) {
-          elem.style.borderColor = borderColor;
-        }
+        const props = [
+          'font-family', 'font-size', 'font-weight', 'font-style', 'line-height',
+          'color', 'background-color', 'background',
+          'margin', 'padding', 'border', 'border-radius',
+          'width', 'height', 'min-width', 'min-height', 'max-width', 'max-height',
+          'display', 'flex-direction', 'justify-content', 'align-items', 'gap', 'flex-wrap',
+          'grid-template-columns', 'grid-column', 'grid-row',
+          'text-align', 'vertical-align', 'white-space', 'overflow', 'text-overflow',
+          'position', 'top', 'right', 'bottom', 'left',
+          'box-sizing', 'opacity', 'visibility',
+          'border-collapse', 'border-spacing',
+          'table-layout',
+        ];
+        
+        props.forEach(prop => {
+          try {
+            const value = computed.getPropertyValue(prop);
+            if (value && value !== 'none' && value !== 'initial' && value !== 'auto') {
+              target.style.setProperty(prop, value, 'important');
+            }
+          } catch {
+            // Ignorer les erreurs
+          }
+        });
+      };
+      
+      // Appliquer au root
+      applyAllInlineStyles(sourceElement, clone);
+      
+      // Appliquer à tous les enfants
+      const sourceChildren = sourceElement.querySelectorAll('*');
+      const cloneChildren = clone.querySelectorAll('*');
+      sourceChildren.forEach((src, i) => {
+        const tgt = cloneChildren[i] as HTMLElement;
+        if (tgt) applyAllInlineStyles(src, tgt);
       });
+      
+      return clone;
     };
     
-    // Cloner l'élément pour ne pas modifier l'original
-    const clone = element.cloneNode(true) as HTMLElement;
+    // Créer le clone avec styles inline
+    const clone = createInlineStyledClone(element);
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0';
+    clone.style.backgroundColor = '#ffffff';
     document.body.appendChild(clone);
-    
-    // Convertir les couleurs modernes en RGB
-    convertModernColors(clone);
     
     // Capturer l'élément en canvas haute résolution
     const canvas = await html2canvas(clone, {
@@ -301,8 +352,9 @@ export async function exportToImage(
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
-      onclone: (clonedDoc) => {
-        convertModernColors(clonedDoc.body);
+      // Ignorer les feuilles de style externes
+      ignoreElements: (el) => {
+        return el.tagName === 'STYLE' || el.tagName === 'LINK';
       },
     });
     
