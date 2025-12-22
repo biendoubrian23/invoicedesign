@@ -20,15 +20,22 @@ interface PreviewFile {
 }
 
 // Composant pour gérer les searchParams (doit être dans un Suspense)
-function TemplateFromUrlHandler() {
+function UrlParamsHandler() {
   const searchParams = useSearchParams();
   const { selectTemplate, setActiveSection } = useInvoiceStore();
   
   useEffect(() => {
+    // Handle template parameter
     const templateFromUrl = searchParams.get('template');
     if (templateFromUrl && (templateFromUrl === 'classic' || templateFromUrl === 'elegant')) {
       selectTemplate(templateFromUrl);
       setActiveSection('templates');
+    }
+    
+    // Handle section parameter (for navigation from settings/pricing page)
+    const sectionFromUrl = searchParams.get('section');
+    if (sectionFromUrl && ['pricing', 'settings', 'templates', 'info', 'options', 'logo', 'blocks', 'clients', 'stockage'].includes(sectionFromUrl)) {
+      setActiveSection(sectionFromUrl as 'pricing' | 'settings' | 'templates' | 'info' | 'options' | 'logo' | 'blocks' | 'clients' | 'stockage');
     }
   }, [searchParams, selectTemplate, setActiveSection]);
   
@@ -184,7 +191,7 @@ export default function DashboardPage() {
     return (
       <div className="h-screen flex flex-col bg-gray-50">
         <Suspense fallback={null}>
-          <TemplateFromUrlHandler />
+          <UrlParamsHandler />
         </Suspense>
         <MobileDashboard
           ref={previewRef}
@@ -212,7 +219,7 @@ export default function DashboardPage() {
       onMouseLeave={handleMouseUp}
     >
       <Suspense fallback={null}>
-        <TemplateFromUrlHandler />
+        <UrlParamsHandler />
       </Suspense>
       <DashboardHeader title={t("common.invoiceEditor")} />
 

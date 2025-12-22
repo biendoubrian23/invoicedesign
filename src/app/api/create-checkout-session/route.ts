@@ -9,9 +9,9 @@ export async function POST(request: NextRequest) {
     try {
         const { priceId, plan, userId, userEmail } = await request.json();
 
-        if (!priceId || !plan || !userId) {
+        if (!priceId || !plan || !userId || !userEmail) {
             return NextResponse.json(
-                { error: 'Missing required fields' },
+                { error: 'Missing required fields. User must be logged in to subscribe.' },
                 { status: 400 }
             );
         }
@@ -35,6 +35,11 @@ export async function POST(request: NextRequest) {
 
         if (profile?.stripe_customer_id) {
             customerId = profile.stripe_customer_id;
+            
+            // Update customer email if it has changed
+            await stripe.customers.update(customerId, {
+                email: userEmail,
+            });
         } else {
             // Create new Stripe customer
             const customer = await stripe.customers.create({

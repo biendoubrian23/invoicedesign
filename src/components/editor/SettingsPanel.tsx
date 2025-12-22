@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { User, Mail, Key, Save, Loader2, CreditCard, ExternalLink } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase/client';
+import { useInvoiceStore } from '@/store';
 
 interface SubscriptionInfo {
     subscription_plan: 'free' | 'standard' | 'premium';
@@ -16,6 +17,7 @@ interface SubscriptionInfo {
 const SettingsPanel = () => {
     const { user } = useAuth();
     const { t } = useLanguage();
+    const { setActiveSection } = useInvoiceStore();
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(false);
     const [portalLoading, setPortalLoading] = useState(false);
@@ -210,17 +212,12 @@ const SettingsPanel = () => {
                         {t('settings.manageSubscription')}
                     </button>
                 ) : (
-                    <a
-                        href="/dashboard"
-                        onClick={() => {
-                            // Navigate to pricing section
-                            const event = new CustomEvent('navigate-to-section', { detail: 'pricing' });
-                            window.dispatchEvent(event);
-                        }}
+                    <button
+                        onClick={() => setActiveSection('pricing')}
                         className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
                     >
                         {t('settings.upgradePlan')}
-                    </a>
+                    </button>
                 )}
             </div>
 
