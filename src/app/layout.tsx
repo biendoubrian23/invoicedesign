@@ -248,10 +248,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Ajoute tes codes de vérification quand tu les auras
-    // google: 'ton-code-google-search-console',
-    // yandex: 'ton-code-yandex',
-    // bing: 'ton-code-bing',
+    google: 'Aam3akWKeqfW_UL7s8Yzn3uIA2GHLY1GD8',
   },
   category: "business",
 };
