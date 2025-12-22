@@ -120,11 +120,13 @@ export function useExport(
         console.log('[Export] Client state saved successfully');
       }
 
-      // Export the PDF (pass userId for watermark check)
+      // Export the PDF (pass isFreeUser for watermark)
+      const isFreeUser = !limitCheck.subscriptionPlan || limitCheck.subscriptionPlan === 'free';
       const blob = await exportToPDF(elementRef.current, {
         filename,
         format,
         userId: user?.id,
+        isFreeUser,
       });
 
       // Increment export count for free users
@@ -183,8 +185,9 @@ export function useExport(
         console.log('[Export] Client state saved successfully');
       }
 
-      // Export the image
-      const blob = await exportToImage(elementRef.current, filename);
+      // Export the image (pass isFreeUser for watermark)
+      const isFreeUser = !limitCheck.subscriptionPlan || limitCheck.subscriptionPlan === 'free';
+      const blob = await exportToImage(elementRef.current, filename, { isFreeUser });
 
       // Increment export count for free users
       await incrementExportCount();
@@ -242,10 +245,12 @@ export function useExport(
       }
 
       // Generate the PDF client-side (without downloading it)
+      const isFreeUser = !limitCheck.subscriptionPlan || limitCheck.subscriptionPlan === 'free';
       const blob = await exportToPDF(elementRef.current, {
         filename,
         format,
         download: false, // Ne pas télécharger, juste générer le blob
+        isFreeUser,
       });
 
       // Upload to storage and get file path for clean URL

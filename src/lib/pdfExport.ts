@@ -7,6 +7,7 @@ interface ExportOptions {
   filename?: string;
   format?: 'A4' | 'Letter';
   userId?: string;
+  isFreeUser?: boolean;
   download?: boolean;
 }
 
@@ -14,12 +15,13 @@ interface ImageExportOptions {
   filename?: string;
   type?: 'png' | 'jpeg';
   quality?: number;
+  isFreeUser?: boolean;
 }
 
 /**
  * Génère le HTML complet avec tous les styles inline pour l'export
  */
-export function generateExportHTML(element: HTMLElement): string {
+export function generateExportHTML(element: HTMLElement, addWatermark: boolean = false): string {
   // Cloner l'élément pour ne pas modifier l'original
   const clone = element.cloneNode(true) as HTMLElement;
 
@@ -71,6 +73,23 @@ export function generateExportHTML(element: HTMLElement): string {
   const elementsToRemove = clone.querySelectorAll('[data-export-hidden]');
   elementsToRemove.forEach(el => el.remove());
 
+  // Ajouter le filigrane pour les utilisateurs gratuits
+  const watermarkHtml = addWatermark ? `
+    <div style="
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 60px;
+      font-weight: bold;
+      color: rgba(156, 163, 175, 0.25);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 1000;
+      letter-spacing: 8px;
+    ">InvoiceDesign</div>
+  ` : '';
+
   // Récupérer les polices Google utilisées
   const fontFamily = window.getComputedStyle(element).fontFamily;
   const primaryFont = fontFamily.split(',')[0].replace(/['"]/g, '').trim();
@@ -105,6 +124,7 @@ export function generateExportHTML(element: HTMLElement): string {
       background: white;
       width: 210mm;
       min-height: 297mm;
+      position: relative;
     }
     
     [style*="background"] {
@@ -114,6 +134,7 @@ export function generateExportHTML(element: HTMLElement): string {
   </style>
 </head>
 <body>
+  ${watermarkHtml}
   ${clone.outerHTML}
 </body>
 </html>
@@ -133,11 +154,12 @@ export async function exportToPDF(
     filename = 'facture',
     format = 'A4',
     download = true,
+    isFreeUser = false,
   } = options;
 
   try {
-    // Générer le HTML avec styles inline
-    const html = generateExportHTML(element);
+    // Générer le HTML avec styles inline (ajouter filigrane pour utilisateurs gratuits)
+    const html = generateExportHTML(element, isFreeUser);
 
     // Appeler l'API serveur
     const response = await fetch('/api/export/pdf', {
@@ -185,11 +207,12 @@ export async function exportToImage(
   const {
     type = 'png',
     quality = 100,
+    isFreeUser = false,
   } = options;
 
   try {
-    // Générer le HTML avec styles inline
-    const html = generateExportHTML(element);
+    // Générer le HTML avec styles inline (ajouter filigrane pour utilisateurs gratuits)
+    const html = generateExportHTML(element, isFreeUser);
 
     // Appeler l'API serveur
     const response = await fetch('/api/export/image', {
