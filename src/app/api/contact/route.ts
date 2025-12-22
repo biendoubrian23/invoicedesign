@@ -78,7 +78,21 @@ ${message}
       }),
     });
 
-    const web3formsData = await web3formsResponse.json();
+    // Web3Forms peut retourner du HTML en cas d'erreur
+    const responseText = await web3formsResponse.text();
+    console.log("[Contact API] Réponse brute Web3Forms:", responseText.substring(0, 200));
+    
+    let web3formsData;
+    try {
+      web3formsData = JSON.parse(responseText);
+    } catch {
+      console.error("[Contact API] ❌ Réponse non-JSON de Web3Forms - Clé API probablement invalide");
+      return NextResponse.json(
+        { error: "Configuration Web3Forms invalide - veuillez vérifier la clé API" },
+        { status: 500 }
+      );
+    }
+    
     console.log("[Contact API] Réponse Web3Forms:", JSON.stringify(web3formsData));
 
     if (!web3formsResponse.ok || !web3formsData.success) {
