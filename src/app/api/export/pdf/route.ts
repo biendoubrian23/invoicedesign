@@ -39,7 +39,6 @@ async function getBrowser() {
       defaultViewport: { width: 794, height: 1123 },
       executablePath: await chromium.executablePath(),
       headless: true,
-      ignoreHTTPSErrors: true,
     });
   }
 }
