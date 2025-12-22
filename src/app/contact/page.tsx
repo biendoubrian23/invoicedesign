@@ -6,6 +6,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Mail, MessageSquare, Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
+// Access key publique Web3Forms (côté client)
+const WEB3FORMS_ACCESS_KEY = "113ca8b9-40c7-474c-a092-2f21fd1bf5bb";
+
 export default function ContactPage() {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
@@ -22,23 +25,39 @@ export default function ContactPage() {
     setStatus("loading");
     setErrorMessage("");
 
+    // Map subject to readable text
+    const subjectMap: Record<string, string> = {
+      general: "Question générale",
+      support: "Support technique",
+      billing: "Facturation",
+      partnership: "Partenariat",
+      other: "Autre",
+    };
+    const subjectText = subjectMap[formData.subject] || formData.subject;
+
     try {
-      const response = await fetch("/api/contact", {
+      // Envoi direct à Web3Forms depuis le navigateur (évite le blocage Cloudflare)
+      const form = new FormData();
+      form.append("access_key", WEB3FORMS_ACCESS_KEY);
+      form.append("subject", `[InvoiceDesign] ${subjectText} - ${formData.name}`);
+      form.append("from_name", "InvoiceDesign Contact");
+      form.append("name", formData.name);
+      form.append("email", formData.email);
+      form.append("message", formData.message);
+
+      const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body: form,
       });
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (data.success) {
         setStatus("success");
         setFormData({ name: "", email: "", subject: "", message: "" });
       } else {
         setStatus("error");
-        setErrorMessage(data.error || t("contact.errorMessage"));
+        setErrorMessage(data.message || t("contact.errorMessage"));
       }
     } catch {
       setStatus("error");
