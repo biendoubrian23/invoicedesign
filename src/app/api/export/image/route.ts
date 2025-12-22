@@ -1,17 +1,14 @@
 /**
- * API Route pour export Image avec Playwright
- * Fonctionne sur Railway avec l'image Docker Playwright
+ * API Route pour export Image
+ * Appelle le microservice PDF sur Railway
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { chromium } from 'playwright-core';
 
-export const maxDuration = 300; // 5 minutes pour Railway
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  let browser = null;
-  
   try {
     const { html, type = 'png', quality = 100 } = await request.json();
 
@@ -22,51 +19,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Lancer Playwright - utilise automatiquement le Chromium de l'image Docker
-    browser = await chromium.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-      ],
+    // URL du microservice PDF (Railway)
+    const pdfServiceUrl = process.env.PDF_SERVICE_URL;
+    
+    if (!pdfServiceUrl) {
+      return NextResponse.json(
+        { error: 'PDF_SERVICE_URL not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Appeler le microservice
+    const response = await fetch(`${pdfServiceUrl}/api/image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ html, type, quality }),
     });
 
-    const context = await browser.newContext({
-      viewport: { width: 794, height: 1123 },
-      deviceScaleFactor: 3, // Haute résolution
-    });
+    if (!response.ok) {
+      const error = await response.json();
+      return NextResponse.json(
+        { error: error.error || 'Image generation failed' },
+        { status: response.status }
+      );
+    }
 
-    const page = await context.newPage();
-
-    // Charger le HTML
-    await page.setContent(html, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
-
-    // Attendre les polices
-    await page.waitForFunction(() => document.fonts.ready);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Capturer la page entière
-    const imageBuffer = await page.screenshot({
-      fullPage: true,
-      type: type as 'png' | 'jpeg',
-      quality: type === 'jpeg' ? quality : undefined,
-    });
-
-    await browser.close();
-
+    // Récupérer l'image et la renvoyer
+    const imageBuffer = await response.arrayBuffer();
     const contentType = type === 'jpeg' ? 'image/jpeg' : 'image/png';
 
-    // Convertir Buffer en Uint8Array pour TypeScript
-    return new NextResponse(new Uint8Array(imageBuffer), {
+    return new NextResponse(imageBuffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
@@ -75,16 +59,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Image generation error:', error);
-    
-    if (browser) {
-      try {
-        await browser.close();
-      } catch {
-        // Ignorer
-      }
-    }
-
+    console.error('Image proxy error:', error);
     return NextResponse.json(
       { error: 'Failed to generate image', details: String(error) },
       { status: 500 }

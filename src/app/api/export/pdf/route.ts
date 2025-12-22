@@ -1,17 +1,14 @@
 /**
- * API Route pour export PDF avec Playwright
- * Fonctionne sur Railway avec l'image Docker Playwright
+ * API Route pour export PDF
+ * Appelle le microservice PDF sur Railway
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { chromium } from 'playwright-core';
 
-export const maxDuration = 300; // 5 minutes pour Railway
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  let browser = null;
-  
   try {
     const { html, format = 'A4' } = await request.json();
 
@@ -22,52 +19,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Lancer Playwright - utilise automatiquement le Chromium de l'image Docker
-    browser = await chromium.launch({
-      headless: true,
-      // executablePath est automatiquement détecté dans l'image Playwright
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-      ],
+    // URL du microservice PDF (Railway)
+    const pdfServiceUrl = process.env.PDF_SERVICE_URL;
+    
+    if (!pdfServiceUrl) {
+      return NextResponse.json(
+        { error: 'PDF_SERVICE_URL not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Appeler le microservice
+    const response = await fetch(`${pdfServiceUrl}/api/pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ html, format }),
     });
 
-    const context = await browser.newContext({
-      viewport: { width: 794, height: 1123 }, // A4 à 96 DPI
-    });
+    if (!response.ok) {
+      const error = await response.json();
+      return NextResponse.json(
+        { error: error.error || 'PDF generation failed' },
+        { status: response.status }
+      );
+    }
 
-    const page = await context.newPage();
+    // Récupérer le PDF et le renvoyer
+    const pdfBuffer = await response.arrayBuffer();
 
-    // Charger le HTML
-    await page.setContent(html, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
-
-    // Attendre que les polices soient chargées
-    await page.waitForFunction(() => document.fonts.ready);
-
-    // Attendre un peu plus pour le rendu complet
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Générer le PDF
-    const pdfBuffer = await page.pdf({
-      format: format as 'A4' | 'Letter',
-      printBackground: true,
-      preferCSSPageSize: true,
-      margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    });
-
-    await browser.close();
-
-    // Retourner le PDF (convertir Buffer en Uint8Array)
-    return new NextResponse(new Uint8Array(pdfBuffer), {
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
@@ -76,16 +58,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('PDF generation error:', error);
-    
-    if (browser) {
-      try {
-        await browser.close();
-      } catch {
-        // Ignorer l'erreur de fermeture
-      }
-    }
-
+    console.error('PDF proxy error:', error);
     return NextResponse.json(
       { error: 'Failed to generate PDF', details: String(error) },
       { status: 500 }
