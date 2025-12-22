@@ -178,6 +178,7 @@ const fontVariables = [
   tangerine.variable,
 ].join(' ');
 import { Providers } from './providers';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: "InvoiceDesign - Creez des factures professionnelles",
@@ -201,6 +202,7 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
