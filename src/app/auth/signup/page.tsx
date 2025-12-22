@@ -56,6 +56,29 @@ export default function SignupPage() {
 
         setLoading(true);
 
+        // ✅ Ajouter à Brevo IMMÉDIATEMENT au clic sur inscription
+        console.log('[Signup] Tentative d\'ajout à Brevo pour:', email);
+        try {
+            const brevoResponse = await fetch('/api/brevo/add-contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    name: fullName,
+                }),
+            });
+            const brevoData = await brevoResponse.json();
+            if (brevoResponse.ok) {
+                console.log('[Signup] ✅ BREVO OK - Contact ajouté avec succès:', brevoData);
+            } else {
+                console.error('[Signup] ❌ BREVO ERREUR:', brevoData);
+            }
+        } catch (brevoError) {
+            console.error('[Signup] ❌ BREVO EXCEPTION:', brevoError);
+        }
+
         const { error } = await signUp(email, password, fullName);
 
         if (error) {
