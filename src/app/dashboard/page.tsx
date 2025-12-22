@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRef, useState, useCallback, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardHeader, Sidebar } from "@/components/dashboard";
 import { EditPanel, InvoicePreview, MobileDashboard } from "@/components/editor";
 import { useInvoiceStore } from "@/store";
@@ -19,8 +19,24 @@ interface PreviewFile {
   type: 'pdf' | 'image';
 }
 
+// Composant pour gérer les searchParams (doit être dans un Suspense)
+function TemplateFromUrlHandler() {
+  const searchParams = useSearchParams();
+  const { selectTemplate, setActiveSection } = useInvoiceStore();
+  
+  useEffect(() => {
+    const templateFromUrl = searchParams.get('template');
+    if (templateFromUrl && (templateFromUrl === 'classic' || templateFromUrl === 'elegant')) {
+      selectTemplate(templateFromUrl);
+      setActiveSection('templates');
+    }
+  }, [searchParams, selectTemplate, setActiveSection]);
+  
+  return null;
+}
+
 export default function DashboardPage() {
-  const { invoice, calculateTotals, activeSection, setActiveSection } = useInvoiceStore();
+  const { invoice, calculateTotals, activeSection, setActiveSection, selectTemplate } = useInvoiceStore();
   const { total } = calculateTotals();
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
@@ -167,6 +183,9 @@ export default function DashboardPage() {
   if (isMobile) {
     return (
       <div className="h-screen flex flex-col bg-gray-50">
+        <Suspense fallback={null}>
+          <TemplateFromUrlHandler />
+        </Suspense>
         <MobileDashboard
           ref={previewRef}
           showPreview={showMobilePreview}
@@ -192,6 +211,9 @@ export default function DashboardPage() {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
+      <Suspense fallback={null}>
+        <TemplateFromUrlHandler />
+      </Suspense>
       <DashboardHeader title={t("common.invoiceEditor")} />
 
       {/* Main Content */}

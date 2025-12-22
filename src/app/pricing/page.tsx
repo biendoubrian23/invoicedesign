@@ -112,11 +112,11 @@ export default function PricingPage() {
         {/* Pricing Cards */}
         <section className="py-16 -mt-8">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
               {plans.map((plan, index) => (
                 <Card
                   key={plan.id}
-                  className={`relative opacity-0 animate-fade-in-up ${plan.popular
+                  className={`relative opacity-0 animate-fade-in-up flex flex-col ${plan.popular
                     ? "border-2 border-blue-500 shadow-xl scale-105 z-10"
                     : "border border-gray-200"
                     }`}
@@ -133,7 +133,7 @@ export default function PricingPage() {
                     </div>
                   )}
 
-                  <div className="p-8">
+                  <div className="p-8 flex flex-col flex-grow">
                     {/* Header */}
                     <div className="text-center mb-8">
                       <h3 className="text-xl font-bold text-gray-900 mb-1">
@@ -153,7 +153,7 @@ export default function PricingPage() {
                     </div>
 
                     {/* Features */}
-                    <ul className="space-y-4 mb-8">
+                    <ul className="space-y-4 mb-8 flex-grow">
                       {plan.features.map((feature) => (
                         <li key={feature.name} className="flex items-start gap-3">
                           {feature.included ? (
@@ -174,7 +174,7 @@ export default function PricingPage() {
                     {/* CTA */}
                     <Button
                       variant={plan.popular ? "primary" : "outline"}
-                      className="w-full"
+                      className="w-full mt-auto"
                       size="lg"
                       onClick={handlePlanClick}
                     >

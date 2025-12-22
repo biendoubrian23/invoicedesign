@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Card from "@/components/ui/Card";
 import { useLanguage } from "@/context/LanguageContext";
 
 const TemplateGallery = () => {
   const { t } = useLanguage();
+  const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState("classic");
 
   const templates = [
@@ -25,6 +27,12 @@ const TemplateGallery = () => {
       image: "/model2.jpeg",
     },
   ];
+
+  const handleTemplateClick = (templateId: string) => {
+    setActiveTemplate(templateId);
+    // Rediriger vers le dashboard avec le template sélectionné
+    router.push(`/dashboard?template=${templateId}`);
+  };
 
   return (
     <section id="templates" className="py-20 bg-white">
@@ -47,7 +55,7 @@ const TemplateGallery = () => {
               className={`cursor-pointer opacity-0 animate-fade-in-up ${activeTemplate === template.id ? "ring-2 ring-blue-500 ring-offset-4" : ""
                 }`}
               style={{ animationDelay: `${index * 0.1}s`, animationFillMode: "forwards" }}
-              onClick={() => setActiveTemplate(template.id)}
+              onClick={() => handleTemplateClick(template.id)}
             >
               <Card hover className="overflow-hidden">
                 {/* Template Preview Image */}

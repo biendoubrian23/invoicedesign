@@ -59,11 +59,11 @@ const PricingTeaser = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
           {plans.map((plan, index) => (
             <Card
               key={index}
-              className={`relative opacity-0 animate-fade-in-up ${plan.popular
+              className={`relative opacity-0 animate-fade-in-up flex flex-col ${plan.popular
                 ? "border-2 border-blue-500 shadow-lg"
                 : "border border-gray-200"
                 }`}
@@ -92,7 +92,7 @@ const PricingTeaser = () => {
               </div>
 
               {/* Features */}
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 mb-8 flex-grow">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -104,7 +104,7 @@ const PricingTeaser = () => {
               {/* CTA */}
               <Button
                 variant={plan.popular ? "primary" : "outline"}
-                className="w-full"
+                className="w-full mt-auto"
               >
                 {plan.cta}
               </Button>
