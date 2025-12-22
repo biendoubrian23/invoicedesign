@@ -10,6 +10,7 @@ interface ExportOptions {
   filename?: string;
   format?: 'A4' | 'Letter';
   userId?: string;
+  download?: boolean; // Si false, ne télécharge pas le fichier
 }
 
 interface ImageExportOptions {
@@ -137,6 +138,7 @@ export async function exportToPDF(
   const {
     filename = 'facture',
     format = 'A4',
+    download = true, // Par défaut, télécharge le fichier
   } = options;
 
   try {
@@ -144,8 +146,41 @@ export async function exportToPDF(
     const a4Width = 210;
     const a4Height = 297;
     
+    // Convertir les couleurs CSS modernes (oklab, oklch, etc.) en RGB
+    // html2canvas ne supporte pas ces couleurs modernes
+    const convertModernColors = (el: HTMLElement) => {
+      const allElements = [el, ...Array.from(el.querySelectorAll('*'))] as HTMLElement[];
+      allElements.forEach(elem => {
+        const computed = getComputedStyle(elem);
+        // Récupérer les couleurs computées (le navigateur les convertit en RGB)
+        const bgColor = computed.backgroundColor;
+        const color = computed.color;
+        const borderColor = computed.borderColor;
+        
+        if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
+          elem.style.backgroundColor = bgColor;
+        }
+        if (color) {
+          elem.style.color = color;
+        }
+        if (borderColor) {
+          elem.style.borderColor = borderColor;
+        }
+      });
+    };
+    
+    // Cloner l'élément pour ne pas modifier l'original
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    document.body.appendChild(clone);
+    
+    // Convertir les couleurs modernes en RGB
+    convertModernColors(clone);
+    
     // Capturer l'élément en canvas haute résolution
-    const canvas = await html2canvas(element, {
+    const canvas = await html2canvas(clone, {
       scale: 2, // Haute résolution
       useCORS: true,
       allowTaint: true,
@@ -154,7 +189,15 @@ export async function exportToPDF(
       // Dimensions pour A4
       windowWidth: 794, // A4 à 96 DPI
       windowHeight: 1123,
+      onclone: (clonedDoc) => {
+        // Convertir aussi dans le document cloné par html2canvas
+        const root = clonedDoc.body;
+        convertModernColors(root);
+      },
     });
+    
+    // Nettoyer le clone
+    document.body.removeChild(clone);
 
     // Créer le PDF
     const pdf = new jsPDF({
@@ -187,15 +230,17 @@ export async function exportToPDF(
     // Générer le blob
     const pdfBlob = pdf.output('blob');
     
-    // Télécharger le PDF
-    const url = URL.createObjectURL(pdfBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Télécharger le PDF seulement si demandé
+    if (download) {
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
 
     return pdfBlob;
   } catch (error) {
@@ -218,14 +263,51 @@ export async function exportToImage(
   } = options;
 
   try {
+    // Convertir les couleurs CSS modernes (oklab, oklch, etc.) en RGB
+    const convertModernColors = (el: HTMLElement) => {
+      const allElements = [el, ...Array.from(el.querySelectorAll('*'))] as HTMLElement[];
+      allElements.forEach(elem => {
+        const computed = getComputedStyle(elem);
+        const bgColor = computed.backgroundColor;
+        const color = computed.color;
+        const borderColor = computed.borderColor;
+        
+        if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
+          elem.style.backgroundColor = bgColor;
+        }
+        if (color) {
+          elem.style.color = color;
+        }
+        if (borderColor) {
+          elem.style.borderColor = borderColor;
+        }
+      });
+    };
+    
+    // Cloner l'élément pour ne pas modifier l'original
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    document.body.appendChild(clone);
+    
+    // Convertir les couleurs modernes en RGB
+    convertModernColors(clone);
+    
     // Capturer l'élément en canvas haute résolution
-    const canvas = await html2canvas(element, {
+    const canvas = await html2canvas(clone, {
       scale: 3, // Très haute résolution pour les images
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
+      onclone: (clonedDoc) => {
+        convertModernColors(clonedDoc.body);
+      },
     });
+    
+    // Nettoyer le clone
+    document.body.removeChild(clone);
 
     // Convertir en blob
     return new Promise((resolve, reject) => {

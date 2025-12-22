@@ -241,24 +241,12 @@ export function useExport(
         console.log('[SendEmail] Client state saved successfully');
       }
 
-      // Generate the PDF (without downloading it)
-      const html = generateExportHTML(elementRef.current);
-      
-      const response = await fetch('/api/export/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          html,
-          userId: user?.id,
-          options: { filename, format, printBackground: true, margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' } },
-        }),
+      // Generate the PDF client-side (without downloading it)
+      const blob = await exportToPDF(elementRef.current, {
+        filename,
+        format,
+        download: false, // Ne pas télécharger, juste générer le blob
       });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la génération du PDF');
-      }
-
-      const blob = await response.blob();
 
       // Upload to storage and get file path for clean URL
       let pdfUrl = '';
