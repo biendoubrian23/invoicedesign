@@ -1,0 +1,28 @@
+Le problème
+Web3Forms utilise Cloudflare pour se protéger. Quand on appelle leur API depuis un serveur (comme l'API Route Next.js), Cloudflare bloque la requête et renvoie une page HTML au lieu de JSON.
+
+La solution
+J'ai modifié le formulaire pour envoyer directement depuis le navigateur (côté client) au lieu de passer par l'API serveur :
+
+Avant (ne marchait pas) :
+Navigateur → /api/contact (serveur Next.js) → Web3Forms ❌ (bloqué par Cloudflare)
+Après (marche) :
+Navigateur → Web3Forms ✅ (direct, pas de blocage)
+
+Le code clé
+Dans page.tsx, au lieu d'appeler /api/contact, j'envoie directement à Web3Forms avec FormData :
+
+const form = new FormData();
+form.append("access_key", "113ca8b9-40c7-474c-a092-2f21fd1bf5bb");
+form.append("name", formData.name);
+form.append("email", formData.email);
+form.append("message", formData.message);
+
+const response = await fetch("https://api.web3forms.com/submit", {
+  method: "POST",
+  body: form,
+});
+La clé API est publique (c'est conçu comme ça par Web3Forms), donc pas de souci de sécurité.
+
+Vous recevrez maintenant les emails à clarkybrian@outlook.fr ! 📧
+
