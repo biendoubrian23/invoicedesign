@@ -14,16 +14,13 @@ async function getBrowser() {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
   } else {
-    // En production (Vercel), utiliser @sparticuz/chromium
+    // En production (Vercel), utiliser @sparticuz/chromium v119
     return puppeteer.launch({
-      args: [
-        ...chromium.args,
-        '--hide-scrollbars',
-        '--disable-web-security',
-      ],
+      args: chromium.args,
       defaultViewport: { width: 794, height: 1123 },
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      headless: 'new' as const,
+      ignoreHTTPSErrors: true,
     });
   }
 }
