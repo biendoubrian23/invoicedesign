@@ -4,7 +4,7 @@ import { useInvoiceStore } from "@/store";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { EditorSection } from "@/types/invoice";
-import { LayoutGrid, FileText, Palette, Image, PlusSquare, FolderOpen, Settings, LogOut, CreditCard, Users, Building2 } from "lucide-react";
+import { LayoutGrid, FileText, Palette, Image, PlusSquare, FolderOpen, Settings, LogOut, CreditCard, Users, Building2, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const Sidebar = () => {
@@ -81,6 +81,15 @@ const Sidebar = () => {
         >
           <CreditCard className="w-5 h-5" />
           {t("sidebar.pricing")}
+        </button>
+
+        {/* Contact Button */}
+        <button
+          onClick={() => router.push("/contact")}
+          className="w-full flex items-center gap-3 px-7 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+        >
+          <Mail className="w-5 h-5" />
+          {t("sidebar.contact")}
         </button>
 
         {/* Settings Button */}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 
 const Footer = () => {
@@ -15,14 +15,14 @@ const Footer = () => {
       { labelKey: "footer.pricing", href: "/pricing" },
     ],
     ressources: [
-      { labelKey: "footer.documentation", href: "#" },
-      { labelKey: "footer.gettingStarted", href: "#" },
-      { labelKey: "footer.faq", href: "/pricing#faq" },
+      { labelKey: "footer.documentation", href: "/documentation" },
+      { labelKey: "footer.gettingStarted", href: "/guide" },
+      { labelKey: "footer.faq", href: "/faq" },
     ],
     legal: [
-      { labelKey: "footer.legalMentions", href: "#" },
-      { labelKey: "footer.privacyPolicy", href: "#" },
-      { labelKey: "footer.terms", href: "#" },
+      { labelKey: "footer.legalMentions", href: "/mentions-legales" },
+      { labelKey: "footer.privacyPolicy", href: "/confidentialite" },
+      { labelKey: "footer.terms", href: "/cgv" },
     ],
   };
 
@@ -33,12 +33,13 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-blue-600 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">
-                Invoice<span className="text-blue-400">Design</span>
-              </span>
+              <Image
+                src="/logoheader.png"
+                alt="InvoiceDesign Logo"
+                width={160}
+                height={40}
+                className="h-10 w-auto brightness-0 invert"
+              />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
               {t("footer.tagline")}

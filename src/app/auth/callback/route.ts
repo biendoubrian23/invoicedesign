@@ -8,8 +8,28 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { error, data } = await supabase.auth.exchangeCodeForSession(code);
+        
         if (!error) {
+            // Add user to Brevo contact list
+            if (data?.user) {
+                try {
+                    await fetch(`${origin}/api/brevo/add-contact`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            email: data.user.email,
+                            name: data.user.user_metadata?.full_name || '',
+                        }),
+                    });
+                } catch (brevoError) {
+                    // Log but don't block the flow
+                    console.error('Brevo sync error:', brevoError);
+                }
+            }
+            
             return NextResponse.redirect(`${origin}${next}`);
         }
     }
