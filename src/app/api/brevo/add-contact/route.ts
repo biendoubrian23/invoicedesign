@@ -84,8 +84,8 @@ export async function POST(request: Request) {
         });
 
         if (!updateResponse.ok) {
-          const updateError = await updateResponse.json();
-          console.error("[Brevo API] ❌ Erreur mise à jour:", JSON.stringify(updateError));
+          const updateText = await updateResponse.text();
+          console.error("[Brevo API] ❌ Erreur mise à jour:", updateText);
         } else {
           console.log("[Brevo API] ✅ Contact mis à jour avec succès!");
         }
@@ -100,8 +100,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const successData = await response.json();
-    console.log("[Brevo API] ✅ SUCCESS! Contact ajouté:", JSON.stringify(successData));
+    // Brevo retourne parfois une réponse vide (201 Created)
+    const responseText = await response.text();
+    let successData = null;
+    if (responseText) {
+      try {
+        successData = JSON.parse(responseText);
+      } catch {
+        successData = { id: responseText };
+      }
+    }
+    console.log("[Brevo API] ✅ SUCCESS! Contact ajouté. Status:", response.status);
     console.log("[Brevo API] ========== FIN REQUÊTE ==========");
     
     return NextResponse.json({ success: true, data: successData });
