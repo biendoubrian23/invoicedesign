@@ -37,14 +37,6 @@ export default function MentionsLegalesPage() {
               <li><strong>{t("legal.email")}:</strong> contact@invoicedesign.com</li>
             </ul>
 
-            <h2>{t("legal.hostingTitle")}</h2>
-            <p>{t("legal.hostingContent")}</p>
-            <ul>
-              <li><strong>Vercel Inc.</strong> - 340 S Lemon Ave #4133, Walnut, CA 91789, USA</li>
-              <li><strong>Supabase</strong> - San Francisco, CA, USA</li>
-              <li><strong>Railway</strong> - San Francisco, CA, USA</li>
-            </ul>
-
             <h2>{t("legal.intellectualPropertyTitle")}</h2>
             <p>{t("legal.intellectualPropertyContent")}</p>
 
