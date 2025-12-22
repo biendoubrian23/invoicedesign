@@ -1,0 +1,36 @@
+# Dépendances
+node_modules
+.pnpm-store
+
+# Build local
+.next
+out
+
+# Fichiers de développement
+*.log
+npm-debug.log*
+.npm
+
+# Environnement local
+.env*.local
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage
+.nyc_output
+
+# Autres
+README.md
+SOUS-LIGNES.md
+.git
+.gitignore

@@ -1,12 +1,12 @@
 /**
  * API Route pour export Image avec Playwright
- * Fonctionne sur Vercel avec le navigateur Chromium embarqué
+ * Fonctionne sur Railway avec l'image Docker Playwright
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium } from 'playwright-core';
 
-export const maxDuration = 60;
+export const maxDuration = 300; // 5 minutes pour Railway
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Lancer Playwright
+    // Lancer Playwright - utilise automatiquement le Chromium de l'image Docker
     browser = await chromium.launch({
       headless: true,
       args: [
@@ -30,7 +30,10 @@ export async function POST(request: NextRequest) {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--single-process',
+        '--disable-software-rasterizer',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
       ],
     });
 
