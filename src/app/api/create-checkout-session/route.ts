@@ -7,7 +7,7 @@ const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 export async function POST(request: NextRequest) {
     try {
-        const { priceId, plan, userId, userEmail } = await request.json();
+        const { priceId, plan, userId, userEmail, billingPeriod } = await request.json();
 
         if (!priceId || !plan || !userId || !userEmail) {
             return NextResponse.json(
@@ -17,6 +17,11 @@ export async function POST(request: NextRequest) {
         }
 
         const stripe = getStripe();
+
+        // Determine billing period from priceId if not provided
+        const period = billingPeriod || (
+            priceId.includes('ShRP') || priceId.includes('ShRR') ? 'yearly' : 'monthly'
+        );
 
         // Create or retrieve Stripe customer
         let customerId: string;
@@ -73,11 +78,13 @@ export async function POST(request: NextRequest) {
             metadata: {
                 user_id: userId,
                 plan: plan,
+                billing_period: period,
             },
             subscription_data: {
                 metadata: {
                     user_id: userId,
                     plan: plan,
+                    billing_period: period,
                 },
             },
         });

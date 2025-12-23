@@ -11,6 +11,8 @@ import { useAuth } from "@/context/AuthContext";
 const STRIPE_PRICES = {
     standard: process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD || "price_1SfH9SFFkQ3ldtDToy3sdoLw",
     premium: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM || "price_1SfH9tFFkQ3ldtDTCd41zSyu",
+    standardYearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_YEARLY || "",
+    premiumYearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY || "",
 };
 
 const PricingPanel = () => {
@@ -18,14 +20,17 @@ const PricingPanel = () => {
     const { user } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState<string | null>(null);
+    const [isYearly, setIsYearly] = useState(true);
 
     const plans = [
         {
             id: "standard",
             name: t("pricing.standardName"),
-            price: "3.99",
-            period: t("pricing.perMonth"),
+            priceMonthly: "3.99",
+            priceYearly: "39.99",
+            period: isYearly ? t("pricing.perYear") : t("pricing.perMonth"),
             description: t("pricing.standardDesc"),
+            savings: isYearly ? "2 mois gratuits" : null,
             features: [
                 t("pricing.unlimitedInvoices"),
                 t("pricing.allTemplates"),
@@ -37,14 +42,16 @@ const PricingPanel = () => {
             cta: t("pricing.chooseStandard"),
             popular: true,
             icon: Sparkles,
-            priceId: STRIPE_PRICES.standard,
+            priceId: isYearly ? STRIPE_PRICES.standardYearly : STRIPE_PRICES.standard,
         },
         {
             id: "premium",
             name: t("pricing.premiumName"),
-            price: "6.99",
-            period: t("pricing.perMonth"),
+            priceMonthly: "6.99",
+            priceYearly: "69.99",
+            period: isYearly ? t("pricing.perYear") : t("pricing.perMonth"),
             description: t("pricing.premiumDesc"),
+            savings: isYearly ? "2 mois gratuits" : null,
             features: [
                 t("pricing.includesStandard"),
                 t("pricing.dynamicInvoices"),
@@ -57,7 +64,7 @@ const PricingPanel = () => {
             cta: t("pricing.choosePremium"),
             popular: false,
             icon: Zap,
-            priceId: STRIPE_PRICES.premium,
+            priceId: isYearly ? STRIPE_PRICES.premiumYearly : STRIPE_PRICES.premium,
         },
     ];
 
@@ -80,6 +87,7 @@ const PricingPanel = () => {
                     plan: plan.id,
                     userId: user.id,
                     userEmail: user.email,
+                    billingPeriod: isYearly ? 'yearly' : 'monthly',
                 }),
             });
 
@@ -109,6 +117,27 @@ const PricingPanel = () => {
                 </p>
             </div>
 
+            {/* Toggle Mensuel/Annuel */}
+            <div className="flex items-center justify-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <span className={`text-sm font-medium ${!isYearly ? 'text-gray-900' : 'text-gray-500'}`}>
+                    Mensuel
+                </span>
+                <button
+                    onClick={() => setIsYearly(!isYearly)}
+                    className={`toggle-switch ${isYearly ? 'active' : ''}`}
+                >
+                    <span className="toggle-switch-knob" />
+                </button>
+                <span className={`text-sm font-medium ${isYearly ? 'text-gray-900' : 'text-gray-500'}`}>
+                    Annuel
+                </span>
+                {isYearly && (
+                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                        -17%
+                    </span>
+                )}
+            </div>
+
             {/* Pricing Cards */}
             <div className="space-y-4">
                 {plans.map((plan, index) => (
@@ -136,9 +165,14 @@ const PricingPanel = () => {
 
                         <div className="mb-4">
                             <span className="text-3xl font-bold text-gray-900">
-                                {plan.price}
+                                {isYearly ? plan.priceYearly : plan.priceMonthly}€
                             </span>
                             <span className="text-gray-500 text-sm">{plan.period}</span>
+                            {plan.savings && (
+                                <p className="text-xs text-green-600 font-medium mt-1">
+                                    {plan.savings}
+                                </p>
+                            )}
                         </div>
 
                         <ul className="space-y-2 mb-6">

@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabase: any) {
     const userId = session.metadata?.user_id;
     const plan = session.metadata?.plan;
+    const billingPeriod = session.metadata?.billing_period || 'monthly';
 
     if (!userId || !plan) {
         console.error('Missing user_id or plan in session metadata');
@@ -83,6 +84,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
             subscription_plan: plan,
             stripe_customer_id: session.customer as string,
             subscription_status: 'active',
+            billing_period: billingPeriod,
         })
         .eq('id', userId);
 
@@ -103,6 +105,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
             currency: session.currency || 'eur',
             status: 'completed',
             plan: plan,
+            billing_period: billingPeriod,
         });
 
     if (transactionError) {
@@ -110,7 +113,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
         throw transactionError;
     }
 
-    console.log(`Checkout completed for user ${userId} with plan ${plan}`);
+    console.log(`Checkout completed for user ${userId} with plan ${plan} (${billingPeriod})`);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,9 +136,18 @@ async function handleSubscriptionUpdated(subscription: any, supabase: any) {
     const priceId = subscription.items?.data?.[0]?.price?.id;
     let plan = 'free';
 
-    if (priceId === process.env.STRIPE_PRICE_STANDARD) {
+    // Check monthly and yearly prices for Standard
+    if (priceId === process.env.STRIPE_PRICE_STANDARD || 
+        priceId === process.env.STRIPE_PRICE_STANDARD_YEARLY ||
+        priceId === 'price_1SfH9SFFkQ3ldtDToy3sdoLw' ||
+        priceId === 'price_1ShRPfFFkQ3ldtDTyStFjq9c') {
         plan = 'standard';
-    } else if (priceId === process.env.STRIPE_PRICE_PREMIUM) {
+    } 
+    // Check monthly and yearly prices for Premium
+    else if (priceId === process.env.STRIPE_PRICE_PREMIUM || 
+             priceId === process.env.STRIPE_PRICE_PREMIUM_YEARLY ||
+             priceId === 'price_1SfH9tFFkQ3ldtDTCd41zSyu' ||
+             priceId === 'price_1ShRRMFFkQ3ldtDT9F02dKOA') {
         plan = 'premium';
     }
 

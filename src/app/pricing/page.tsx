@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isYearly, setIsYearly] = useState(true);
   const { t } = useLanguage();
   const { user } = useAuth();
   const router = useRouter();
@@ -19,9 +20,11 @@ export default function PricingPage() {
     {
       id: "standard",
       name: t("pricing.standardName"),
-      price: "3.99",
-      period: t("pricing.perMonth"),
+      priceMonthly: "3.99",
+      priceYearly: "39.99",
+      period: isYearly ? t("pricing.perYear") : t("pricing.perMonth"),
       description: t("pricing.standardDesc"),
+      savings: isYearly ? "2 mois gratuits" : null,
       features: [
         { name: t("pricing.unlimitedInvoices"), included: true },
         { name: t("pricing.allTemplates"), included: true },
@@ -38,9 +41,11 @@ export default function PricingPage() {
     {
       id: "premium",
       name: t("pricing.premiumName"),
-      price: "6.99",
-      period: t("pricing.perMonth"),
+      priceMonthly: "6.99",
+      priceYearly: "69.99",
+      period: isYearly ? t("pricing.perYear") : t("pricing.perMonth"),
       description: t("pricing.premiumDesc"),
+      savings: isYearly ? "2 mois gratuits" : null,
       features: [
         { name: t("pricing.includesStandard"), included: true },
         { name: t("pricing.dynamicInvoices"), included: true },
@@ -106,6 +111,27 @@ export default function PricingPage() {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto animate-fade-in-up stagger-1">
               {t("pricing.subtitle")}
             </p>
+
+            {/* Toggle Mensuel/Annuel */}
+            <div className="flex items-center justify-center gap-4 mt-8 animate-fade-in-up stagger-2">
+              <span className={`text-sm font-medium ${!isYearly ? 'text-gray-900' : 'text-gray-500'}`}>
+                Mensuel
+              </span>
+              <button
+                onClick={() => setIsYearly(!isYearly)}
+                className={`toggle-switch ${isYearly ? 'active' : ''}`}
+              >
+                <span className="toggle-switch-knob" />
+              </button>
+              <span className={`text-sm font-medium ${isYearly ? 'text-gray-900' : 'text-gray-500'}`}>
+                Annuel
+              </span>
+              {isYearly && (
+                <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full">
+                  -17%
+                </span>
+              )}
+            </div>
           </div>
         </section>
 
@@ -144,12 +170,17 @@ export default function PricingPage() {
                       </p>
                       <div className="flex items-baseline justify-center">
                         <span className="text-5xl font-bold text-gray-900">
-                          {plan.price}
+                          {isYearly ? plan.priceYearly : plan.priceMonthly}€
                         </span>
                         <span className="text-xl text-gray-500 ml-1">
                           {plan.period}
                         </span>
                       </div>
+                      {plan.savings && (
+                        <p className="text-sm text-green-600 font-medium mt-2">
+                          {plan.savings}
+                        </p>
+                      )}
                     </div>
 
                     {/* Features */}

@@ -12,6 +12,7 @@ interface SubscriptionInfo {
     subscription_status: string;
     subscription_end_date: string | null;
     stripe_customer_id: string | null;
+    billing_period: 'monthly' | 'yearly' | null;
 }
 
 const SettingsPanel = () => {
@@ -37,7 +38,7 @@ const SettingsPanel = () => {
         const supabase = getSupabase();
         const { data } = await supabase
             .from('profiles')
-            .select('subscription_plan, subscription_status, subscription_end_date, stripe_customer_id')
+            .select('subscription_plan, subscription_status, subscription_end_date, stripe_customer_id, billing_period')
             .eq('id', user.id)
             .single();
 
@@ -182,6 +183,16 @@ const SettingsPanel = () => {
                             <span className={`text-sm font-medium ${subscriptionInfo.subscription_status === 'active' ? 'text-green-600' : 'text-yellow-600'
                                 }`}>
                                 {subscriptionInfo.subscription_status === 'active' ? t('settings.active') : subscriptionInfo.subscription_status}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Billing Period */}
+                    {subscriptionInfo?.billing_period && subscriptionInfo.subscription_plan !== 'free' && (
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Facturation</span>
+                            <span className="text-sm font-medium text-gray-700">
+                                {subscriptionInfo.billing_period === 'yearly' ? 'Annuelle' : 'Mensuelle'}
                             </span>
                         </div>
                     )}
