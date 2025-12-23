@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { Breadcrumbs } from "@/components/seo";
 import { Mail, MessageSquare, Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 // Access key publique Web3Forms (côté client)
 const WEB3FORMS_ACCESS_KEY = "113ca8b9-40c7-474c-a092-2f21fd1bf5bb";
 
 export default function ContactPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -74,6 +75,12 @@ export default function ContactPage() {
       <Header />
       <main className="pt-24 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumbs */}
+          <Breadcrumbs
+            items={[{ label: language === "fr" ? "Contact" : "Contact", href: "/contact" }]}
+            className="mb-8"
+          />
+
           {/* Hero Section */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full text-blue-600 text-sm font-medium mb-6">

@@ -6,10 +6,12 @@ import {
   TemplateGallery,
   PricingTeaser,
 } from "@/components/landing";
+import { OrganizationSchema } from "@/components/seo";
 
 export default function Home() {
   return (
     <>
+      <OrganizationSchema />
       <Header />
       <main>
         <Hero />

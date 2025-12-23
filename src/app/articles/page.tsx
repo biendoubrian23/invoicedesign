@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { Breadcrumbs } from "@/components/seo";
 import { Calendar, Clock, ArrowRight, Search, BookOpen, FileText, Scale, Globe, TrendingUp } from "lucide-react";
 import { getAllArticles, getCategoriesWithCount, getArticlesByCategory, Article } from "@/data/articles";
 
@@ -43,6 +44,14 @@ export default function ArticlesPage() {
     <>
       <Header />
       <main className="min-h-screen bg-gray-50">
+        {/* Breadcrumbs SEO */}
+        <div className="max-w-7xl mx-auto px-4 pt-24">
+          <Breadcrumbs
+            items={[{ label: isEn ? "Articles" : "Articles", href: "/articles" }]}
+            className="mb-4"
+          />
+        </div>
+
         {/* Hero Section avec image de fond */}
         <section className="relative min-h-[450px] flex items-center overflow-hidden">
           {/* Image de fond avec overlay */}

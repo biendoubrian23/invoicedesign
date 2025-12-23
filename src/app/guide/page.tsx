@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { HowToSchema, Breadcrumbs } from "@/components/seo";
 import { CheckCircle, ArrowRight, Play, Clock, Star } from "lucide-react";
 
 export default function GuidePage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const steps = [
     {
@@ -42,11 +43,31 @@ export default function GuidePage() {
     },
   ];
 
+  // Données pour le schema HowTo (SEO)
+  const howToSteps = steps.map((step) => ({
+    name: t(step.titleKey),
+    text: t(step.descKey),
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* HowTo Schema JSON-LD pour SEO */}
+      <HowToSchema
+        name={language === "fr" ? "Comment créer une facture professionnelle" : "How to create a professional invoice"}
+        description={t("guide.subtitle")}
+        steps={howToSteps}
+        totalTime="PT5M"
+      />
+
       <Header />
       <main className="pt-24 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumbs */}
+          <Breadcrumbs
+            items={[{ label: language === "fr" ? "Guide de démarrage" : "Getting Started Guide", href: "/guide" }]}
+            className="mb-8"
+          />
+
           {/* Hero Section */}
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full text-green-600 text-sm font-medium mb-6">

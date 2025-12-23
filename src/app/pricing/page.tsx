@@ -8,6 +8,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { Breadcrumbs, FAQSchema, SoftwareApplicationSchema } from "@/components/seo";
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -100,11 +101,30 @@ export default function PricingPage() {
 
   return (
     <>
+      {/* FAQ Schema pour SEO */}
+      <FAQSchema faqs={faqs} />
+      
+      {/* Software Application Schema pour SEO */}
+      <SoftwareApplicationSchema
+        offers={[
+          { price: '0', priceCurrency: 'EUR' },
+          { price: isYearly ? '39.99' : '3.99', priceCurrency: 'EUR' },
+          { price: isYearly ? '69.99' : '6.99', priceCurrency: 'EUR' },
+        ]}
+      />
+
       <Header />
       <main className="pt-16">
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            {/* Breadcrumbs */}
+            <div className="flex justify-center mb-8">
+              <Breadcrumbs
+                items={[{ label: t("header.navPricing"), href: "/pricing" }]}
+              />
+            </div>
+
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 animate-fade-in-up">
               {t("pricing.title")}
             </h1>

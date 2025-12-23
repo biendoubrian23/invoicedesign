@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { Breadcrumbs, TableOfContents } from "@/components/seo";
 import { Calendar, Clock, ArrowLeft, ArrowRight, User, Tag, FileText, Globe, Share2 } from "lucide-react";
 import { Article, getCategoriesWithCount, getRelatedArticles } from "@/data/articles";
 
@@ -38,6 +39,17 @@ export default function ArticleClient({ article }: Props) {
     <>
       <Header />
       <main className="min-h-screen bg-gray-50">
+        {/* Breadcrumbs SEO */}
+        <div className="max-w-4xl mx-auto px-4 pt-24">
+          <Breadcrumbs
+            items={[
+              { label: isEn ? "Articles" : "Articles", href: "/articles" },
+              { label: getTitle(article) }
+            ]}
+            className="mb-4"
+          />
+        </div>
+
         {/* Hero with background */}
         <section className="relative min-h-[400px] flex items-center overflow-hidden">
           {/* Background */}
@@ -102,6 +114,11 @@ export default function ArticleClient({ article }: Props) {
         <section className="max-w-5xl mx-auto px-4 py-16">
           <div className="bg-white">
             <div className="max-w-4xl mx-auto">
+              {/* Table of Contents */}
+              <div className="mb-8 lg:float-right lg:ml-8 lg:w-64">
+                <TableOfContents contentSelector=".article-content" maxDepth={3} />
+              </div>
+              
               <article 
                 className="article-content"
                 dangerouslySetInnerHTML={{ __html: formatContent(getContent(article)) }}
