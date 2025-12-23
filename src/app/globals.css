@@ -393,3 +393,230 @@ body {
 .font-lobster { font-family: var(--font-lobster), cursive; }
 .font-kaushan-script { font-family: var(--font-kaushan-script), cursive; }
 .font-tangerine { font-family: var(--font-tangerine), cursive; }
+
+/* Article Content Styles */
+.article-content h2 { 
+  font-size: 2.25rem; 
+  margin-top: 0.75rem; 
+  margin-bottom: 0.4rem; 
+  padding-bottom: 0.25rem; 
+  border-bottom: 1px solid #d1d5db; 
+  font-weight: 300; 
+  color: #111827; 
+  font-family: ui-serif, Georgia, serif;
+}
+
+.article-content h2:first-child { 
+  margin-top: 0; 
+}
+
+.article-content h3 { 
+  font-size: 1.5rem; 
+  margin-top: 0.6rem; 
+  margin-bottom: 0.25rem; 
+  font-weight: 400; 
+  color: #1f2937; 
+  font-family: ui-serif, Georgia, serif;
+}
+
+.article-content h4 { 
+  font-size: 1.25rem; 
+  margin-top: 0.5rem; 
+  margin-bottom: 0.2rem; 
+  font-weight: 500; 
+  color: #374151; 
+  font-family: ui-serif, Georgia, serif;
+}
+
+.article-content p { 
+  color: #1f2937; 
+  line-height: 1.75; 
+  margin: 0.25rem 0; 
+  font-size: 17px; 
+  font-weight: 300; 
+}
+
+.article-content a { 
+  color: #111827; 
+  text-decoration: underline; 
+  text-decoration-color: #9ca3af; 
+  text-underline-offset: 4px; 
+  transition: all 0.2s;
+}
+
+.article-content a:hover { 
+  text-decoration-color: #111827; 
+}
+
+.article-content strong { 
+  color: #111827; 
+  font-weight: 600; 
+}
+
+.article-content em { 
+  color: #1f2937; 
+  font-style: italic; 
+  font-weight: 300; 
+}
+
+.article-content ul,
+.article-content ol { 
+  margin: 0.4rem 0; 
+}
+
+.article-content ul { 
+  padding-left: 0; 
+  list-style: none; 
+}
+
+.article-content ol { 
+  padding-left: 2rem; 
+}
+
+.article-content li { 
+  color: #1f2937; 
+  line-height: 1.75; 
+  margin: 0.125rem 0; 
+  font-size: 17px; 
+  font-weight: 300; 
+}
+
+.article-content blockquote { 
+  border-left: 2px solid #111827; 
+  padding: 0.25rem 0.5rem; 
+  margin: 0.5rem 0; 
+  color: #374151; 
+  font-size: 1.25rem; 
+  font-weight: 300;
+}
+
+.article-content hr { 
+  margin: 0.6rem 0; 
+  border-top: 1px solid #d1d5db; 
+}
+
+.article-content code { 
+  background: #f3f4f6; 
+  padding: 0.125rem 0.5rem; 
+  font-size: 0.875rem; 
+  color: #111827; 
+  border: 1px solid #d1d5db; 
+  font-family: ui-monospace, monospace;
+}
+
+.article-content pre { 
+  background: #f9fafb; 
+  color: #111827; 
+  padding: 1.5rem; 
+  border: 1px solid #d1d5db; 
+  overflow-x: auto; 
+  margin: 0.4rem 0; 
+  font-family: ui-monospace, monospace;
+}
+
+.article-content pre code { 
+  background: transparent; 
+  padding: 0; 
+  border: none; 
+}
+
+.article-content img { 
+  margin: 0.5rem 0; 
+  border: 1px solid #d1d5db; 
+}
+
+.article-content table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  margin: 0.5rem 0; 
+  border: 1px solid #d1d5db; 
+  table-layout: fixed;
+}
+
+.article-content th { 
+  background: #ffffff; 
+  color: #111827; 
+  padding: 1rem; 
+  text-align: left; 
+  font-weight: 600; 
+  border: 1px solid #d1d5db; 
+  font-size: 0.875rem; 
+  text-transform: uppercase; 
+  letter-spacing: 0.05em;
+  word-wrap: break-word;
+}
+
+.article-content td { 
+  padding: 1rem; 
+  border: 1px solid #d1d5db; 
+  color: #1f2937; 
+  font-weight: 300;
+  word-wrap: break-word;
+}
+
+.article-content tr { 
+  border-bottom: 1px solid #d1d5db; 
+}
+
+/* Responsive tables pour mobile */
+@media (max-width: 640px) {
+  .article-content table {
+    font-size: 0.8rem;
+    table-layout: fixed;
+    width: 100%;
+  }
+  
+  .article-content th,
+  .article-content td {
+    padding: 0.4rem;
+    font-size: 0.7rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .article-content th {
+    font-size: 0.6rem;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  
+  .article-content h2 {
+    font-size: 1.5rem;
+  }
+  
+  .article-content h3 {
+    font-size: 1.25rem;
+  }
+  
+  .article-content h4 {
+    font-size: 1rem;
+  }
+  
+  .article-content p,
+  .article-content li {
+    font-size: 15px;
+  }
+}
+
+/* Styles pour les blocs CTA avec fond sombre dans les articles */
+.article-content .cta-box {
+  background-color: #111827 !important;
+  color: white !important;
+}
+
+.article-content .cta-box * {
+  color: white !important;
+}
+
+.article-content .cta-box h1,
+.article-content .cta-box h2,
+.article-content .cta-box h3,
+.article-content .cta-box h4,
+.article-content .cta-box h5,
+.article-content .cta-box h6,
+.article-content .cta-box p,
+.article-content .cta-box a,
+.article-content .cta-box span {
+  color: white !important;
+}

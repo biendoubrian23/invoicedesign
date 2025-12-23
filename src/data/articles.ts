@@ -1,301 +1,482 @@
 export interface Article {
   slug: string;
   title: string;
+  titleEn: string;
   description: string;
+  descriptionEn: string;
   content: string;
+  contentEn: string;
   author: string;
   publishedAt: string;
   updatedAt?: string;
   image: string;
   category: string;
-  readTime: number; // en minutes
+  readTime: number;
   tags: string[];
+  tagsEn: string[];
 }
 
 export const categories = [
-  { id: 'all', name: 'Tous les articles', count: 0 },
-  { id: 'guide', name: 'Guides pratiques', count: 0 },
-  { id: 'legal', name: 'Cadre légal', count: 0 },
-  { id: 'conseils', name: 'Conseils', count: 0 },
-  { id: 'auto-entrepreneur', name: 'Auto-entrepreneur', count: 0 },
+  { id: 'all', name: 'Tous les articles', nameEn: 'All articles', count: 0 },
+  { id: 'legal', name: 'Cadre légal', nameEn: 'Legal framework', count: 0 },
+  { id: 'guide', name: 'Guides pratiques', nameEn: 'Practical guides', count: 0 },
+  { id: 'international', name: 'International', nameEn: 'International', count: 0 },
 ];
 
 export const articles: Article[] = [
+  // =====================================================
+  // ARTICLE 1 : Mentions obligatoires France
+  // =====================================================
   {
-    slug: 'comment-creer-facture-auto-entrepreneur-2025',
-    title: 'Comment créer une facture auto-entrepreneur en 2025 : Guide complet',
-    description: 'Découvrez toutes les étapes pour créer une facture conforme en tant qu\'auto-entrepreneur. Mentions obligatoires, modèles et outils gratuits.',
-    image: '/articles/facture-auto-entrepreneur.jpg',
-    category: 'auto-entrepreneur',
-    readTime: 8,
+    slug: 'mentions-obligatoires-facture-france',
+    title: 'Mentions obligatoires sur une facture en France 2026',
+    titleEn: 'Mandatory Invoice Requirements in France 2026',
+    description: 'Liste complète des mentions obligatoires sur une facture en France. Auto-entrepreneur, SARL, SAS : tout ce qu\'il faut savoir.',
+    descriptionEn: 'Complete list of mandatory invoice requirements in France. Self-employed, LLC, corporations: everything you need to know.',
+    image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80',
+    category: 'legal',
+    readTime: 5,
     author: 'InvoiceDesign',
     publishedAt: '2025-12-22',
-    tags: ['auto-entrepreneur', 'facture', 'guide', 'mentions légales'],
+    tags: [
+      'mentions obligatoires', 'facture France', 'SIRET', 'TVA', 'numéro facture',
+      'auto-entrepreneur', 'micro-entreprise', 'SARL', 'SAS', 'freelance',
+      'mentions légales facture', 'modèle facture', 'conformité fiscale'
+    ],
+    tagsEn: [
+      'mandatory requirements', 'France invoice', 'tax ID', 'VAT', 'invoice number',
+      'self-employed', 'small business', 'LLC', 'corporation', 'freelance',
+      'legal invoice requirements', 'invoice template', 'tax compliance'
+    ],
     content: `
-## Introduction
+## Qui doit établir des factures ?
 
-En tant qu'auto-entrepreneur (ou micro-entrepreneur), établir des factures conformes est une obligation légale. Que vous soyez consultant, artisan, ou prestataire de services, ce guide vous explique tout ce qu'il faut savoir pour créer des factures professionnelles en 2025.
-
-## Les mentions obligatoires sur une facture auto-entrepreneur
-
-Votre facture doit obligatoirement contenir les informations suivantes :
-
-### Vos informations
-- **Nom et prénom** ou nom commercial
-- **Adresse complète** de votre activité
-- **Numéro SIRET** (14 chiffres)
-- **Code APE/NAF** de votre activité
-- **Mention "EI"** ou "Entrepreneur individuel" (obligatoire depuis 2022)
-
-### Informations du client
-- **Nom ou raison sociale** du client
-- **Adresse de facturation**
-- Pour les professionnels : numéro SIRET ou TVA intracommunautaire
-
-### Informations de la facture
-- **Numéro de facture** unique et chronologique
-- **Date d'émission** de la facture
-- **Date de la prestation** ou de la vente
-- **Description détaillée** des produits ou services
-- **Quantité et prix unitaire HT**
-- **Montant total**
-
-### Mention TVA obligatoire
-
-Si vous bénéficiez de la franchise en base de TVA (chiffre d'affaires inférieur aux seuils), vous devez ajouter la mention :
-
-> "TVA non applicable, article 293 B du Code général des impôts"
-
-## La numérotation des factures
-
-La numérotation doit être :
-- **Chronologique** : suivre un ordre logique
-- **Continue** : sans trou dans la séquence
-- **Unique** : chaque numéro ne peut être utilisé qu'une fois
-
-### Exemples de numérotation acceptés
-- 2025-001, 2025-002, 2025-003...
-- F2025-0001, F2025-0002...
-- 20251222-001 (date + numéro)
-
-## Les délais de paiement
-
-Vous devez indiquer sur la facture :
-- La **date d'échéance** du paiement
-- Les **conditions de paiement** (virement, chèque, etc.)
-- Les **pénalités de retard** applicables
-
-Le délai de paiement standard est de **30 jours** après réception de la facture, mais il peut être négocié jusqu'à 60 jours.
-
-## Créer sa facture avec InvoiceDesign
-
-Avec InvoiceDesign, créer une facture conforme devient simple :
-
-1. **Renseignez vos informations** une seule fois
-2. **Ajoutez votre client** (sauvegardé pour les prochaines fois)
-3. **Décrivez vos prestations** avec les montants
-4. **Exportez en PDF** professionnel
-
-Toutes les mentions obligatoires sont automatiquement incluses, et la numérotation est gérée pour vous.
-
-## Conclusion
-
-Créer une facture auto-entrepreneur n'a rien de compliqué une fois que vous connaissez les règles. L'essentiel est de respecter les mentions obligatoires et de conserver une numérotation cohérente.
-
-Avec un outil comme InvoiceDesign, vous gagnez du temps et vous êtes sûr d'être en conformité avec la réglementation 2025.
+| Statut | Obligatoire | Particularité |
+|--------|-------------|---------------|
+| Auto-entrepreneur | ✅ Oui | Mention "TVA non applicable" |
+| Entreprise individuelle (EI) | ✅ Oui | Mention "EI" obligatoire |
+| SARL / SAS / SA | ✅ Oui | Capital social requis |
+| Profession libérale | ✅ Oui | N° ordre professionnel |
+| Artisan | ✅ Oui | N° Répertoire des Métiers |
 
 ---
 
-**Besoin de créer votre première facture ?** [Essayez InvoiceDesign gratuitement](/dashboard)
-    `,
-  },
-  {
-    slug: 'mentions-obligatoires-facture-2025',
-    title: 'Mentions obligatoires sur une facture en 2025 : Liste complète',
-    description: 'Toutes les mentions légales obligatoires à inclure sur vos factures en 2025. Guide complet et à jour avec les dernières réglementations.',
-    image: '/articles/mentions-obligatoires.jpg',
-    category: 'legal',
-    readTime: 6,
-    author: 'InvoiceDesign',
-    publishedAt: '2025-12-20',
-    tags: ['mentions légales', 'facture', 'réglementation', 'TVA'],
-    content: `
-## Pourquoi les mentions obligatoires sont importantes
+## Les mentions du vendeur
 
-Une facture n'est pas qu'un simple document commercial : c'est une pièce comptable et fiscale qui doit respecter des règles strictes. Une facture non conforme peut entraîner :
+| Mention | Exemple |
+|---------|---------|
+| Nom ou raison sociale | DUPONT SARL |
+| Forme juridique | SARL, SAS, EI... |
+| Adresse du siège | 12 rue de Paris, 75001 Paris |
+| SIRET | 123 456 789 00012 (14 chiffres) |
+| N° TVA intracommunautaire | FR12345678901 |
+| Contact | email, téléphone |
 
-- Le **rejet de la déduction de TVA** pour votre client
-- Des **amendes** pouvant aller jusqu'à 75 000€
-- Des complications lors d'un **contrôle fiscal**
+<div class="warning-box">
+<h4>⚠️ Depuis 2022</h4>
+<p>Les <strong>entrepreneurs individuels</strong> doivent ajouter la mention <strong>"EI"</strong> ou <strong>"Entrepreneur individuel"</strong> sur toutes leurs factures.</p>
+</div>
 
-## Liste complète des mentions obligatoires
+---
 
-### 1. Identité du vendeur
+## Les mentions du client
+
+| Information | B2B | B2C |
+|-------------|-----|-----|
+| Nom / Raison sociale | ✅ Obligatoire | ✅ Obligatoire |
+| Adresse facturation | ✅ Obligatoire | ✅ Obligatoire |
+| Adresse livraison | Si différente | Recommandé |
+| N° TVA intracommunautaire | ✅ Si UE | ❌ Non requis |
+
+---
+
+## Les éléments de la facture
+
+| Élément | Description |
+|---------|-------------|
+| **Numéro de facture** | Unique, chronologique (ex: FA-2026-0001) |
+| **Date d'émission** | Jour de création |
+| **Date de prestation** | Quand le service a été rendu |
+| **Date d'échéance** | Limite de paiement (ex: 30 jours) |
+
+---
+
+## Le détail des lignes
+
+Pour **chaque produit ou service** :
+
+| Élément | Exemple |
+|---------|---------|
+| Désignation | Création site web |
+| Quantité | 1 |
+| Prix unitaire HT | 1 500,00 € |
+| Taux TVA | 20% |
+| Montant HT | 1 500,00 € |
+
+---
+
+## Les totaux obligatoires
+
+| Ligne | Calcul |
+|-------|--------|
+| Total HT | Somme des montants HT |
+| TVA (par taux) | Montant TVA 20%, 10%, 5,5%... |
+| Total TTC | Total HT + Total TVA |
+| Acomptes | Montants déjà versés |
+| **Net à payer** | Total TTC - Acomptes |
+
+---
+
+## Conditions de paiement
 
 | Mention | Détail |
 |---------|--------|
-| Dénomination sociale | Nom de l'entreprise ou nom/prénom pour les EI |
-| Forme juridique | SARL, SAS, EI, etc. |
-| Adresse du siège | Adresse complète |
-| Numéro SIREN/SIRET | 9 ou 14 chiffres |
-| Capital social | Pour les sociétés |
-| Numéro RCS | Ville d'immatriculation |
-| N° TVA intracommunautaire | Si assujetti à la TVA |
-
-### 2. Identité de l'acheteur
-
-- Dénomination sociale ou nom
-- Adresse de facturation
-- Adresse de livraison (si différente)
-- N° TVA intracommunautaire (pour les échanges B2B en UE)
-
-### 3. Informations sur la facture
-
-- **Numéro unique** de facture
-- **Date d'émission**
-- **Date de la vente** ou de la prestation
-
-### 4. Détail des produits/services
-
-Pour chaque ligne :
-- Désignation précise
-- Quantité
-- Prix unitaire HT
-- Taux de TVA applicable
-- Remises éventuelles
-
-### 5. Montants
-
-- Total HT
-- Montant de la TVA (par taux)
-- Total TTC
-- Acomptes déjà versés (le cas échéant)
-- Solde à payer
-
-### 6. Conditions de paiement
-
-- Date d'échéance
-- Conditions d'escompte
-- Taux des pénalités de retard
-- Montant de l'indemnité forfaitaire (40€ minimum)
-
-## Mentions spécifiques selon les cas
-
-### Auto-entrepreneur sans TVA
-> "TVA non applicable, article 293 B du CGI"
-
-### Artisan
-> Numéro au Répertoire des Métiers
-
-### Profession réglementée
-> Assurance professionnelle + coordonnées de l'assureur
-
-### Facture d'acompte
-> "Facture d'acompte" + référence au devis
-
-## Sanctions en cas de non-conformité
-
-| Infraction | Sanction |
-|------------|----------|
-| Mention manquante | 15€ par mention et par facture |
-| Facture fictive | 50% du montant facturé |
-| Défaut de facturation | 75 000€ d'amende |
-
-## Simplifiez-vous la vie
-
-Avec InvoiceDesign, toutes ces mentions sont automatiquement incluses. Vous n'avez qu'à renseigner vos informations une fois, et chaque facture générée sera conforme.
+| Date d'échéance | Précise (ex: 15/01/2026) |
+| Pénalités de retard | Minimum : 3× taux intérêt légal |
+| Indemnité forfaitaire | **40€** (recouvrement) |
 
 ---
 
-**Créez des factures conformes en quelques clics** → [Essayer InvoiceDesign](/dashboard)
+## Mentions spéciales
+
+<div class="info-box blue">
+<h4>Auto-entrepreneur sans TVA</h4>
+<p><strong>"TVA non applicable, article 293 B du CGI"</strong></p>
+</div>
+
+<div class="info-box blue">
+<h4>Sous-traitance BTP</h4>
+<p><strong>"Autoliquidation de la TVA - Article 283-2 nonies du CGI"</strong></p>
+</div>
+
+---
+
+## Sanctions en cas d'erreur
+
+| Infraction | Amende |
+|------------|--------|
+| Mention manquante | **15€** par mention |
+| Défaut de facturation | Jusqu'à **75 000€** |
+| Facture fictive | **50%** du montant |
+
+---
+
+<div class="cta-box">
+<h3>Créez des factures conformes</h3>
+<p>InvoiceDesign intègre automatiquement toutes les mentions obligatoires.</p>
+</div>
+    `,
+    contentEn: `
+## Who Must Issue Invoices?
+
+| Status | Required | Specifics |
+|--------|----------|-----------|
+| Self-employed | ✅ Yes | "VAT not applicable" mention |
+| Sole proprietor | ✅ Yes | "EI" mention required |
+| LLC / Corporation | ✅ Yes | Share capital required |
+| Liberal profession | ✅ Yes | Professional order number |
+| Craftsman | ✅ Yes | Trade register number |
+
+---
+
+## Seller Information
+
+| Field | Example |
+|-------|---------|
+| Name or company name | SMITH LLC |
+| Legal form | LLC, Corp, Sole Prop... |
+| Headquarters address | 123 Main St, New York |
+| Tax ID (SIRET) | 14 digits in France |
+| VAT number | FR12345678901 |
+| Contact | email, phone |
+
+<div class="warning-box">
+<h4>⚠️ Since 2022</h4>
+<p><strong>Sole proprietors</strong> in France must add <strong>"EI"</strong> or <strong>"Entrepreneur individuel"</strong> on all invoices.</p>
+</div>
+
+---
+
+## Customer Information
+
+| Information | B2B | B2C |
+|-------------|-----|-----|
+| Name / Company | ✅ Required | ✅ Required |
+| Billing address | ✅ Required | ✅ Required |
+| Shipping address | If different | Recommended |
+| VAT number | ✅ If EU | ❌ Not required |
+
+---
+
+## Invoice Elements
+
+| Element | Description |
+|---------|-------------|
+| **Invoice number** | Unique, sequential (e.g., INV-2026-0001) |
+| **Issue date** | Creation date |
+| **Service date** | When service was provided |
+| **Due date** | Payment deadline (e.g., Net 30) |
+
+---
+
+## Line Item Details
+
+For **each product or service**:
+
+| Element | Example |
+|---------|---------|
+| Description | Website creation |
+| Quantity | 1 |
+| Unit price (excl. tax) | $1,500.00 |
+| Tax rate | 20% |
+| Line total (excl. tax) | $1,500.00 |
+
+---
+
+## Required Totals
+
+| Line | Calculation |
+|------|-------------|
+| Subtotal | Sum of line totals |
+| Tax (by rate) | VAT 20%, 10%, 5.5%... |
+| Grand total | Subtotal + Tax |
+| Deposits | Amounts already paid |
+| **Amount due** | Grand total - Deposits |
+
+---
+
+## Payment Terms
+
+| Field | Details |
+|-------|---------|
+| Due date | Specific date (e.g., Jan 15, 2026) |
+| Late payment penalties | Minimum: 3× legal interest rate |
+| Recovery fee | **€40** flat fee |
+
+---
+
+## Special Mentions
+
+<div class="info-box blue">
+<h4>Self-employed without VAT</h4>
+<p><strong>"VAT not applicable, article 293 B of the CGI"</strong></p>
+</div>
+
+<div class="info-box blue">
+<h4>Construction subcontracting</h4>
+<p><strong>"VAT reverse charge - Article 283-2 nonies of the CGI"</strong></p>
+</div>
+
+---
+
+## Penalties for Errors
+
+| Violation | Fine |
+|-----------|------|
+| Missing information | **€15** per item |
+| Failure to invoice | Up to **€75,000** |
+| Fake invoice | **50%** of amount |
+
+---
+
+<div class="cta-box">
+<h3>Create Compliant Invoices</h3>
+<p>InvoiceDesign automatically includes all required information.</p>
+</div>
     `,
   },
+
+  // =====================================================
+  // ARTICLE 2 : Facturation électronique internationale
+  // =====================================================
   {
-    slug: 'numerotation-factures-regles',
-    title: 'Numérotation des factures : les règles à respecter absolument',
-    description: 'Comment numéroter correctement vos factures ? Découvrez les règles légales et les bonnes pratiques pour une numérotation conforme.',
-    image: '/articles/numerotation-factures.jpg',
-    category: 'guide',
-    readTime: 5,
+    slug: 'facturation-electronique-2026-guide-international',
+    title: 'Facturation électronique 2026 : Guide international',
+    titleEn: 'E-Invoicing 2026: International Guide',
+    description: 'Calendrier de la facturation électronique obligatoire en France, Europe et USA. Ce qui change en 2026.',
+    descriptionEn: 'E-invoicing timeline for France, Europe, and USA. What changes in 2026.',
+    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
+    category: 'international',
+    readTime: 4,
     author: 'InvoiceDesign',
-    publishedAt: '2025-12-18',
-    tags: ['numérotation', 'facture', 'comptabilité', 'règles'],
+    publishedAt: '2025-12-22',
+    tags: [
+      'facturation électronique', 'e-invoicing', 'facture 2026', 'Factur-X',
+      'PPF', 'PDP', 'Europe', 'USA', 'TVA', 'ViDA', 'dématérialisation'
+    ],
+    tagsEn: [
+      'electronic invoicing', 'e-invoicing', 'invoice 2026', 'Factur-X',
+      'PPF', 'PDP', 'Europe', 'USA', 'VAT', 'ViDA', 'digital transformation'
+    ],
     content: `
-## Pourquoi la numérotation est cruciale
+## Calendrier France 2026-2027
 
-La numérotation des factures n'est pas qu'une formalité : c'est une obligation légale qui permet de :
-
-- **Assurer la traçabilité** de vos transactions
-- **Faciliter les contrôles fiscaux**
-- **Prouver l'authenticité** de vos documents
-
-## Les 3 règles fondamentales
-
-### 1. Chronologique
-
-Les numéros doivent suivre un ordre logique dans le temps. Une facture du 15 décembre ne peut pas avoir un numéro inférieur à une facture du 10 décembre.
-
-### 2. Continue
-
-Pas de "trous" dans la numérotation. Si vous avez les factures 001, 002, 004... l'administration fiscale vous demandera où est passée la 003.
-
-### 3. Unique
-
-Chaque numéro ne peut être attribué qu'une seule fois. Deux factures ne peuvent jamais avoir le même numéro.
-
-## Formats de numérotation acceptés
-
-### Format simple
-- 001, 002, 003...
-- Idéal pour les petites structures
-
-### Format avec préfixe année
-- 2025-001, 2025-002...
-- **Recommandé** : permet de repartir à 001 chaque année
-
-### Format avec préfixe personnalisé
-- FA-2025-001, FA-2025-002...
-- Utile si vous avez plusieurs types de documents
-
-### Format avec date complète
-- 20251222-001 (AAAAMMJJ-numéro)
-- Très précis, idéal pour les gros volumes
-
-## Que faire en cas d'erreur ?
-
-### Facture annulée
-Ne supprimez jamais une facture ! Émettez plutôt un **avoir** (facture négative) qui annule la facture d'origine.
-
-### Erreur sur une facture
-Créez une facture rectificative qui fait référence à la facture d'origine et détaille les corrections.
-
-## Bonnes pratiques
-
-✅ **Utilisez un logiciel** qui gère automatiquement la numérotation
-
-✅ **Documentez votre système** de numérotation
-
-✅ **Ne mélangez pas** devis et factures dans la même séquence
-
-✅ **Conservez vos factures** pendant 10 ans minimum
-
-## La solution InvoiceDesign
-
-Avec InvoiceDesign, la numérotation est automatique :
-- Format personnalisable
-- Incrémentation automatique
-- Impossible de créer des doublons
-- Historique complet accessible
+| Date | Obligation |
+|------|------------|
+| **1er septembre 2026** | Toutes les entreprises doivent **recevoir** des factures électroniques |
+| **1er septembre 2026** | Grandes entreprises doivent **émettre** en e-invoicing |
+| **1er septembre 2027** | Toutes les entreprises doivent **émettre** en e-invoicing |
 
 ---
 
-**Fini les erreurs de numérotation** → [Créer une facture](/dashboard)
+## Comment ça fonctionne ?
+
+| Élément | Description |
+|---------|-------------|
+| **PPF** | Portail Public de Facturation (gratuit) |
+| **PDP** | Plateforme de Dématérialisation Partenaire (privée) |
+| **Formats** | Factur-X, UBL, CII |
+
+<div class="info-box blue">
+<h4>Transmission obligatoire</h4>
+<p>Les factures B2B devront transiter par le PPF ou une PDP agréée. Plus d'envoi direct par email !</p>
+</div>
+
+---
+
+## Identifiants TVA par pays
+
+| Pays | Identifiant | Format |
+|------|-------------|--------|
+| 🇫🇷 France | N° TVA | FR + 11 chiffres |
+| 🇩🇪 Allemagne | USt-IdNr | DE + 9 chiffres |
+| 🇪🇸 Espagne | NIF | ES + 9 caractères |
+| 🇮🇹 Italie | Partita IVA | IT + 11 chiffres |
+| 🇧🇪 Belgique | N° TVA | BE + 10 chiffres |
+| 🇬🇧 Royaume-Uni | VAT | GB + 9 chiffres |
+
+---
+
+## États-Unis : Sales Tax par État
+
+| État | Taux | Notes |
+|------|------|-------|
+| 🌴 Californie | 7.25% + local | Jusqu'à 10.75% |
+| ⭐ Texas | 6.25% + local | Pas d'impôt sur le revenu |
+| 🗽 New York | 4% + local | Jusqu'à 8.875% |
+| ☀️ Floride | 6% + local | Pas d'impôt sur le revenu |
+| 💎 Delaware | 0% | Pas de sales tax |
+| 🌲 Oregon | 0% | Pas de sales tax |
+
+---
+
+## Europe : Directive ViDA
+
+| Échéance | Mesure |
+|----------|--------|
+| **2028** | E-invoicing pour transactions transfrontalières B2B |
+| **2030** | Reporting en temps réel obligatoire |
+
+<div class="info-box green">
+<h4>Ventes intracommunautaires</h4>
+<p>Mention obligatoire : <strong>"Exonération de TVA - Article 262 ter I du CGI"</strong></p>
+<p>+ N° TVA du vendeur et de l'acheteur</p>
+</div>
+
+---
+
+## Préparez-vous dès maintenant
+
+| Action | Priorité |
+|--------|----------|
+| Vérifier votre logiciel de facturation | 🔴 Haute |
+| Choisir PPF ou PDP | 🟡 Moyenne |
+| Former vos équipes | 🟢 À planifier |
+
+---
+
+<div class="cta-box">
+<h3>InvoiceDesign est prêt pour 2026</h3>
+<p>Créez des factures conformes aux nouvelles normes dès aujourd'hui.</p>
+</div>
+    `,
+    contentEn: `
+## France Timeline 2026-2027
+
+| Date | Requirement |
+|------|-------------|
+| **September 1, 2026** | All businesses must **receive** electronic invoices |
+| **September 1, 2026** | Large companies must **issue** e-invoices |
+| **September 1, 2027** | All businesses must **issue** e-invoices |
+
+---
+
+## How Does It Work?
+
+| Element | Description |
+|---------|-------------|
+| **PPF** | Public Invoicing Portal (free) |
+| **PDP** | Partner Dematerialization Platform (private) |
+| **Formats** | Factur-X, UBL, CII |
+
+<div class="info-box blue">
+<h4>Mandatory Transmission</h4>
+<p>B2B invoices must go through PPF or an approved PDP. No more direct email sending!</p>
+</div>
+
+---
+
+## VAT IDs by Country
+
+| Country | ID Type | Format |
+|---------|---------|--------|
+| 🇫🇷 France | VAT | FR + 11 digits |
+| 🇩🇪 Germany | USt-IdNr | DE + 9 digits |
+| 🇪🇸 Spain | NIF | ES + 9 characters |
+| 🇮🇹 Italy | Partita IVA | IT + 11 digits |
+| 🇧🇪 Belgium | VAT | BE + 10 digits |
+| 🇬🇧 UK | VAT | GB + 9 digits |
+
+---
+
+## USA: Sales Tax by State
+
+| State | Rate | Notes |
+|-------|------|-------|
+| 🌴 California | 7.25% + local | Up to 10.75% |
+| ⭐ Texas | 6.25% + local | No income tax |
+| 🗽 New York | 4% + local | Up to 8.875% |
+| ☀️ Florida | 6% + local | No income tax |
+| 💎 Delaware | 0% | No sales tax |
+| 🌲 Oregon | 0% | No sales tax |
+
+---
+
+## Europe: ViDA Directive
+
+| Deadline | Measure |
+|----------|---------|
+| **2028** | E-invoicing for cross-border B2B transactions |
+| **2030** | Real-time reporting mandatory |
+
+<div class="info-box green">
+<h4>Intra-Community Sales</h4>
+<p>Required mention: <strong>"VAT exemption - Article 262 ter I of the CGI"</strong></p>
+<p>+ VAT numbers of both seller and buyer</p>
+</div>
+
+---
+
+## Prepare Now
+
+| Action | Priority |
+|--------|----------|
+| Check your invoicing software | 🔴 High |
+| Choose PPF or PDP | 🟡 Medium |
+| Train your teams | 🟢 Plan ahead |
+
+---
+
+<div class="cta-box">
+<h3>InvoiceDesign is Ready for 2026</h3>
+<p>Create invoices compliant with new standards today.</p>
+</div>
     `,
   },
 ];
 
 // Calculer le nombre d'articles par catégorie
-export function getCategoriesWithCount() {
+export function getCategoriesWithCount(lang: 'fr' | 'en' = 'fr') {
   const counts: Record<string, number> = { all: articles.length };
   
   articles.forEach(article => {
@@ -304,6 +485,7 @@ export function getCategoriesWithCount() {
   
   return categories.map(cat => ({
     ...cat,
+    name: lang === 'en' ? cat.nameEn : cat.name,
     count: counts[cat.id] || 0,
   }));
 }
