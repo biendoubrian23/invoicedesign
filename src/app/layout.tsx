@@ -212,9 +212,9 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/iconfav.png",
-    apple: "/iconfav.png",
-    shortcut: "/iconfav.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+    shortcut: "/favicon.png",
   },
   manifest: "/manifest.json",
   openGraph: {
