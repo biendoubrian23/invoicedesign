@@ -312,7 +312,7 @@ function formatContent(content: string): string {
   html = html.replace(/^- (.*$)/gm, '<li class="pl-8 mb-4 relative before:content-["—"] before:absolute before:left-0 before:text-gray-400">$1</li>');
   
   // Wrap consecutive li elements in ul
-  html = html.replace(/(<li[^>]*>.*?<\/li>\n?)+/gs, (match) => {
+  html = html.replace(/(<li[^>]*>[\s\S]*?<\/li>\n?)+/g, (match) => {
     return `<ul class="my-8 list-none">${match}</ul>`;
   });
   html = html.replace(/<\/ul>\s*<ul[^>]*>/g, '');
