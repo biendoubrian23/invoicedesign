@@ -279,7 +279,10 @@
         "confirmEmailMessage": "We sent you a confirmation email. Click the link to activate your account.",
         "redirectingToLoginSoon": "Redirecting to login page...",
         "confirmEmailBannerTitle": "Check your inbox",
-        "confirmEmailBanner": "Click the link in the email we sent you to confirm your account."
+        "confirmEmailBanner": "Click the link in the email we sent you to confirm your account.",
+        "continueWithGoogle": "Continue with Google",
+        "connecting": "Connecting...",
+        "or": "or"
     },
     "infoPanel": {
         "basicInfo": "Basic information",

@@ -1,13 +1,38 @@
 import { NextResponse } from "next/server";
 
+// Validation email basique
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
+// Sanitize input string
+function sanitizeString(str: string | undefined): string {
+  if (!str) return "";
+  return str.trim().substring(0, 500).replace(/[<>]/g, '');
+}
+
 export async function POST(request: Request) {
   console.log("[Contact API] ========== DÉBUT REQUÊTE ==========");
   
   try {
+    // Vérifier l'origine de la requête
+    const origin = request.headers.get('origin');
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://invoicedesign.fr',
+      'https://www.invoicedesign.fr'
+    ];
+    
+    if (origin && !allowedOrigins.some(allowed => origin.startsWith(allowed.replace('www.', '')))) {
+      console.log("[Contact API] ❌ Origine non autorisée:", origin);
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { name, email, subject, message } = await request.json();
     console.log("[Contact API] Données reçues:", { name, email, subject, messageLength: message?.length });
 
-    // Validation
+    // Validation des champs
     if (!name || !email || !subject || !message) {
       console.log("[Contact API] ❌ Champs manquants");
       return NextResponse.json(
@@ -15,6 +40,19 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Validation email
+    if (!isValidEmail(email)) {
+      console.log("[Contact API] ❌ Email invalide:", email);
+      return NextResponse.json(
+        { error: "Email invalide" },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize les entrées
+    const sanitizedName = sanitizeString(name);
+    const sanitizedMessage = sanitizeString(message);
 
     const accessKey = process.env.WEB3FORMS_ACCESS_KEY;
     const contactEmail = process.env.CONTACT_EMAIL || "clarkybrian@outlook.fr";
@@ -51,7 +89,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         access_key: accessKey,
-        subject: `[InvoiceDesign] ${subjectText} - ${name}`,
+        subject: `[InvoiceDesign] ${subjectText} - ${sanitizedName}`,
         from_name: "InvoiceDesign Contact Form",
         to: contactEmail,
         replyto: email,
@@ -60,7 +98,7 @@ export async function POST(request: Request) {
 📧 NOUVEAU MESSAGE - INVOICEDESIGN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-👤 NOM: ${name}
+👤 NOM: ${sanitizedName}
 📧 EMAIL: ${email}
 📋 SUJET: ${subjectText}
 
@@ -68,11 +106,11 @@ export async function POST(request: Request) {
 💬 MESSAGE:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-${message}
+${sanitizedMessage}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📌 Ce message provient du formulaire de contact InvoiceDesign
-🌐 https://invoicedesign.vercel.app
+🌐 https://invoicedesign.fr
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         `.trim(),
       }),

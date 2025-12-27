@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 const FREE_EXPORT_LIMIT = 3;
 
@@ -18,6 +19,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 canExport: false,
                 reason: 'not_authenticated',
+                exportsRemaining: 0,
+            });
+        }
+
+        // Vérifier que l'utilisateur est bien celui qu'il prétend être
+        const supabaseAuth = await createServerClient();
+        const { data: { user } } = await supabaseAuth.auth.getUser();
+        
+        if (!user || user.id !== userId) {
+            return NextResponse.json({
+                canExport: false,
+                reason: 'unauthorized',
                 exportsRemaining: 0,
             });
         }
@@ -83,6 +96,14 @@ export async function PUT(request: NextRequest) {
 
         if (!userId) {
             return NextResponse.json({ success: false });
+        }
+
+        // Vérifier que l'utilisateur est bien celui qu'il prétend être
+        const supabaseAuth = await createServerClient();
+        const { data: { user } } = await supabaseAuth.auth.getUser();
+        
+        if (!user || user.id !== userId) {
+            return NextResponse.json({ success: false, error: 'unauthorized' });
         }
 
         const supabase = getSupabase();

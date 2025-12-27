@@ -5,21 +5,51 @@ interface BrevoContact {
   name?: string;
 }
 
+// Validation email basique
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
+// Sanitize input string
+function sanitizeString(str: string | undefined): string {
+  if (!str) return "";
+  return str.trim().substring(0, 100).replace(/[<>]/g, '');
+}
+
 export async function POST(request: Request) {
   console.log("[Brevo API] ========== DÉBUT REQUÊTE ==========");
   
   try {
-    const { email, name }: BrevoContact = await request.json();
-    console.log("[Brevo API] Email reçu:", email);
-    console.log("[Brevo API] Nom reçu:", name);
+    // Vérifier l'origine de la requête (protection basique)
+    const origin = request.headers.get('origin');
+    const host = request.headers.get('host');
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://invoicedesign.fr',
+      'https://www.invoicedesign.fr'
+    ];
+    
+    // En production, vérifier l'origine
+    if (origin && !allowedOrigins.some(allowed => origin.startsWith(allowed.replace('www.', '')))) {
+      console.log("[Brevo API] ❌ Origine non autorisée:", origin);
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    if (!email) {
-      console.log("[Brevo API] ❌ Email manquant");
+    const { email, name }: BrevoContact = await request.json();
+    
+    // Validation de l'email
+    if (!email || !isValidEmail(email)) {
+      console.log("[Brevo API] ❌ Email invalide:", email);
       return NextResponse.json(
-        { error: "Email requis" },
+        { error: "Email invalide" },
         { status: 400 }
       );
     }
+    
+    const sanitizedName = sanitizeString(name);
+    console.log("[Brevo API] Email reçu:", email);
+    console.log("[Brevo API] Nom reçu:", sanitizedName);
 
     const brevoApiKey = process.env.BREVO_API_KEY;
     const listId = parseInt(process.env.BREVO_LIST_ID || "6");
@@ -47,9 +77,9 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         email: email,
         attributes: {
-          PRENOM: name?.split(" ")[0] || "",
-          NOM: name?.split(" ").slice(1).join(" ") || "",
-          FULLNAME: name || "",
+          PRENOM: sanitizedName.split(" ")[0] || "",
+          NOM: sanitizedName.split(" ").slice(1).join(" ") || "",
+          FULLNAME: sanitizedName,
         },
         listIds: [listId],
         updateEnabled: true,
@@ -75,9 +105,9 @@ export async function POST(request: Request) {
           },
           body: JSON.stringify({
             attributes: {
-              PRENOM: name?.split(" ")[0] || "",
-              NOM: name?.split(" ").slice(1).join(" ") || "",
-              FULLNAME: name || "",
+              PRENOM: sanitizedName.split(" ")[0] || "",
+              NOM: sanitizedName.split(" ").slice(1).join(" ") || "",
+              FULLNAME: sanitizedName,
             },
             listIds: [listId],
           }),

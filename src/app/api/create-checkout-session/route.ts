@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 // Lazy initialization to avoid build errors
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY || '');
@@ -13,6 +14,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: 'Missing required fields. User must be logged in to subscribe.' },
                 { status: 400 }
+            );
+        }
+
+        // Vérifier que l'utilisateur est bien celui qu'il prétend être
+        const supabaseAuth = await createServerClient();
+        const { data: { user } } = await supabaseAuth.auth.getUser();
+        
+        if (!user || user.id !== userId) {
+            return NextResponse.json(
+                { error: 'Unauthorized. Please log in again.' },
+                { status: 401 }
             );
         }
 
